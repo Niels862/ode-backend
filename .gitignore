@@ -1,0 +1,4 @@
+.vscode/
+obc
+*.o
+*.d
