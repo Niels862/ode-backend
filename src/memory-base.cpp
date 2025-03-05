@@ -59,7 +59,13 @@ std::size_t MemoryBase::translate(std::size_t bank_addr,
 }
 
 std::ostream &operator <<(std::ostream &stream, MemoryBase const &mem) {
-    stream << std::hex << std::setfill('0');
+    stream << std::hex << std::setfill('0') << std::uppercase;
+
+    stream << "    ";
+    for (std::size_t i = 0; i < mem.m_bank_size; i++) {
+        stream << std::setw(2) << i << " ";
+    }
+    stream << std::endl;
 
     bool first = true;
     for (std::size_t i = 0; i < mem.m_n_banks; i++) {
@@ -80,6 +86,8 @@ std::ostream &operator <<(std::ostream &stream, MemoryBase const &mem) {
             }
         }
     }
+
+    stream << std::dec;
 
     return stream;
 }
