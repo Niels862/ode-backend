@@ -58,10 +58,8 @@ void MemoryBase::set(std::size_t bank_addr, std::size_t byte_addr,
     }
 }
 
-std::vector<uint8_t> MemoryBase::to_configuration_info() const {
+void MemoryBase::to_data_bytestream(std::vector<uint8_t> &data) const {
     constexpr int SectionHeaderSize = 4;
-
-    std::vector<uint8_t> data;
     std::vector<uint8_t> section;
 
     for (std::size_t i = 0; i < size(); i++) {
@@ -72,26 +70,40 @@ std::vector<uint8_t> MemoryBase::to_configuration_info() const {
         section.clear();
 
         std::size_t null_count = 0;
-        for (; i < size() && null_count < SectionHeaderSize; i++) {
+        std::size_t start = i;
+        for (; i < size() && null_count <= SectionHeaderSize 
+                          && i - start <= 256; i++) {
             if (m_banks[i].value() == 0) {
-                null_count = 0;
-            } else {
                 null_count++;
+            } else {
+                null_count = 0;
             }
 
             section.push_back(m_banks[i].value());
         }
 
+        while (!section.empty() && section.back() == 0) {
+            section.pop_back();
+        }
+
+        std::size_t byte_addr = start % m_bank_size + m_bank_addr_start;
+        std::size_t bank_addr = start / m_bank_size;
+        std::size_t size = section.size();
+
+        data.push_back(byte_addr | 0xC0);
+        data.push_back(bank_addr);
+        data.push_back(size == 256 ? 0 : size);
+
         for (uint8_t entry : section) {
             data.push_back(entry);
         }
-    }
 
-    return data;
+        data.push_back(0x2A);
+    }
 }
 
 std::size_t MemoryBase::translate(std::size_t bank_addr, 
-                                   std::size_t byte_addr) const {
+                                  std::size_t byte_addr) const {
     return (bank_addr - m_bank_addr_start) * m_bank_size + byte_addr;
 }
 

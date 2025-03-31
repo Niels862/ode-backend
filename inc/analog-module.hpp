@@ -44,6 +44,22 @@ protected:
     std::bitset<NType1IOCellsPerChip> m_outputs_used;
 };
 
+class InvGain : public AnalogModule {
+public:
+    InvGain(double gain);
+
+    void setup() override;
+
+    InputPort &in() { return m_in; }
+    OutputPort &out() { return m_out; }
+
+private:
+    double m_gain;
+
+    InputPort m_in;
+    OutputPort m_out;
+};
+
 class InvSum : public AnalogModule {
 public:
     InvSum(double lgain, double ugain);

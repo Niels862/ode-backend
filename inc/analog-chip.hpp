@@ -12,6 +12,8 @@ public:
 
     ShadowSRam compile() const;
 
+    void to_header_bytestream(std::vector<uint8_t> &data) const;
+
     AnalogBlock &cab(int id) { return m_cabs.at(id - 1); }
 
     AnalogBlock &null_cab() { return m_null_cab; }

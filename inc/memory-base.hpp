@@ -47,7 +47,7 @@ public:
     void set(std::size_t bank_addr, std::size_t byte_addr,
              std::initializer_list<MemoryCell> cells);
 
-    std::vector<uint8_t> to_configuration_info() const;
+    void to_data_bytestream(std::vector<uint8_t> &data) const;
 
     std::size_t size() const { return m_bank_size * m_n_banks; }
 

@@ -24,6 +24,22 @@ ShadowSRam AnalogChip::compile() const {
     return ssram;
 }
 
+void AnalogChip::to_header_bytestream(std::vector<uint8_t> &data) const {
+    uint8_t header[] = {
+        0xD5, /* Synch     */
+        0xB7, /* JTAG0     */
+        0x20, /* JTAG1     */
+        0x01, /* JTAG2     */
+        0x00, /* JTAG3     */
+        0x01, /* Address1  */
+        0xC1, /* Control   */
+    };
+ 
+    for (uint8_t entry : header) {
+        data.push_back(entry);
+    }
+}
+
 void AnalogChip::compile_clocks(ShadowSRam &ssram) const {
     const int ACLK = 16'000;
     const int Sys1 = ACLK;
