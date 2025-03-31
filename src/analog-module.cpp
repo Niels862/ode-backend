@@ -7,8 +7,6 @@ AnalogModule::AnalogModule()
 
 void AnalogModule::set_cab(AnalogBlock &cab) {
     m_cab = &cab; 
-    std::cout << "Set to CAB" << cab.id() 
-              << " at module " << this << std::endl;
 }
 
 InvSum::InvSum(double lgain, double ugain)
@@ -16,16 +14,10 @@ InvSum::InvSum(double lgain, double ugain)
           m_in_x{*this}, m_in_y{*this}, m_out{*this} {}
 
 void InvSum::setup() {
-    std::cout << "InX at " << &m_in_x << " from " << m_in_x.connection() << std::endl;
-    std::cout << "InY at " << &m_in_y << " from " << m_in_y.connection() << std::endl;
-    std::cout << "Out at " << &m_out << std::endl;
-
     GainEncodingTriple triple 
             = compute_gain_encoding(m_lgain, m_ugain);
 
     OpAmp &opamp = cab().opamp(1).claim(true);
-
-    std::cout << &m_in_x << std::endl;
 
     cab().cap(1).claim(triple.C_1)
                 .set_in(Capacitor::from_input(m_in_x))

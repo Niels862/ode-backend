@@ -8,6 +8,8 @@
 class AnalogModule;
 class OutputPort;
 
+uint8_t nibble_cab_to_cab();
+
 class InputPort {
 public:
     InputPort(AnalogModule &module);

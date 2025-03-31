@@ -3,6 +3,48 @@
 #include "analog-block.hpp"
 #include "error.hpp"
 
+uint8_t nibble_cab_to_cab(int from, int to) {
+    switch (from) {
+        case 1:
+            switch (to) {
+                case 1: return 0x3;
+                case 2: return 0xB;
+                case 3: return 0xB;
+                case 4: return 0xB;
+            }
+            break;
+        
+        case 2:
+            switch (to) {
+                case 1: return 0xF;
+                case 2: return 0x3;
+                case 3: return 0x9;
+                case 4: return 0x9;
+            }
+            break;
+
+        case 3:
+            switch (to) {
+                case 1: return 0xB;
+                case 2: return 0xD;
+                case 3: return 0x7;
+                case 4: return 0xD;
+            }
+            break;
+
+        case 4:
+            switch (to) {
+                case 1: return 0xD;
+                case 2: return 0xF;
+                case 3: return 0xF;
+                case 4: return 0x3;
+            }
+            break;
+    }
+
+    throw DesignError("Invalid Block ID");
+}
+
 InputPort::InputPort(AnalogModule &module)
         : m_module{&module} {}
 
@@ -11,28 +53,14 @@ uint8_t InputPort::connection_nibble() const {
         return 0x0;
     }
 
-    auto &a = m_connection->module();
-    auto &b = a.cab();
-    auto c = b.id();
-
-    std::cout << ">> In Module at " << &a << ":" << std::endl;
-    std::cout << ">> Cab" << b.id() << " at " << &b << std::endl;
-
-    int from = c;
+    int from = m_connection->module().cab().id();
     int to = m_module->cab().id();
 
-    if (from < 1 || to < 1) {
-        throw DesignError("Not yet supported");
+    if (from > 0 && to > 0) {
+        return nibble_cab_to_cab(from, to);
     }
 
-    std::array<std::array<uint8_t, 4>, 4> nibbles = { {
-        { 0x3, 0xB, 0xB, 0xB },
-        { 0xF, 0x3, 0x9, 0x9 },
-        { 0xB, 0xD, 0x7, 0xD },
-        { 0xD, 0xF, 0xF, 0x3 }
-    } };
-
-    return nibbles.at(from).at(to);
+    return 0x0;
 }
 
 void InputPort::connect(OutputPort &port) {
@@ -42,9 +70,6 @@ void InputPort::connect(OutputPort &port) {
             " to single input port");
     }
 
-    std::cout << "InputPort at " << this << " connected to " 
-              << &port << std::endl;
-
     m_connection = &port;
 }
 
@@ -53,6 +78,5 @@ OutputPort::OutputPort(AnalogModule &module)
 
 void OutputPort::connect(InputPort &port) {
     m_connections.push_back(&port);
-    std::cout << "connecting to " << &port << " from " << this << std::endl;
     port.connect(*this);
 }

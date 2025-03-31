@@ -14,12 +14,6 @@ class IOCell : public AnalogModule {
 public:
     IOCell();
 
-    /* Delete copy/move semantics as this breaks links with Ports. */
-    IOCell(IOCell const &) = delete;
-    IOCell &operator=(IOCell const &) = delete;
-    IOCell(IOCell &&) = delete;
-    IOCell &operator=(IOCell &&) = delete;
-
     /* Only allow in-place (re)initialization */
     void initialize(int id, AnalogBlock &cab);
 
