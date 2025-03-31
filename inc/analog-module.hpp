@@ -2,24 +2,30 @@
 #define OBC_COMPONENTS_HPP
 
 #include "shadow-sram.hpp"
-#include "analog-block.hpp"
 #include "io-port.hpp"
+
+class AnalogBlock;
 
 class AnalogModule {
 public:
-    AnalogModule(AnalogBlock &cab);
+    AnalogModule();
 
-    AnalogBlock &cab() { return m_cab; }
+    virtual ~AnalogModule() = default;
+
+    virtual void setup() = 0;
+
+    void set_cab(AnalogBlock &cab);
+    AnalogBlock &cab() { return *m_cab; }
 
 protected:
-    AnalogBlock &m_cab;
+    AnalogBlock *m_cab;
 };
 
-class InvertingSum : public AnalogModule {
+class InvSum : public AnalogModule {
 public:
-    InvertingSum(AnalogBlock &block, double lgain, double ugain);
+    InvSum(double lgain, double ugain);
 
-    void emit(ShadowSRam &ssram) const;
+    void setup() override;
 
     InputPort &in_x() { return m_in_x; }
     InputPort &in_y() { return m_in_y; }
@@ -29,9 +35,9 @@ private:
     double m_lgain;
     double m_ugain;
 
-    InputPort m_in_x{*this};
-    InputPort m_in_y{*this};
-    OutputPort m_out{*this};
+    InputPort m_in_x;
+    InputPort m_in_y;
+    OutputPort m_out;
 };
 
 #endif

@@ -1,12 +1,12 @@
 #ifndef OBC_UTIL_HPP
 #define OBC_UTIL_HPP
 
-#include <cstddef>
+#include <cinttypes>
 
 struct GainEncodingTriple {
-    std::byte lgain_numerator;
-    std::byte ugain_numerator;
-    std::byte denominator;
+    uint8_t C_1;
+    uint8_t C_2;
+    uint8_t C_out;
 };
 
 int round_and_clamp(double number, int lower, int upper);

@@ -3,22 +3,32 @@
 
 #include <iostream>
 #include <memory>
+#include <vector>
+#include <cinttypes>
 #include <cstddef>
 #include <initializer_list>
+
+struct MemoryAddress {
+    MemoryAddress();
+    MemoryAddress(uint8_t bank_addr, uint8_t byte_addr);
+
+    uint8_t bank_addr;
+    uint8_t byte_addr;
+};
 
 class MemoryCell {
 public:
     MemoryCell();
 
-    MemoryCell(std::byte value);
+    MemoryCell(uint8_t value);
     MemoryCell(int value); /* For convenient initializer arrays */
 
-    std::byte value() const { return m_value; }
+    uint8_t value() const { return m_value; }
 
     bool is_set() const { return m_is_set; }
 
 private:
-    std::byte m_value;
+    uint8_t m_value;
     bool m_is_set;
 };
 
@@ -32,10 +42,14 @@ public:
     MemoryCell const &get(std::size_t bank_addr, std::size_t byte_addr) const;
 
     void set(std::size_t bank_addr, std::size_t byte_addr, 
-             std::byte value) const;
+             uint8_t value) const;
 
     void set(std::size_t bank_addr, std::size_t byte_addr,
              std::initializer_list<MemoryCell> cells);
+
+    std::vector<uint8_t> to_configuration_info() const;
+
+    std::size_t size() const { return m_bank_size * m_n_banks; }
 
     friend std::ostream &operator <<(std::ostream &stream, 
                                      MemoryBase const &mem);

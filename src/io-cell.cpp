@@ -1,14 +1,23 @@
 #include "io-cell.hpp"
 #include "error.hpp"
+#include "analog-block.hpp"
+#include "analog-chip.hpp"
 
-IOCell::IOCell(int id)
-        : AnalogModule{AnalogBlock::None()}, m_id{id} {}
+IOCell::IOCell()
+        : AnalogModule{}, m_id{}, 
+          m_mode{IOMode::Disabled},
+          m_in{*this}, m_out{*this} {}
+
+void IOCell::initialize(int id, AnalogBlock &cab) {
+    set_cab(cab);
+    m_id = id;
+    m_mode = IOMode::Disabled;
+}
 
 void IOCell::set_mode(IOMode mode) {
     if (m_mode != IOMode::Disabled) { 
         /* TODO will probably need changing */
-        throw DesignError(
-                "Cannot change mode of IO-Cell");
+        throw DesignError("Cannot change mode of IO-Cell");
     }
 
     m_mode = mode;

@@ -2,7 +2,6 @@
 #define OBC_SHADOW_SRAM_HPP
 
 #include "memory-base.hpp"
-#include "analog-block.hpp"
 #include <iostream>
 
 class ShadowSRam : public MemoryBase {

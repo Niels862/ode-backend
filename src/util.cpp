@@ -32,9 +32,9 @@ GainEncodingTriple compute_gain_encoding(double lgain, double ugain) {
                      + std::abs(res_ugain - ugain);
         
         if (delta < best_delta) {
-            best.denominator = std::byte(denominator);
-            best.lgain_numerator = std::byte(lgain_num);
-            best.ugain_numerator = std::byte(ugain_num);
+            best.C_out = denominator;
+            best.C_1 = lgain_num;
+            best.C_2 = ugain_num;
             best_delta = delta;
         }
     }

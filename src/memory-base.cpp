@@ -1,14 +1,20 @@
 #include "memory-base.hpp"
 #include <iomanip>
 
+MemoryAddress::MemoryAddress()
+        : bank_addr{}, byte_addr{} {}
+
+MemoryAddress::MemoryAddress(uint8_t bank_addr, uint8_t byte_addr)
+        : bank_addr{bank_addr}, byte_addr{byte_addr} {}
+
 MemoryCell::MemoryCell()
         : m_value{0}, m_is_set{false} {}
 
-MemoryCell::MemoryCell(std::byte value)
+MemoryCell::MemoryCell(uint8_t value)
         : m_value{value}, m_is_set{true} {}
 
 MemoryCell::MemoryCell(int value)
-        : m_value{std::byte(value)}, m_is_set{true} {}
+        : m_value{uint8_t(value)}, m_is_set{true} {}
 
 MemoryBase::MemoryBase(std::size_t bank_size, std::size_t n_banks, 
                        std::size_t bank_addr_start)
@@ -31,7 +37,7 @@ MemoryCell const &MemoryBase::get(std::size_t bank_addr,
 }
 
 void MemoryBase::set(std::size_t bank_addr, std::size_t byte_addr, 
-                     std::byte value) const {
+                     uint8_t value) const {
     if (!includes(bank_addr, byte_addr)) {
         /* error... */
     }
@@ -52,6 +58,37 @@ void MemoryBase::set(std::size_t bank_addr, std::size_t byte_addr,
     }
 }
 
+std::vector<uint8_t> MemoryBase::to_configuration_info() const {
+    constexpr int SectionHeaderSize = 4;
+
+    std::vector<uint8_t> data;
+    std::vector<uint8_t> section;
+
+    for (std::size_t i = 0; i < size(); i++) {
+        if (m_banks[i].value() == 0) {
+            continue;
+        }
+
+        section.clear();
+
+        std::size_t null_count = 0;
+        for (; i < size() && null_count < SectionHeaderSize; i++) {
+            if (m_banks[i].value() == 0) {
+                null_count = 0;
+            } else {
+                null_count++;
+            }
+
+            section.push_back(m_banks[i].value());
+        }
+
+        for (uint8_t entry : section) {
+            data.push_back(entry);
+        }
+    }
+
+    return data;
+}
 
 std::size_t MemoryBase::translate(std::size_t bank_addr, 
                                    std::size_t byte_addr) const {

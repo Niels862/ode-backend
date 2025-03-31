@@ -8,9 +8,22 @@ enum class IOMode {
     Disabled, InputBypass, OutputBypass
 };
 
+class AnalogChip;
+
 class IOCell : public AnalogModule {
 public:
-    IOCell(int id);
+    IOCell();
+
+    /* Delete copy/move semantics as this breaks links with Ports. */
+    IOCell(IOCell const &) = delete;
+    IOCell &operator=(IOCell const &) = delete;
+    IOCell(IOCell &&) = delete;
+    IOCell &operator=(IOCell &&) = delete;
+
+    /* Only allow in-place (re)initialization */
+    void initialize(int id, AnalogBlock &cab);
+
+    void setup() override {}
 
     void set_mode(IOMode mode);
 
@@ -20,12 +33,12 @@ public:
     OutputPort &out();
 
 private:
-    int m_id{};
+    int m_id;
 
-    IOMode m_mode{IOMode::Disabled};
+    IOMode m_mode;
 
-    InputPort m_in{*this};
-    OutputPort m_out{*this};
+    InputPort m_in;
+    OutputPort m_out;
 };
 
 #endif

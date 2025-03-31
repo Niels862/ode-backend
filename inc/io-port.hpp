@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstddef>
+#include <cinttypes>
 
 class AnalogModule;
 class OutputPort;
@@ -13,16 +14,16 @@ public:
 
     /* Returns the 4-bit nibble representing the connection to this 
        input port as it appears in the configuration data. */
-    std::byte connection_nibble() const;
+    uint8_t connection_nibble() const;
 
-    AnalogModule &module() { return m_module; }
+    AnalogModule &module() { return *m_module; }
 
     OutputPort const *connection() const { return m_connection; }
 
 private:
     void connect(OutputPort &port);
 
-    AnalogModule &m_module;
+    AnalogModule *m_module;
     OutputPort *m_connection{nullptr};
 
     friend OutputPort;
@@ -34,14 +35,14 @@ public:
 
     void connect(InputPort &port);
 
-    AnalogModule &module() { return m_module; }
+    AnalogModule &module() { return *m_module; }
 
     std::vector<InputPort *> const &connections() {
-     return m_connections;
+        return m_connections;
     }
 
 private:
-    AnalogModule &m_module;
+    AnalogModule *m_module;
     std::vector<InputPort *> m_connections{};
 };
 
