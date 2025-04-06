@@ -13,6 +13,16 @@ AnalogChip::AnalogChip()
     }
 }
 
+void AnalogChip::setup() {
+    m_conns.reset();
+
+    for (AnalogBlock &cab : m_cabs) {
+        cab.setup();
+    }
+
+    std::cout << conns().bitset() << std::endl;
+}
+
 ShadowSRam AnalogChip::compile() const {
     auto ssram = ShadowSRam();
 

@@ -8,11 +8,13 @@
 #include <iomanip>
 
 /* Will be expanded, for now just a function */
-void write(AnalogChip const &chip, std::string const &filename) {
+void write(AnalogChip &chip, std::string const &filename) {
     std::ofstream f(filename);
     std::vector<uint8_t> data;
 
+    chip.setup();
     ShadowSRam ssram = chip.compile();
+
     chip.to_header_bytestream(data);
     ssram.to_data_bytestream(data);
 

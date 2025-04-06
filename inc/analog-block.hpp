@@ -26,6 +26,8 @@ public:
         return *module;
     }
 
+    void setup();
+
     void compile(ShadowSRam &ssram) const;
 
     std::size_t bank_a() const { return 2 * m_id + 1; }

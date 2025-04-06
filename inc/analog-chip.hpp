@@ -4,11 +4,14 @@
 #include "io-cell.hpp"
 #include "shadow-sram.hpp"
 #include "analog-block.hpp"
+#include "connection-matrix.hpp"
 #include <array>
 
 class AnalogChip {
 public:
     AnalogChip();
+
+    void setup();
 
     ShadowSRam compile() const;
 
@@ -20,6 +23,8 @@ public:
 
     IOCell &io_cell(int id) { return m_io_cells.at(id - 1); }
 
+    ConnectionMatrix &conns() { return m_conns; }
+
 private:
     void compile_clocks(ShadowSRam &ssram) const;
 
@@ -27,6 +32,8 @@ private:
     AnalogBlock m_null_cab;
 
     std::array<IOCell, 4> m_io_cells;
+
+    ConnectionMatrix m_conns;
 };
 
 #endif

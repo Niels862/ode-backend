@@ -14,11 +14,13 @@ AnalogBlock::AnalogBlock(int id)
     }
 }
 
-void AnalogBlock::compile(ShadowSRam &ssram) const {
+void AnalogBlock::setup() {
     for (auto const &module : m_modules) {
         module->setup();
     }
+}
 
+void AnalogBlock::compile(ShadowSRam &ssram) const {
     for (Capacitor const &cap : m_caps) {
         cap.compile(*this, ssram);
     }
