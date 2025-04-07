@@ -10,11 +10,13 @@
 /* Will be expanded, for now just a function */
 void write(AnalogChip &chip, std::string const &filename) {
     std::ofstream f(filename);
-    std::vector<uint8_t> data;
 
     chip.setup();
     ShadowSRam ssram = chip.compile();
 
+    std::cout << ssram << std::endl;
+
+    std::vector<uint8_t> data;
     chip.to_header_bytestream(data);
     ssram.to_data_bytestream(data);
 
@@ -37,7 +39,10 @@ int main() {
     chip.io_cell(3).set_mode(IOMode::OutputBypass);
 
     auto &invsum = chip.cab(1).add(new InvSum(0.48, 4.18));
-    auto &invgain = chip.cab(2).add(new InvGain(0.5));
+    auto &invgain = chip.cab(3).add(new InvGain(0.5));
+
+    chip.io_cell(1).out().connect(invsum.in_x());
+    chip.io_cell(2).out().connect(invsum.in_y());
 
     invsum.out().connect(invgain.in());
     invgain.out().connect(chip.io_cell(3).in());

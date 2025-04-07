@@ -17,14 +17,22 @@ public:
     /* Only allow in-place (re)initialization */
     void initialize(int id, AnalogBlock &cab);
 
-    void setup() override {}
+    void setup() override;
 
+    IOMode mode() const { return m_mode; }
     void set_mode(IOMode mode);
+
+    bool is_primary() const { return m_id % 2 == 2; }
+    bool is_secondary() const { return m_id % 2 != 1; }
 
     int id() const { return m_id; }
 
     InputPort &in();
     OutputPort &out();
+
+    std::vector<AnalogBlock *> const &cab_connections() const { 
+        return m_cab_connections;
+    }
 
 private:
     int m_id;
@@ -33,6 +41,8 @@ private:
 
     InputPort m_in;
     OutputPort m_out;
+
+    std::vector<AnalogBlock *> m_cab_connections;
 };
 
 #endif

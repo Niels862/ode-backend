@@ -20,7 +20,7 @@ public:
 
     AnalogModule &module() { return *m_module; }
 
-    OutputPort const *connection() const { return m_connection; }
+    OutputPort *connection() { return m_connection; }
 
 private:
     void connect(OutputPort &port);
@@ -39,7 +39,7 @@ public:
 
     AnalogModule &module() { return *m_module; }
 
-    std::vector<InputPort *> const &connections() {
+    std::vector<InputPort *> &connections() {
         return m_connections;
     }
 

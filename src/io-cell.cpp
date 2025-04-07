@@ -14,6 +14,27 @@ void IOCell::initialize(int id, AnalogBlock &cab) {
     m_mode = IOMode::Disabled;
 }
 
+void IOCell::setup() {
+    m_cab_connections.clear();
+
+    if (m_mode == IOMode::InputBypass) {
+        for (InputPort *port : out().connections()) {
+            AnalogBlock &cab = port->module().cab();
+            if (cab.id() > 0) {
+                m_cab_connections.push_back(&cab);
+            }
+        }
+    } else if (m_mode == IOMode::OutputBypass) {
+        OutputPort *port = in().connection();
+        if (port) {
+            AnalogBlock &cab = port->module().cab();
+            if (cab.id() > 0) {
+                m_cab_connections.push_back(&cab);
+            }
+        }
+    }
+}
+
 void IOCell::set_mode(IOMode mode) {
     if (m_mode != IOMode::Disabled) { 
         /* TODO will probably need changing */

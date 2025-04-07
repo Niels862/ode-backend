@@ -13,12 +13,11 @@ public:
 
     void setup();
 
-    ShadowSRam compile() const;
+    ShadowSRam compile();
 
     void to_header_bytestream(std::vector<uint8_t> &data) const;
 
     AnalogBlock &cab(int id) { return m_cabs.at(id - 1); }
-
     AnalogBlock &null_cab() { return m_null_cab; }
 
     IOCell &io_cell(int id) { return m_io_cells.at(id - 1); }
@@ -26,7 +25,11 @@ public:
     ConnectionMatrix &conns() { return m_conns; }
 
 private:
-    void compile_clocks(ShadowSRam &ssram) const;
+    void compile_clocks(ShadowSRam &ssram);
+    void compile_lut_io_control(ShadowSRam &ssram);
+    void compile_io_routing(ShadowSRam &ssram);
+
+    void configure_shared_routing(IOCell &pri, IOCell &sec, uint8_t data[]);
 
     std::array<AnalogBlock, 4> m_cabs;
     AnalogBlock m_null_cab;

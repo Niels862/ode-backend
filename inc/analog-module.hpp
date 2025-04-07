@@ -26,22 +26,8 @@ public:
     void set_cab(AnalogBlock &cab);
     AnalogBlock &cab() { return *m_cab; }
 
-    void set_used_input(InputPort &port);
-    void set_used_output(OutputPort &port);
-
-    std::bitset<NType1IOCellsPerChip> const &inputs_used() const {
-        return m_inputs_used;
-    }
-
-    std::bitset<NType1IOCellsPerChip> const &outputs_used() const {
-        return m_outputs_used;
-    }
-
 protected:
     AnalogBlock *m_cab;
-
-    std::bitset<NType1IOCellsPerChip> m_inputs_used;
-    std::bitset<NType1IOCellsPerChip> m_outputs_used;
 };
 
 class InvGain : public AnalogModule {

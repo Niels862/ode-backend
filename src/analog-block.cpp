@@ -28,4 +28,6 @@ void AnalogBlock::compile(ShadowSRam &ssram) const {
     for (OpAmp const &opamp : m_opamps) {
         opamp.compile(*this, ssram);
     }
+
+    ssram.set(bank_b(), 0x0, m_modules.empty() ? 0x00 : 0x0C);
 }
