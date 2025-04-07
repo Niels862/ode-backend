@@ -21,6 +21,8 @@ public:
 
     virtual ~AnalogModule() = default;
 
+    virtual uint8_t connection_nibble(AnalogModule &to); 
+
     virtual void setup() = 0;
 
     void set_cab(AnalogBlock &cab);

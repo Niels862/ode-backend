@@ -17,6 +17,8 @@ public:
     /* Only allow in-place (re)initialization */
     void initialize(int id, AnalogBlock &cab);
 
+    virtual uint8_t connection_nibble(AnalogModule &to); 
+
     void setup() override;
 
     IOMode mode() const { return m_mode; }

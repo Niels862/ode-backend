@@ -3,48 +3,6 @@
 #include "analog-block.hpp"
 #include "error.hpp"
 
-uint8_t nibble_cab_to_cab(int from, int to) {
-    switch (from) {
-        case 1:
-            switch (to) {
-                case 1: return 0x3;
-                case 2: return 0xB;
-                case 3: return 0xB;
-                case 4: return 0xB;
-            }
-            break;
-        
-        case 2:
-            switch (to) {
-                case 1: return 0xF;
-                case 2: return 0x3;
-                case 3: return 0x9;
-                case 4: return 0x9;
-            }
-            break;
-
-        case 3:
-            switch (to) {
-                case 1: return 0xB;
-                case 2: return 0xD;
-                case 3: return 0x7;
-                case 4: return 0xD;
-            }
-            break;
-
-        case 4:
-            switch (to) {
-                case 1: return 0xD;
-                case 2: return 0xF;
-                case 3: return 0xF;
-                case 4: return 0x3;
-            }
-            break;
-    }
-
-    throw DesignError("Invalid Block ID");
-}
-
 InputPort::InputPort(AnalogModule &module)
         : m_module{&module} {}
 
@@ -53,14 +11,7 @@ uint8_t InputPort::connection_nibble() const {
         return 0x0;
     }
 
-    int from = m_connection->module().cab().id();
-    int to = m_module->cab().id();
-
-    if (from > 0 && to > 0) {
-        return nibble_cab_to_cab(from, to);
-    }
-
-    return 0x0;
+    return m_connection->module().connection_nibble(*m_module);
 }
 
 void InputPort::connect(OutputPort &port) {

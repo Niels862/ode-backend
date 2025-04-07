@@ -14,6 +14,34 @@ void IOCell::initialize(int id, AnalogBlock &cab) {
     m_mode = IOMode::Disabled;
 }
 
+uint8_t IOCell::connection_nibble(AnalogModule &to) {
+    int to_id = to.cab().id();
+
+    switch (m_id) {
+        case 1:
+        case 2:
+            switch (to_id) {
+                case 1:
+                case 2: return 0x9;
+                case 3:
+                case 4: return 0x7;
+            }
+            break;
+
+        case 3:
+        case 4:
+            switch (to_id) {
+                case 1: 
+                case 2: return 0x7;
+                case 3: return 0xD;
+                case 4: return 0xF;
+            }
+            break;
+    }
+
+    throw DesignError("Unreached todo");
+}
+
 void IOCell::setup() {
     m_cab_connections.clear();
 

@@ -1,9 +1,55 @@
 #include "analog-module.hpp"
 #include "util.hpp"
 #include "analog-block.hpp"
+#include "error.hpp"
 
 AnalogModule::AnalogModule()
         : m_cab{} {}
+
+uint8_t AnalogModule::connection_nibble(AnalogModule &to) {
+    int id_from = cab().id();
+    int id_to = to.cab().id();
+
+    switch (id_from) {
+        case 1:
+            switch (id_to) {
+                case 1: return 0x3;
+                case 2: return 0xB;
+                case 3: return 0xB;
+                case 4: return 0xB;
+            }
+            break;
+        
+        case 2:
+            switch (id_to) {
+                case 1: return 0xF;
+                case 2: return 0x3;
+                case 3: return 0x9;
+                case 4: return 0x9;
+            }
+            break;
+
+        case 3:
+            switch (id_to) {
+                case 1: return 0xB;
+                case 2: return 0xD;
+                case 3: return 0x7;
+                case 4: return 0xD;
+            }
+            break;
+
+        case 4:
+            switch (id_to) {
+                case 1: return 0xD;
+                case 2: return 0xF;
+                case 3: return 0xF;
+                case 4: return 0x3;
+            }
+            break;
+    }
+
+    throw DesignError("Unreached todo");
+}
 
 void AnalogModule::set_cab(AnalogBlock &cab) {
     m_cab = &cab; 
