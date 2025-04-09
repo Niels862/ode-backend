@@ -19,13 +19,13 @@ public:
 
     virtual uint8_t connection_nibble(AnalogModule &to); 
 
-    void setup() override;
+    void configure() override;
 
     IOMode mode() const { return m_mode; }
     void set_mode(IOMode mode);
 
-    bool is_primary() const { return m_id % 2 == 2; }
-    bool is_secondary() const { return m_id % 2 != 1; }
+    void use_primary_channel() { m_channel = false; }
+    void use_secondary_channel() { m_channel = true; }
 
     int id() const { return m_id; }
 
@@ -40,6 +40,7 @@ private:
     int m_id;
 
     IOMode m_mode;
+    bool m_channel;
 
     InputPort m_in;
     OutputPort m_out;

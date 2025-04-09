@@ -59,7 +59,7 @@ InvGain::InvGain(double gain)
         : m_gain{gain}, 
           m_in{*this}, m_out{*this} {}
 
-void InvGain::setup() {
+void InvGain::configure() {
     uint8_t num, den;
     approximate_ratio(m_gain, num, den);
 
@@ -83,7 +83,7 @@ InvSum::InvSum(double lgain, double ugain)
         : m_lgain{lgain}, m_ugain{ugain}, 
           m_in_x{*this}, m_in_y{*this}, m_out{*this} {}
 
-void InvSum::setup() {
+void InvSum::configure() {
     std::vector<double> gains = { m_lgain, m_ugain };
     std::vector<uint8_t> nums;
     uint8_t den;

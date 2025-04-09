@@ -11,7 +11,7 @@ class AnalogChip {
 public:
     AnalogChip();
 
-    void setup();
+    void configure();
 
     ShadowSRam compile();
 

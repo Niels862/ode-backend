@@ -11,7 +11,7 @@
 void write(AnalogChip &chip, std::string const &filename) {
     std::ofstream f(filename);
 
-    chip.setup();
+    chip.configure();
     ShadowSRam ssram = chip.compile();
 
     std::cout << ssram << std::endl;
@@ -22,7 +22,7 @@ void write(AnalogChip &chip, std::string const &filename) {
 
     f << std::hex << std::setfill('0') << std::uppercase;
 
-    f << "const an_Byte an_FPAA1_PrimaryConfigInfo[] = \n";
+    f << "const unsigned char an_FPAA1_PrimaryConfigInfo[] = {\n";
     for (uint8_t byte : data) {
         f << "  0x" << static_cast<int>(byte) << ",\n";
     }

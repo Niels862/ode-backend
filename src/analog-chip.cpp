@@ -14,10 +14,15 @@ AnalogChip::AnalogChip()
     }
 }
 
-void AnalogChip::setup() {
+void AnalogChip::configure() {
     m_conns.reset();
 
     for (IOCell &cell : m_io_cells) {
+        if (cell.id() % 2 == 1) { // FIXME temp
+            cell.use_primary_channel();
+        } else {
+            cell.use_secondary_channel();
+        }
         cell.setup();
 
         std::cout << "IO" << cell.id() << std::endl;
@@ -101,6 +106,8 @@ void AnalogChip::compile_clocks(ShadowSRam &ssram) {
             data[i] = Sys1 / clock / 2;
         }
     }
+
+    ssram.set(0x0, 0x0B, 0x40);
 
     uint8_t data_used = 1 | (0 << 1);
     for (std::size_t i = 0; i < ClocksUsed.size(); i++) {
@@ -231,6 +238,14 @@ void AnalogChip::configure_shared_routing(IOCell &pri, IOCell &sec,
                 default:
                     throw DesignError("unsupported");
             }
+
+            std::cout << "pri/sec" << std::endl;
+            pri.use_primary_channel();
+            sec.use_secondary_channel();
+        } else {
+            std::cout << "pri/pri" << std::endl;
+            pri.use_primary_channel();
+            sec.use_primary_channel();
         }
     }
 }

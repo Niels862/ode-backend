@@ -5,7 +5,7 @@
 
 IOCell::IOCell()
         : AnalogModule{}, m_id{}, 
-          m_mode{IOMode::Disabled},
+          m_mode{IOMode::Disabled}, m_channel{false},
           m_in{*this}, m_out{*this} {}
 
 void IOCell::initialize(int id, AnalogBlock &cab) {
@@ -16,15 +16,16 @@ void IOCell::initialize(int id, AnalogBlock &cab) {
 
 uint8_t IOCell::connection_nibble(AnalogModule &to) {
     int to_id = to.cab().id();
+    uint8_t n = 0x0;
 
     switch (m_id) {
         case 1:
         case 2:
             switch (to_id) {
                 case 1:
-                case 2: return 0x9;
+                case 2: n = 0x9; break;
                 case 3:
-                case 4: return 0x7;
+                case 4: n = 0x7; break;
             }
             break;
 
@@ -32,17 +33,23 @@ uint8_t IOCell::connection_nibble(AnalogModule &to) {
         case 4:
             switch (to_id) {
                 case 1: 
-                case 2: return 0x7;
-                case 3: return 0xD;
-                case 4: return 0xF;
+                case 2: n = 0x7; break;
+                case 3: n = 0xD; break;
+                case 4: n = 0xF; break;
             }
             break;
     }
 
-    throw DesignError("Unreached todo");
+    if (n == 0x0) {
+        throw DesignError("Unreached todo");
+    }
+
+    std::cout << "channel-" << m_channel << std::endl;
+
+    return n - m_channel;
 }
 
-void IOCell::setup() {
+void IOCell::configure() {
     m_cab_connections.clear();
 
     if (m_mode == IOMode::InputBypass) {

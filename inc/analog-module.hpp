@@ -23,7 +23,7 @@ public:
 
     virtual uint8_t connection_nibble(AnalogModule &to); 
 
-    virtual void setup() = 0;
+    virtual void configure() = 0;
 
     void set_cab(AnalogBlock &cab);
     AnalogBlock &cab() { return *m_cab; }
@@ -36,7 +36,7 @@ class InvGain : public AnalogModule {
 public:
     InvGain(double gain);
 
-    void setup() override;
+    void configure() override;
 
     InputPort &in() { return m_in; }
     OutputPort &out() { return m_out; }
@@ -52,7 +52,7 @@ class InvSum : public AnalogModule {
 public:
     InvSum(double lgain, double ugain);
 
-    void setup() override;
+    void configure() override;
 
     InputPort &in_x() { return m_in_x; }
     InputPort &in_y() { return m_in_y; }

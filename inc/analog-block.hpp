@@ -26,7 +26,7 @@ public:
         return *module;
     }
 
-    void setup();
+    void configure();
 
     void compile(ShadowSRam &ssram) const;
 

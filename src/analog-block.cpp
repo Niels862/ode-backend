@@ -14,9 +14,9 @@ AnalogBlock::AnalogBlock(int id)
     }
 }
 
-void AnalogBlock::setup() {
+void AnalogBlock::configure() {
     for (auto const &module : m_modules) {
-        module->setup();
+        module->configure();
     }
 }
 
