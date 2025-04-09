@@ -11,7 +11,6 @@
 void write(AnalogChip &chip, std::string const &filename) {
     std::ofstream f(filename);
 
-    chip.configure();
     ShadowSRam ssram = chip.compile();
 
     std::cout << ssram << std::endl;

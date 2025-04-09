@@ -11,8 +11,6 @@ class AnalogChip {
 public:
     AnalogChip();
 
-    void configure();
-
     ShadowSRam compile();
 
     void to_header_bytestream(std::vector<uint8_t> &data) const;

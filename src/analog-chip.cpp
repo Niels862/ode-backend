@@ -14,34 +14,20 @@ AnalogChip::AnalogChip()
     }
 }
 
-void AnalogChip::configure() {
-    m_conns.reset();
-
-    for (IOCell &cell : m_io_cells) {
-        if (cell.id() % 2 == 1) { // FIXME temp
-            cell.use_primary_channel();
-        } else {
-            cell.use_secondary_channel();
-        }
-        cell.setup();
-
-        std::cout << "IO" << cell.id() << std::endl;
-        for (AnalogBlock const *cab : cell.cab_connections()) {
-            std::cout << "  Cab" << cab->id() << std::endl;
-        }
-    }
-
-    for (AnalogBlock &cab : m_cabs) {
-        cab.setup();
-    }
-}
-
 ShadowSRam AnalogChip::compile() {
     auto ssram = ShadowSRam();
+
+    for (IOCell &cell : m_io_cells) {
+        cell.configure();
+    }
 
     compile_lut_io_control(ssram);
     compile_io_routing(ssram);
     compile_clocks(ssram);
+
+    for (AnalogBlock &cab : m_cabs) {
+        cab.configure();
+    }
 
     for (AnalogBlock const &cab : m_cabs) {
         cab.compile(ssram);
