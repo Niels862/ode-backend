@@ -60,45 +60,70 @@ void MemoryBase::set(std::size_t bank_addr, std::size_t byte_addr,
 
 void MemoryBase::to_data_bytestream(std::vector<uint8_t> &data) const {
     constexpr int SectionHeaderSize = 4;
-    std::vector<uint8_t> section;
 
-    for (std::size_t i = 0; i < size(); i++) {
+    std::vector<std::vector<uint8_t>> sections;
+    std::vector<uint8_t> section, data_section;
+
+    for (std::size_t i = 0; i < size(); /* manual increment */) {
         if (m_banks[i].value() == 0) {
+            i++;
             continue;
         }
-
+    
         section.clear();
-
+    
         std::size_t null_count = 0;
         std::size_t start = i;
-        for (; i < size() && null_count <= SectionHeaderSize 
-                          && i - start <= 256; i++) {
-            if (m_banks[i].value() == 0) {
+        std::size_t j = i;
+    
+        for (; j < size() && null_count <= SectionHeaderSize && j - start <= 256; j++) {
+            if (m_banks[j].value() == 0) {
                 null_count++;
             } else {
                 null_count = 0;
             }
-
-            section.push_back(m_banks[i].value());
+    
+            section.push_back(m_banks[j].value());
         }
-
+    
+        // Trim trailing zeros
         while (!section.empty() && section.back() == 0) {
             section.pop_back();
         }
-
+    
         std::size_t byte_addr = start % m_bank_size + m_bank_addr_start;
         std::size_t bank_addr = start / m_bank_size;
         std::size_t size = section.size();
+    
+        data_section.clear();
+        data_section.push_back(byte_addr);
+        data_section.push_back(bank_addr);
+        data_section.push_back(size == 256 ? 0 : size);
+    
+        for (uint8_t entry : section) {
+            data_section.push_back(entry);
+        }
+    
+        data_section.push_back(0x2A);
+        sections.push_back(data_section);
+    
+        // Update i to point to next candidate
+        i = j;
+    }
+    
+    for (std::size_t i = 0; i < sections.size(); i++) {
+        bool last = i == sections.size() - 1;
+        section = sections[i];
 
-        data.push_back(byte_addr | 0xC0);
-        data.push_back(bank_addr);
-        data.push_back(size == 256 ? 0 : size);
+        if (last) {
+            section[0] |= 0b1000'0000;
+        } else {
+            section[0] |= 0b1100'0000;
+        }   
 
         for (uint8_t entry : section) {
             data.push_back(entry);
         }
-
-        data.push_back(0x2A);
     }
 }
 

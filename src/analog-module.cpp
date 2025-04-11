@@ -3,8 +3,8 @@
 #include "analog-block.hpp"
 #include "error.hpp"
 
-AnalogModule::AnalogModule()
-        : m_cab{} {}
+AnalogModule::AnalogModule(std::string const &name)
+        : m_cab{}, m_name{name} {}
 
 uint8_t AnalogModule::connection_nibble(AnalogModule &to) {
     int id_from = cab().id();
@@ -56,7 +56,7 @@ void AnalogModule::set_cab(AnalogBlock &cab) {
 }
 
 InvGain::InvGain(double gain)
-        : m_gain{gain}, 
+        : AnalogModule{"GainInv"}, m_gain{gain}, 
           m_in{*this}, m_out{*this} {}
 
 void InvGain::configure() {
@@ -80,7 +80,7 @@ void InvGain::configure() {
 }
 
 InvSum::InvSum(double lgain, double ugain)
-        : m_lgain{lgain}, m_ugain{ugain}, 
+        : AnalogModule{"SumInv"}, m_lgain{lgain}, m_ugain{ugain}, 
           m_in_x{*this}, m_in_y{*this}, m_out{*this} {}
 
 void InvSum::configure() {

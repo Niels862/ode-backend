@@ -2,10 +2,40 @@
 #include "analog-module.hpp"
 #include "shadow-sram.hpp"
 #include "io-port.hpp"
+#include "settings.hpp"
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <iomanip>
+#include <argp.h>
+
+static argp_option options[] = {
+    { "verbose",    'v', 0, 0,  "Use verbose output", 0 },
+    {}
+};
+
+static error_t parse_opt(int key, char */*arg*/, argp_state *) {
+    switch (key) {
+        case 'v':
+            args.verbose = true;
+            break;
+
+        case ARGP_KEY_ARG:
+            break;
+
+        case ARGP_KEY_END:
+            // end conditions
+            break;
+
+        default:
+            return ARGP_ERR_UNKNOWN;
+    }
+    return 0;
+}
+
+static struct argp argp = { 
+    options, parse_opt, nullptr, nullptr, nullptr, nullptr, nullptr 
+};
 
 /* Will be expanded, for now just a function */
 void write(AnalogChip &chip, std::string const &filename) {
@@ -13,7 +43,9 @@ void write(AnalogChip &chip, std::string const &filename) {
 
     ShadowSRam ssram = chip.compile();
 
-    std::cout << ssram << std::endl;
+    if (args.verbose) {
+        std::cerr << ssram << std::endl;
+    }
 
     std::vector<uint8_t> data;
     chip.to_header_bytestream(data);
@@ -30,14 +62,17 @@ void write(AnalogChip &chip, std::string const &filename) {
     f.close();
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    argp_parse(&argp, argc, argv, 0, 0, nullptr);
+
     AnalogChip chip;
 
+    /*
     chip.io_cell(1).set_mode(IOMode::InputBypass);
     chip.io_cell(2).set_mode(IOMode::InputBypass);
     chip.io_cell(3).set_mode(IOMode::OutputBypass);
 
-    auto &invsum = chip.cab(1).add(new InvSum(0.48, 4.18));
+    auto &invsum = chip.cab(1).add(new InvSum(0.48, 3.14159));
     auto &invgain = chip.cab(3).add(new InvGain(0.5));
 
     chip.io_cell(1).out().connect(invsum.in_x());
@@ -45,8 +80,19 @@ int main() {
 
     invsum.out().connect(invgain.in());
     invgain.out().connect(chip.io_cell(3).in());
+    */
 
-    write(chip, "config.cpp");
+    chip.io_cell(1).set_mode(IOMode::InputBypass);
+    chip.io_cell(3).set_mode(IOMode::OutputBypass);
+
+    auto &invgain1 = chip.cab(1).add(new InvGain(1));
+    auto &invgain2 = chip.cab(3).add(new InvGain(1));
+
+    chip.io_cell(1).out().connect(invgain1.in());
+    invgain1.out().connect(invgain2.in());
+    invgain2.out().connect(chip.io_cell(3).in());
+
+    write(chip, "config.c.out");
     
     return 0;
 }

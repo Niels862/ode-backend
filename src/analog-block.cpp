@@ -1,4 +1,5 @@
 #include "analog-block.hpp"
+#include "settings.hpp"
 
 AnalogBlock::AnalogBlock()
         : m_id{}, m_caps{}, m_opamps{} {}
@@ -16,6 +17,9 @@ AnalogBlock::AnalogBlock(int id)
 
 void AnalogBlock::configure() {
     for (auto const &module : m_modules) {
+        if (args.verbose) {
+            std::cerr << module->name() << ":" << std::endl;
+        }
         module->configure();
     }
 }

@@ -1,4 +1,5 @@
 #include "util.hpp"
+#include "settings.hpp"
 #include <limits>
 #include <cmath>
 #include <algorithm>
@@ -36,6 +37,13 @@ void approximate_ratios(std::vector<double> const &values,
 
     compute_ratios(values, nums, best_den);
     den = best_den;
+
+    if (args.verbose) {
+        for (std::size_t i = 0; i < values.size(); i++) {
+            double f = static_cast<double>(nums[i]) / den;
+            std::cerr << values[i] << " realized as " << f << std::endl;
+        }
+    }
 }
 
 void approximate_ratio(double value, uint8_t &num, uint8_t &den) {

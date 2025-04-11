@@ -10,7 +10,7 @@ class AnalogBlock;
 
 class AnalogModule {
 public:
-    AnalogModule();
+    AnalogModule(std::string const &name);
 
     /* Delete copy/move semantics as this breaks links with Ports. */
     AnalogModule(AnalogModule const &) = delete;
@@ -28,8 +28,12 @@ public:
     void set_cab(AnalogBlock &cab);
     AnalogBlock &cab() { return *m_cab; }
 
+    std::string const &name() const { return m_name; }
+
 protected:
     AnalogBlock *m_cab;
+
+    std::string m_name;
 };
 
 class InvGain : public AnalogModule {

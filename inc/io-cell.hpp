@@ -2,6 +2,7 @@
 #define OBC_IO_CELL_HPP
 
 #include "analog-module.hpp"
+#include "analog-block.hpp"
 #include "io-port.hpp"
 
 enum class IOMode {
@@ -9,6 +10,26 @@ enum class IOMode {
 };
 
 class AnalogChip;
+
+struct Connection {
+    enum Kind {
+        None,
+        Connected,
+    
+        InputPrimary,
+        InputSecondary,
+    
+        OutputPrimary,
+        OutputSecondary,
+    
+        FarPrimary,
+        FarSecondary,
+    };
+
+    Kind kind;
+    AnalogBlock *cab;
+};
+
 
 class IOCell : public AnalogModule {
 public:
@@ -32,8 +53,11 @@ public:
     InputPort &in();
     OutputPort &out();
 
-    std::vector<AnalogBlock *> const &cab_connections() const { 
-        return m_cab_connections;
+    std::array<Connection, NBlocksPerChip> &connections() { 
+        return m_conns; 
+    }
+    Connection::Kind connection(AnalogBlock const &cab) const {
+        return m_conns[cab.id() - 1].kind;
     }
 
 private:
@@ -45,7 +69,7 @@ private:
     InputPort m_in;
     OutputPort m_out;
 
-    std::vector<AnalogBlock *> m_cab_connections;
+    std::array<Connection, NBlocksPerChip> m_conns;
 };
 
 #endif

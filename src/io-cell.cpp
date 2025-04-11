@@ -4,14 +4,19 @@
 #include "analog-chip.hpp"
 
 IOCell::IOCell()
-        : AnalogModule{}, m_id{}, 
+        : AnalogModule{"IOCell"}, m_id{}, 
           m_mode{IOMode::Disabled}, m_channel{false},
-          m_in{*this}, m_out{*this} {}
+          m_in{*this}, m_out{*this}, m_conns{} {}
 
 void IOCell::initialize(int id, AnalogBlock &cab) {
     set_cab(cab);
     m_id = id;
     m_mode = IOMode::Disabled;
+
+    for (Connection &conn : m_conns) {
+        conn.kind = Connection::None;
+        conn.cab = nullptr;
+    }
 }
 
 uint8_t IOCell::connection_nibble(AnalogModule &to) {
@@ -44,19 +49,20 @@ uint8_t IOCell::connection_nibble(AnalogModule &to) {
         throw DesignError("Unreached todo");
     }
 
-    std::cout << "channel-" << m_channel << std::endl;
-
     return n - m_channel;
 }
 
 void IOCell::configure() {
-    m_cab_connections.clear();
+    for (Connection &conn : m_conns) {
+        conn.kind = Connection::None;
+        conn.cab = nullptr;
+    }
 
     if (m_mode == IOMode::InputBypass) {
         for (InputPort *port : out().connections()) {
             AnalogBlock &cab = port->module().cab();
             if (cab.id() > 0) {
-                m_cab_connections.push_back(&cab);
+                m_conns[cab.id() - 1].cab = &cab;
             }
         }
     } else if (m_mode == IOMode::OutputBypass) {
@@ -64,7 +70,7 @@ void IOCell::configure() {
         if (port) {
             AnalogBlock &cab = port->module().cab();
             if (cab.id() > 0) {
-                m_cab_connections.push_back(&cab);
+                m_conns[cab.id() - 1].cab = &cab;
             }
         }
     }

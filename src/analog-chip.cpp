@@ -1,6 +1,7 @@
 #include "analog-chip.hpp"
 #include "error.hpp"
 #include "util.hpp"
+#include "settings.hpp"
 #include <sstream>
 
 AnalogChip::AnalogChip()
@@ -26,6 +27,9 @@ ShadowSRam AnalogChip::compile() {
     compile_clocks(ssram);
 
     for (AnalogBlock &cab : m_cabs) {
+        if (args.verbose) {
+            std::cerr << "Configuring CAB-" << cab.id() << "..." << std::endl;
+        }
         cab.configure();
     }
 
@@ -145,23 +149,27 @@ void AnalogChip::compile_io_routing(ShadowSRam &ssram) {
     ssram.set(0x02, 0x01, from_nibbles(routing_hi[3], routing_hi[2]));
 }
 
-void AnalogChip::configure_shared_routing(IOCell &pri, IOCell &sec, 
+void AnalogChip::configure_shared_routing(IOCell &io1, IOCell &io2, 
                                           uint8_t data[4]) {
-    auto &conns1 = pri.cab_connections();
-    auto &conns2 = sec.cab_connections();
+    auto &conns1 = io1.connections();
+    auto &conns2 = io2.connections();
     bool matrix[2][NBlocksPerChip] = { false };
 
-    for (AnalogBlock *cab : conns1) {
-        matrix[0][cab->id() - 1] = true;
+    for (auto &conn : conns1) {
+        if (conn.cab) {
+            matrix[0][conn.cab->id() - 1] = true;
+        }
     }
-    for (AnalogBlock *cab : conns2) {
-        matrix[1][cab->id() - 1] = true;
+    for (auto &conn : conns2) {
+        if (conn.cab) {
+            matrix[1][conn.cab->id() - 1] = true;
+        }
     }
 
     int near_odd, near_even, far_odd, far_even;
-    if (pri.id() > 2 && sec.id() > 2) {
+    if (io1.id() > 2 && io2.id() > 2) {
         far_odd = 0, far_even = 1, near_odd = 2, near_even = 3;
-    } else if (pri.id() <= 2 && sec.id() <= 2) {
+    } else if (io1.id() <= 2 && io2.id() <= 2) {
         far_odd = 2, far_even = 3, near_odd = 0, near_even = 1;
     } else {
         throw DesignError("err");
@@ -171,11 +179,8 @@ void AnalogChip::configure_shared_routing(IOCell &pri, IOCell &sec,
     bool pri_any_far = matrix[0][far_even] || matrix[0][far_odd];
     bool sec_any_far = matrix[1][far_even] || matrix[1][far_odd];
 
-    for (auto &a : matrix) {
-        for (auto &e : a) {
-            std::cout << e << " ";
-        }
-        std::cout << std::endl;
+    if (pri_any_far || sec_any_far) {
+        throw DesignError("`Far` connections are not yet supported");
     }
 
     /* For both data fields [0:2] and [2:4] */
@@ -195,15 +200,14 @@ void AnalogChip::configure_shared_routing(IOCell &pri, IOCell &sec,
         bool pri_far  = pri_any_far && (matrix[0][cn] || matrix[0][cf]);
         bool sec_far  = sec_any_far && (matrix[1][cn] || matrix[1][cf]);
 
-        std::cout << b1 << ": " << pri_far << std::endl;
         if (pri_near) {
-            data[b1] = pri.mode() == IOMode::InputBypass ? 0x1 : 0xC;
+            data[b1] = io1.mode() == IOMode::InputBypass ? 0x1 : 0xC;
         } else if (pri_far) {
             data[b1] = 0x5;
         }
         
         if (sec_near) {
-            data[b2] = pri.mode() == IOMode::InputBypass ? 0x1 : 0xC;
+            data[b2] = io1.mode() == IOMode::InputBypass ? 0x1 : 0xC;
         } else if (sec_far) {
             data[b2] = 0x5;
         }
@@ -225,13 +229,11 @@ void AnalogChip::configure_shared_routing(IOCell &pri, IOCell &sec,
                     throw DesignError("unsupported");
             }
 
-            std::cout << "pri/sec" << std::endl;
-            pri.use_primary_channel();
-            sec.use_secondary_channel();
+            io1.use_primary_channel();
+            io2.use_secondary_channel();
         } else {
-            std::cout << "pri/pri" << std::endl;
-            pri.use_primary_channel();
-            sec.use_primary_channel();
+            io1.use_primary_channel();
+            io2.use_primary_channel();
         }
     }
 }
