@@ -14,16 +14,26 @@ static argp_option options[] = {
     {}
 };
 
-static error_t parse_opt(int key, char */*arg*/, argp_state *) {
+static error_t parse_opt(int key, char *arg, argp_state *state) {
     switch (key) {
         case 'v':
             args.verbose = true;
             break;
 
         case ARGP_KEY_ARG:
+            if (args.infile.empty()) {
+                args.infile = arg;
+            } else if (args.outfile.empty()) {
+                args.outfile = arg;
+            } else {
+                argp_usage(state);
+            }
             break;
 
         case ARGP_KEY_END:
+            if (args.outfile.empty()) {
+                argp_usage(state);
+            }
             // end conditions
             break;
 
@@ -38,8 +48,8 @@ static struct argp argp = {
 };
 
 /* Will be expanded, for now just a function */
-void write(AnalogChip &chip, std::string const &filename) {
-    std::ofstream f(filename);
+void write(AnalogChip &chip) {
+    std::ofstream f(args.outfile);
 
     ShadowSRam ssram = chip.compile();
 
@@ -67,7 +77,6 @@ int main(int argc, char *argv[]) {
 
     AnalogChip chip;
 
-    /*
     chip.io_cell(1).set_mode(IOMode::InputBypass);
     chip.io_cell(2).set_mode(IOMode::InputBypass);
     chip.io_cell(3).set_mode(IOMode::OutputBypass);
@@ -80,8 +89,8 @@ int main(int argc, char *argv[]) {
 
     invsum.out().connect(invgain.in());
     invgain.out().connect(chip.io_cell(3).in());
-    */
 
+    /*
     chip.io_cell(1).set_mode(IOMode::InputBypass);
     chip.io_cell(3).set_mode(IOMode::OutputBypass);
 
@@ -91,8 +100,9 @@ int main(int argc, char *argv[]) {
     chip.io_cell(1).out().connect(invgain1.in());
     invgain1.out().connect(invgain2.in());
     invgain2.out().connect(chip.io_cell(3).in());
+    */
 
-    write(chip, "config.c.out");
+    write(chip);
     
     return 0;
 }

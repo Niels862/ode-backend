@@ -149,88 +149,135 @@ void AnalogChip::compile_io_routing(ShadowSRam &ssram) {
     ssram.set(0x02, 0x01, from_nibbles(routing_hi[3], routing_hi[2]));
 }
 
+void setup_connection_matrix(IOCell &cell, Connection *conns[2][2]) {
+    for (auto &conn : cell.connections()) {
+        if (conn.block == Connection::None) {
+            continue;
+        }
+
+        int cid = conn.cab->id();
+        switch (cid) {
+            case 1: conns[0][0] = &conn; break;
+            case 2: conns[1][0] = &conn; break;
+            case 3: conns[0][1] = &conn; break;
+            case 4: conns[1][1] = &conn; break;
+
+            default:
+                abort(); // todo 
+        }
+    }
+}
+
+void promote_near_connections(Connection *conns[2][2]) {
+    if (conns[0][1] || conns[1][1]) {
+        if (conns[0][0]) {
+            conns[0][0]->mode = Connection::Far;
+        }
+        if (conns[1][0]) {
+            conns[1][0]->mode = Connection::Far;
+        }
+    }
+}
+
+Connection::Block get_local_connection_type(Connection *lconns[2]) {
+    Connection::Block block = Connection::None;
+
+    for (std::size_t i = 0; i < 2; i++) {
+        if (!lconns[i]) {
+            continue;
+        }
+
+        if (block == Connection::None) {
+            block = lconns[i]->block;
+        }
+
+        /* This is unexpected, because if both exist, then they must both be Far
+           according to promote_near_connections. */
+        if (block != lconns[i]->block) {
+            abort(); 
+        }
+    }
+
+    return block;
+}
+
+void resolve_local_connection_conflicts(Connection *lconns1[2], 
+                                        Connection *lconns2[2]) {
+    auto block1 = get_local_connection_type(lconns1);
+    auto block2 = get_local_connection_type(lconns2);
+
+    if (block1 == block2) {
+        if (lconns2[0]) {
+            lconns2[0]->channel = Connection::Secondary;
+        }
+        if (lconns2[1]) {
+            lconns2[1]->channel = Connection::Secondary;
+        }
+    }
+}
+
+void initialize_routing_data(Connection *conns[2], uint8_t &entry) {
+    Connection *conn = nullptr;
+
+    for (std::size_t i = 0; i < 2; i++) {
+        if (conns[i]) {
+            conn = conns[i];
+        }
+    }
+
+    if (conn) {
+        // ...
+    } else {
+        entry = 0x0;
+    }
+}
+
+/*
+io1 and io2 are two IOCells that share routing to and from CABs in two bytes,
+which are represented as four nibbles in data[4]. This array has the following 
+structure:
+
+[0] = io2 to c1/c3
+[1] = io1 to c1/c3
+[2] = io2 to c2/c4
+[3] = io1 to c1/c3
+
+In this function, this array is configured, as well as the connections
+to the CABs in io1 & io2. The follwing constraints are present.
+
+- any connection to c3/c4 is equivalent for Input/Output. In this case, this
+  is set using CELL.connection(CAB).mode = Connection::Far (default is Near).
+  * if a connection to c1/c2 respectively also exists, then this should be
+    configured exactly like above
+- if ioX is connected to c3/c4 as well as to c1/c2, then the connection to 
+  c1/c2 is also encoded as Far and should be handled as above. 
+- if two connections are conflicting, then one of the commections should be 
+  switched to the secondary channel. This is handled by 
+  CELL.connection(CAB).channel = Connection::Secondary (default is Primary).
+
+A conflict has the following constraints:
+- the data cells where the two connections will be placed are either 
+  (data[0], data[1]), or (data[2], data[3]). 
+- the two connections have the same kind: CELL.connection(CAB).kind
+
+the nibbles are determined by CELL.connection(CAB).io_nibble().
+*/
 void AnalogChip::configure_shared_routing(IOCell &io1, IOCell &io2, 
                                           uint8_t data[4]) {
-    auto &conns1 = io1.connections();
-    auto &conns2 = io2.connections();
-    bool matrix[2][NBlocksPerChip] = { false };
+    Connection *conns1[2][2] = {};
+    Connection *conns2[2][2] = {};
 
-    for (auto &conn : conns1) {
-        if (conn.cab) {
-            matrix[0][conn.cab->id() - 1] = true;
-        }
-    }
-    for (auto &conn : conns2) {
-        if (conn.cab) {
-            matrix[1][conn.cab->id() - 1] = true;
-        }
-    }
+    setup_connection_matrix(io1, conns1);
+    setup_connection_matrix(io2, conns2);
 
-    int near_odd, near_even, far_odd, far_even;
-    if (io1.id() > 2 && io2.id() > 2) {
-        far_odd = 0, far_even = 1, near_odd = 2, near_even = 3;
-    } else if (io1.id() <= 2 && io2.id() <= 2) {
-        far_odd = 2, far_even = 3, near_odd = 0, near_even = 1;
-    } else {
-        throw DesignError("err");
-    }
+    promote_near_connections(conns1);
+    promote_near_connections(conns2);
 
-    /* If one CAB is far, then both connections are far */
-    bool pri_any_far = matrix[0][far_even] || matrix[0][far_odd];
-    bool sec_any_far = matrix[1][far_even] || matrix[1][far_odd];
+    resolve_local_connection_conflicts(conns1[0], conns2[0]);
+    resolve_local_connection_conflicts(conns1[1], conns2[1]);
 
-    if (pri_any_far || sec_any_far) {
-        throw DesignError("`Far` connections are not yet supported");
-    }
-
-    /* For both data fields [0:2] and [2:4] */
-    for (int i = 0; i < 2; i++) {
-        int cn, cf;
-        if (i % 2) {
-            cn = near_even, cf = far_even;
-        } else {
-            cn = near_odd,  cf = far_odd;
-        }
-
-        int b1 = 2 * i + 1;
-        int b2 = 2 * i;
-
-        bool pri_near = !pri_any_far && matrix[0][cn];
-        bool sec_near = !pri_any_far && matrix[1][cn];
-        bool pri_far  = pri_any_far && (matrix[0][cn] || matrix[0][cf]);
-        bool sec_far  = sec_any_far && (matrix[1][cn] || matrix[1][cf]);
-
-        if (pri_near) {
-            data[b1] = io1.mode() == IOMode::InputBypass ? 0x1 : 0xC;
-        } else if (pri_far) {
-            data[b1] = 0x5;
-        }
-        
-        if (sec_near) {
-            data[b2] = io1.mode() == IOMode::InputBypass ? 0x1 : 0xC;
-        } else if (sec_far) {
-            data[b2] = 0x5;
-        }
-
-        if (data[b1] == data[b2]) {
-            switch (data[b1]) {
-                case 0x0:
-                    break;
-
-                case 0x1:       
-                    data[b2] = 0x2; 
-                    break;
-
-                case 0x5:       
-                    data[b2] = 0x6; 
-                    break;
-
-                default:
-                    throw DesignError("unsupported");
-            }
-
-        } else {
-
-        }
-    }
+    initialize_routing_data(conns1[0], data[1]);
+    initialize_routing_data(conns2[0], data[0]);
+    initialize_routing_data(conns1[1], data[3]);
+    initialize_routing_data(conns2[1], data[2]);
 }
