@@ -10,26 +10,37 @@ enum class IOMode {
 };
 
 class AnalogChip;
+class IOCell;
 
 struct Connection {
-    enum Kind {
+    enum Block {
         None,
-        Connected,
-    
-        InputPrimary,
-        InputSecondary,
-    
-        OutputPrimary,
-        OutputSecondary,
-    
-        FarPrimary,
-        FarSecondary,
+        ToInput,
+        FromOutput1,
+        FromOutput2
     };
 
-    Kind kind;
-    AnalogBlock *cab;
-};
+    enum Mode {
+        Near,
+        Far
+    };
 
+    enum Channel {
+        Primary,
+        Secondary
+    };
+
+    Block block;
+    Mode mode;
+    Channel channel;
+    AnalogBlock *cab;
+
+    void reset();
+
+    void initialize(AnalogBlock &cab, Block block);
+
+    uint8_t nibble(IOCell &cell) const;
+};
 
 class IOCell : public AnalogModule {
 public:
@@ -45,9 +56,6 @@ public:
     IOMode mode() const { return m_mode; }
     void set_mode(IOMode mode);
 
-    void use_primary_channel() { m_channel = false; }
-    void use_secondary_channel() { m_channel = true; }
-
     int id() const { return m_id; }
 
     InputPort &in();
@@ -56,15 +64,14 @@ public:
     std::array<Connection, NBlocksPerChip> &connections() { 
         return m_conns; 
     }
-    Connection::Kind connection(AnalogBlock const &cab) const {
-        return m_conns[cab.id() - 1].kind;
+    Connection &connection(AnalogBlock const &cab) {
+        return m_conns[cab.id() - 1];
     }
 
 private:
     int m_id;
 
     IOMode m_mode;
-    bool m_channel;
 
     InputPort m_in;
     OutputPort m_out;

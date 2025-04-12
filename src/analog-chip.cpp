@@ -229,11 +229,8 @@ void AnalogChip::configure_shared_routing(IOCell &io1, IOCell &io2,
                     throw DesignError("unsupported");
             }
 
-            io1.use_primary_channel();
-            io2.use_secondary_channel();
         } else {
-            io1.use_primary_channel();
-            io2.use_primary_channel();
+
         }
     }
 }

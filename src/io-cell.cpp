@@ -3,27 +3,24 @@
 #include "analog-block.hpp"
 #include "analog-chip.hpp"
 
-IOCell::IOCell()
-        : AnalogModule{"IOCell"}, m_id{}, 
-          m_mode{IOMode::Disabled}, m_channel{false},
-          m_in{*this}, m_out{*this}, m_conns{} {}
-
-void IOCell::initialize(int id, AnalogBlock &cab) {
-    set_cab(cab);
-    m_id = id;
-    m_mode = IOMode::Disabled;
-
-    for (Connection &conn : m_conns) {
-        conn.kind = Connection::None;
-        conn.cab = nullptr;
-    }
+void Connection::reset() {
+    this->block = Connection::None;
+    this->mode = Connection::Near;
+    this->channel = Connection::Primary;
+    this->cab = nullptr;
 }
 
-uint8_t IOCell::connection_nibble(AnalogModule &to) {
-    int to_id = to.cab().id();
+void Connection::initialize(AnalogBlock &cab, Block block) {
+    this->cab = &cab;
+    this->block = block;
+}
+
+uint8_t Connection::nibble(IOCell &cell) const {
+    int from_id = cell.id();
+    int to_id = cab->id();
     uint8_t n = 0x0;
 
-    switch (m_id) {
+    switch (from_id) {
         case 1:
         case 2:
             switch (to_id) {
@@ -49,28 +46,52 @@ uint8_t IOCell::connection_nibble(AnalogModule &to) {
         throw DesignError("Unreached todo");
     }
 
-    return n - m_channel;
+    if (channel == Connection::Primary) {
+        n = n;
+    } else {
+        n = n - 1;
+    }
+
+    return n;
+}
+
+IOCell::IOCell()
+        : AnalogModule{"IOCell"}, m_id{}, 
+          m_mode{IOMode::Disabled},
+          m_in{*this}, m_out{*this}, m_conns{} {}
+
+void IOCell::initialize(int id, AnalogBlock &cab) {
+    set_cab(cab);
+    m_id = id;
+    m_mode = IOMode::Disabled;
+
+    for (Connection &conn : m_conns) {
+        conn.reset();
+    }
+}
+
+uint8_t IOCell::connection_nibble(AnalogModule &to) {
+    return connection(to.cab()).nibble(*this);
 }
 
 void IOCell::configure() {
     for (Connection &conn : m_conns) {
-        conn.kind = Connection::None;
-        conn.cab = nullptr;
+        conn.reset();
     }
 
     if (m_mode == IOMode::InputBypass) {
         for (InputPort *port : out().connections()) {
             AnalogBlock &cab = port->module().cab();
-            if (cab.id() > 0) {
-                m_conns[cab.id() - 1].cab = &cab;
+            if (cab) {
+                connection(cab).initialize(cab, Connection::ToInput);
             }
         }
     } else if (m_mode == IOMode::OutputBypass) {
         OutputPort *port = in().connection();
         if (port) {
             AnalogBlock &cab = port->module().cab();
-            if (cab.id() > 0) {
-                m_conns[cab.id() - 1].cab = &cab;
+            if (cab) {
+                connection(cab).initialize(cab, Connection::FromOutput1);
             }
         }
     }

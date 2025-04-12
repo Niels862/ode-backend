@@ -38,6 +38,8 @@ public:
     Capacitor &cap(int id) { return m_caps.at(id - 1); }
     OpAmp &opamp(int id) { return m_opamps.at(id - 1); }
 
+    operator bool() const { return m_id > 0; }
+
 private:
     int m_id;
 
