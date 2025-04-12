@@ -179,54 +179,48 @@ void promote_near_connections(Connection *conns[2][2]) {
     }
 }
 
-Connection::Block get_local_connection_type(Connection *lconns[2]) {
-    Connection::Block block = Connection::None;
+Connection *get_local_representative(Connection *lconns[2]) {
+    Connection *repr = nullptr;
 
     for (std::size_t i = 0; i < 2; i++) {
         if (!lconns[i]) {
             continue;
         }
 
-        if (block == Connection::None) {
-            block = lconns[i]->block;
-        }
-
-        /* This is unexpected, because if both exist, then they must both be Far
-           according to promote_near_connections. */
-        if (block != lconns[i]->block) {
+        if (!repr) {
+            repr = lconns[i];
+        } else if (!repr->equivalent(*lconns[i])) {
+            /* This is unexpected, because if both exist, then they must 
+               both be Far according to promote_near_connections. */
             abort(); 
         }
     }
 
-    return block;
+    return repr;
 }
 
 void resolve_local_connection_conflicts(Connection *lconns1[2], 
                                         Connection *lconns2[2]) {
-    auto block1 = get_local_connection_type(lconns1);
-    auto block2 = get_local_connection_type(lconns2);
+    auto repr1 = get_local_representative(lconns1);
+    auto repr2 = get_local_representative(lconns2);
 
-    if (block1 == block2) {
-        if (lconns2[0]) {
-            lconns2[0]->channel = Connection::Secondary;
-        }
-        if (lconns2[1]) {
-            lconns2[1]->channel = Connection::Secondary;
-        }
+    if (!repr1 || !repr2 || !repr1->equivalent(*repr2)) {
+        return;
+    }
+
+    if (lconns2[0]) {
+        lconns2[0]->channel = Connection::Secondary;
+    }
+    if (lconns2[1]) {
+        lconns2[1]->channel = Connection::Secondary;
     }
 }
 
 void initialize_routing_data(Connection *conns[2], uint8_t &entry) {
-    Connection *conn = nullptr;
+    Connection *repr = get_local_representative(conns);
 
-    for (std::size_t i = 0; i < 2; i++) {
-        if (conns[i]) {
-            conn = conns[i];
-        }
-    }
-
-    if (conn) {
-        // ...
+    if (repr) {
+        entry = repr->io_nibble();
     } else {
         entry = 0x0;
     }
@@ -267,10 +261,10 @@ void AnalogChip::configure_shared_routing(IOCell &io1, IOCell &io2,
     Connection *conns1[2][2] = {};
     Connection *conns2[2][2] = {};
 
-    setup_connection_matrix(io1, conns1);
+    setup_connection_matrix(io1, conns1); 
     setup_connection_matrix(io2, conns2);
 
-    promote_near_connections(conns1);
+    promote_near_connections(conns1); // FIXME: works for io1&op2, but things need to be reversed for io3&io4
     promote_near_connections(conns2);
 
     resolve_local_connection_conflicts(conns1[0], conns2[0]);

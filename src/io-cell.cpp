@@ -15,7 +15,32 @@ void Connection::initialize(AnalogBlock &cab, Block block) {
     this->block = block;
 }
 
-uint8_t Connection::nibble(IOCell &cell) const {
+uint8_t Connection::io_nibble() const {
+    if (mode == Connection::Far) {
+        if (channel == Connection::Primary) {
+            return 0x5;
+        }
+        return 0x6;
+    }
+
+    if (block == Connection::ToInput) {
+        if (channel == Connection::Primary) {
+            return 0x1;
+        }
+        return 0x2;
+    }
+
+    if (block == Connection::FromOutput1) {
+        if (channel == Connection::Primary) {
+            return 0xC;
+        }
+        abort(); // ?? todo
+    }
+
+    abort();
+}
+
+uint8_t Connection::cab_nibble(IOCell &cell) const {
     int from_id = cell.id();
     int to_id = cab->id();
     uint8_t n = 0x0;
@@ -55,6 +80,22 @@ uint8_t Connection::nibble(IOCell &cell) const {
     return n;
 }
 
+bool Connection::equivalent(Connection const &other) const {
+    if (this->channel != other.channel) {
+        return false;
+    }
+    
+    if (this->mode == Connection::Far && other.mode == Connection::Far) {
+        return true;
+    }
+
+    if (this->block == other.block) {
+        return true;
+    }
+
+    return false;
+}
+
 IOCell::IOCell()
         : AnalogModule{"IOCell"}, m_id{}, 
           m_mode{IOMode::Disabled},
@@ -71,7 +112,7 @@ void IOCell::initialize(int id, AnalogBlock &cab) {
 }
 
 uint8_t IOCell::connection_nibble(AnalogModule &to) {
-    return connection(to.cab()).nibble(*this);
+    return connection(to.cab()).cab_nibble(*this);
 }
 
 void IOCell::configure() {

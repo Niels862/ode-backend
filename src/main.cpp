@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     chip.io_cell(3).set_mode(IOMode::OutputBypass);
 
     auto &invsum = chip.cab(1).add(new InvSum(0.48, 3.14159));
-    auto &invgain = chip.cab(3).add(new InvGain(0.5));
+    auto &invgain = chip.cab(2).add(new InvGain(0.5));
 
     chip.io_cell(1).out().connect(invsum.in_x());
     chip.io_cell(2).out().connect(invsum.in_y());
