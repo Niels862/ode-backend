@@ -168,13 +168,18 @@ void setup_connection_matrix(IOCell &cell, Connection *conns[2][2]) {
     }
 }
 
-void promote_near_connections(Connection *conns[2][2]) {
-    if (conns[0][1] || conns[1][1]) {
-        if (conns[0][0]) {
-            conns[0][0]->mode = Connection::Far;
-        }
-        if (conns[1][0]) {
-            conns[1][0]->mode = Connection::Far;
+void promote_near_connections(Connection *conns[2][2], bool c1c2_near) {
+    int far  = c1c2_near ? 1 : 0;
+    
+    if (!conns[0][far] && !conns[1][far]) {
+        return;
+    }
+
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            if (conns[i][j]) {
+                conns[i][j]->mode = Connection::Far;
+            }
         }
     }
 }
@@ -264,8 +269,17 @@ void AnalogChip::configure_shared_routing(IOCell &io1, IOCell &io2,
     setup_connection_matrix(io1, conns1); 
     setup_connection_matrix(io2, conns2);
 
-    promote_near_connections(conns1); // FIXME: works for io1&op2, but things need to be reversed for io3&io4
-    promote_near_connections(conns2);
+    bool c1c2_near;
+    if (io1.id() == 1 && io2.id() == 2) {
+        c1c2_near = true;
+    } else if (io1.id() == 3 && io2.id() == 4) {
+        c1c2_near = false;
+    } else {
+        abort();
+    }
+
+    promote_near_connections(conns1, c1c2_near);
+    promote_near_connections(conns2, c1c2_near);
 
     resolve_local_connection_conflicts(conns1[0], conns2[0]);
     resolve_local_connection_conflicts(conns1[1], conns2[1]);

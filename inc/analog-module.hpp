@@ -31,6 +31,9 @@ public:
     OutputPort &out(std::size_t i);
     OutputPort &out();
 
+    std::vector<InputPort> &ins() { return m_ins; }
+    std::vector<OutputPort> &outs() { return m_outs; }
+
     void set_cab(AnalogBlock &cab);
     AnalogBlock &cab() { return *m_cab; }
 

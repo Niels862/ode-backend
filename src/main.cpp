@@ -81,8 +81,8 @@ int main(int argc, char *argv[]) {
     chip.io_cell(2).set_mode(IOMode::InputBypass);
     chip.io_cell(3).set_mode(IOMode::OutputBypass);
 
-    auto &invsum = chip.cab(1).add(new InvSum(0.48, 3.14159));
-    auto &invgain = chip.cab(2).add(new InvGain(0.5));
+    auto &invsum = chip.cab(3).add(new InvSum(0.48, 3.14159));
+    auto &invgain = chip.cab(4).add(new InvGain(0.5));
 
     chip.io_cell(1).out().connect(invsum.in(1));
     chip.io_cell(2).out().connect(invsum.in(2));

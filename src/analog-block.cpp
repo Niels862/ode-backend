@@ -1,5 +1,7 @@
 #include "analog-block.hpp"
 #include "settings.hpp"
+#include "io-cell.hpp"
+#include <vector>
 
 AnalogBlock::AnalogBlock()
         : m_id{}, m_caps{}, m_opamps{} {}
@@ -33,5 +35,37 @@ void AnalogBlock::compile(ShadowSRam &ssram) const {
         opamp.compile(*this, ssram);
     }
 
+    bool use_far_pri = false, use_far_sec = false;
+    for (auto &module : m_modules) {
+        for (auto &in : module->ins()) {
+            AnalogModule &module = in.connection()->module();
+
+            if (auto *cell = dynamic_cast<IOCell *>(&module)) {
+                Connection &conn = cell->connection(*this);
+
+                if (conn.mode == Connection::Far) {
+                    if (conn.channel == Connection::Primary) {
+                        use_far_pri = true;
+                    }
+                    if (conn.channel == Connection::Secondary) {
+                        use_far_sec = true;
+                    }
+                }
+            }
+        }
+    }
+
+    uint8_t b05 = 0x00, b04 = 0x00;
+    if (use_far_pri && use_far_sec) {
+        b05 = 0x01; // both present
+        b04 = 0x02;
+    } else if (use_far_pri) {
+        b05 = 0x01;
+    } else if (use_far_sec) {
+        b05 = 0x02;
+    }
+
+    ssram.set(bank_b(), 0x05, b05);
+    ssram.set(bank_b(), 0x04, b04);
     ssram.set(bank_b(), 0x0, m_modules.empty() ? 0x00 : 0x0C);
 }
