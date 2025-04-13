@@ -8,10 +8,9 @@
 class AnalogModule;
 class OutputPort;
 
-uint8_t nibble_cab_to_cab();
-
 class InputPort {
 public:
+    InputPort();
     InputPort(AnalogModule &module);
 
     /* Returns the 4-bit nibble representing the connection to this 
@@ -33,6 +32,7 @@ private:
 
 class OutputPort {
 public:
+    OutputPort();
     OutputPort(AnalogModule &module);
 
     void connect(InputPort &port);

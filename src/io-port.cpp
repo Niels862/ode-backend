@@ -3,6 +3,9 @@
 #include "analog-block.hpp"
 #include "error.hpp"
 
+InputPort::InputPort()
+        : m_module{} {}
+
 InputPort::InputPort(AnalogModule &module)
         : m_module{&module} {}
 
@@ -23,6 +26,9 @@ void InputPort::connect(OutputPort &port) {
 
     m_connection = &port;
 }
+
+OutputPort::OutputPort()
+        : m_module{} {}
 
 OutputPort::OutputPort(AnalogModule &module)
         : m_module{&module} {}

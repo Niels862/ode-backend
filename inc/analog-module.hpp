@@ -5,12 +5,13 @@
 #include "io-port.hpp"
 #include "defs.hpp"
 #include <bitset>
+#include <vector>
 
 class AnalogBlock;
 
 class AnalogModule {
 public:
-    AnalogModule(std::string const &name);
+    AnalogModule(std::string const &name, std::size_t n_in, std::size_t n_out);
 
     /* Delete copy/move semantics as this breaks links with Ports. */
     AnalogModule(AnalogModule const &) = delete;
@@ -25,6 +26,11 @@ public:
 
     virtual void configure() = 0;
 
+    InputPort &in(std::size_t i);
+    InputPort &in();
+    OutputPort &out(std::size_t i);
+    OutputPort &out();
+
     void set_cab(AnalogBlock &cab);
     AnalogBlock &cab() { return *m_cab; }
 
@@ -34,6 +40,11 @@ protected:
     AnalogBlock *m_cab;
 
     std::string m_name;
+    std::size_t m_in_n;
+    std::size_t m_out_n;
+
+    std::vector<InputPort> m_ins;
+    std::vector<OutputPort> m_outs;
 };
 
 class InvGain : public AnalogModule {
@@ -42,14 +53,8 @@ public:
 
     void configure() override;
 
-    InputPort &in() { return m_in; }
-    OutputPort &out() { return m_out; }
-
 private:
     double m_gain;
-
-    InputPort m_in;
-    OutputPort m_out;
 };
 
 class InvSum : public AnalogModule {
@@ -58,17 +63,9 @@ public:
 
     void configure() override;
 
-    InputPort &in_x() { return m_in_x; }
-    InputPort &in_y() { return m_in_y; }
-    OutputPort &out() { return m_out; }
-
 private:
     double m_lgain;
     double m_ugain;
-
-    InputPort m_in_x;
-    InputPort m_in_y;
-    OutputPort m_out;
 };
 
 #endif

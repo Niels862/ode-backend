@@ -96,8 +96,8 @@ bool Connection::equivalent(Connection const &other) const {
     return false;
 }
 
-IOCell::IOCell()
-        : AnalogModule{"IOCell"}, m_id{}, 
+IOCell::IOCell() /* IOCell manages its own in() and out() port */
+        : AnalogModule{"IOCell", 0, 0}, m_id{}, 
           m_mode{IOMode::Disabled},
           m_in{*this}, m_out{*this}, m_conns{} {}
 

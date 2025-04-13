@@ -2,9 +2,19 @@
 #include "util.hpp"
 #include "analog-block.hpp"
 #include "error.hpp"
+#include <sstream>
 
-AnalogModule::AnalogModule(std::string const &name)
-        : m_cab{}, m_name{name} {}
+AnalogModule::AnalogModule(std::string const &name, std::size_t in_n, 
+                           std::size_t out_n)
+        : m_cab{}, m_name{name}, m_in_n{in_n}, m_out_n{out_n},
+          m_ins{}, m_outs{} {
+    for (std::size_t i = 0; i < m_in_n; i++) {
+        m_ins.emplace_back(*this);
+    }
+    for (std::size_t i = 0; i < m_out_n; i++) {
+        m_outs.emplace_back(*this); // todo should interact with CAB to assign unique output port
+    }
+}
 
 uint8_t AnalogModule::connection_nibble(AnalogModule &to) {
     int id_from = cab().id();
@@ -51,13 +61,52 @@ uint8_t AnalogModule::connection_nibble(AnalogModule &to) {
     throw DesignError("Unreached todo");
 }
 
+InputPort &AnalogModule::in(std::size_t i) {
+    if (i < 1 || i > m_in_n) {
+        std::stringstream ss;
+        ss << "`" << m_name << "` does not implement in(" << i << ")";
+        throw DesignError(ss.str());
+    }
+
+    return m_ins[i - 1];
+}
+
+InputPort &AnalogModule::in() {
+    if (m_in_n != 1) {
+        std::stringstream ss;
+        ss << "`" << m_name << "` does not support in()";
+        throw DesignError(ss.str());
+    }
+
+    return in(1);
+}
+
+OutputPort &AnalogModule::out(std::size_t i) {
+    if (i < 1 || i > m_out_n) {
+        std::stringstream ss;
+        ss << "`" << m_name << "` does not implement out(" << i << ")";
+        throw DesignError(ss.str());
+    }
+
+    return m_outs[i - 1];
+}
+
+OutputPort &AnalogModule::out() {
+    if (m_out_n != 1) {
+        std::stringstream ss;
+        ss << "`" << m_name << "` does not support out()";
+        throw DesignError(ss.str());
+    }
+
+    return out(1);
+}
+
 void AnalogModule::set_cab(AnalogBlock &cab) {
     m_cab = &cab; 
 }
 
 InvGain::InvGain(double gain)
-        : AnalogModule{"GainInv"}, m_gain{gain}, 
-          m_in{*this}, m_out{*this} {}
+        : AnalogModule{"GainInv", 1, 1}, m_gain{gain} {}
 
 void InvGain::configure() {
     uint8_t num, den;
@@ -66,10 +115,10 @@ void InvGain::configure() {
     OpAmp &opamp = cab().opamp(1).claim(true);
 
     cab().cap(1).claim(num)
-                .set_in(Capacitor::from_input(m_in))
+                .set_in(Capacitor::from_input(in()))
                 .set_out(Capacitor::to_opamp(opamp));
     cab().cap(2).claim(num)
-                .set_in(Capacitor::from_input(m_in, 1))
+                .set_in(Capacitor::from_input(in(), 1))
                 .set_out(Capacitor::to_opamp(opamp, 1));
     cab().cap(3).claim(den)
                 .set_in(Capacitor::from_opamp(opamp))
@@ -80,8 +129,7 @@ void InvGain::configure() {
 }
 
 InvSum::InvSum(double lgain, double ugain)
-        : AnalogModule{"SumInv"}, m_lgain{lgain}, m_ugain{ugain}, 
-          m_in_x{*this}, m_in_y{*this}, m_out{*this} {}
+        : AnalogModule{"SumInv", 2, 1}, m_lgain{lgain}, m_ugain{ugain} {}
 
 void InvSum::configure() {
     std::vector<double> gains = { m_lgain, m_ugain };
@@ -92,16 +140,16 @@ void InvSum::configure() {
     OpAmp &opamp = cab().opamp(1).claim(true);
 
     cab().cap(1).claim(nums[0])
-                .set_in(Capacitor::from_input(m_in_x))
+                .set_in(Capacitor::from_input(in(1)))
                 .set_out(Capacitor::to_opamp(opamp));
     cab().cap(2).claim(nums[0])
-                .set_in(Capacitor::from_input(m_in_x, 1))
+                .set_in(Capacitor::from_input(in(1), 1))
                 .set_out(Capacitor::to_opamp(opamp, 1));
     cab().cap(3).claim(nums[1])
-                .set_in(Capacitor::from_input(m_in_y))
+                .set_in(Capacitor::from_input(in(2)))
                 .set_out(Capacitor::to_opamp(opamp));
     cab().cap(4).claim(nums[1])
-                .set_in(Capacitor::from_input(m_in_y, 1))
+                .set_in(Capacitor::from_input(in(2), 1))
                 .set_out(Capacitor::to_opamp(opamp, 1));
     cab().cap(5).claim(den)
                 .set_in(Capacitor::from_opamp(opamp))
