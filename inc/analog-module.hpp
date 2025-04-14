@@ -71,4 +71,14 @@ private:
     double m_ugain;
 };
 
+class Integrator : public AnalogModule {
+public:
+    Integrator(double integ_const);
+
+    void configure() override;
+
+private:
+    double m_integ_const;
+};
+
 #endif

@@ -78,29 +78,11 @@ int main(int argc, char *argv[]) {
     AnalogChip chip;
 
     chip.io_cell(1).set_mode(IOMode::InputBypass);
-    chip.io_cell(2).set_mode(IOMode::InputBypass);
-    chip.io_cell(3).set_mode(IOMode::OutputBypass);
+    chip.io_cell(2).set_mode(IOMode::OutputBypass);
 
-    auto &invsum = chip.cab(3).add(new InvSum(0.48, 3.14159));
-    auto &invgain = chip.cab(4).add(new InvGain(0.5));
-
-    chip.io_cell(1).out().connect(invsum.in(1));
-    chip.io_cell(2).out().connect(invsum.in(2));
-
-    invsum.out().connect(invgain.in());
-    invgain.out().connect(chip.io_cell(3).in());
-
-    /*
-    chip.io_cell(1).set_mode(IOMode::InputBypass);
-    chip.io_cell(3).set_mode(IOMode::OutputBypass);
-
-    auto &invgain1 = chip.cab(1).add(new InvGain(1));
-    auto &invgain2 = chip.cab(3).add(new InvGain(1));
-
-    chip.io_cell(1).out().connect(invgain1.in());
-    invgain1.out().connect(invgain2.in());
-    invgain2.out().connect(chip.io_cell(3).in());
-    */
+    auto &integ = chip.cab(1).add(new Integrator(3.14));
+    chip.io_cell(1).out().connect(integ.in());
+    integ.out().connect(chip.io_cell(2).in());
 
     write(chip);
     

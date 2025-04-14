@@ -23,18 +23,24 @@ SwitchConfiguration Capacitor::from_input(InputPort &port,
 
 SwitchConfiguration Capacitor::from_opamp(OpAmp const &, 
                                           int sg_phase) {
-    if (sg_phase) {
-        return { 0x01, 0x13 };
+    switch (sg_phase) {
+        case 0: return { 0x00, 0x30 };
+        case 1: return { 0x01, 0x13 };
+        case 2: return { 0x01, 0x31 };
     }
-    return { 0x00, 0x30 };
+    
+    throw DesignError("Invalid phase");
 }
 
 SwitchConfiguration Capacitor::to_opamp(OpAmp const &, 
                                         int sg_phase) {
-    if (sg_phase) {
-        return { 0x01, 0x81 };
+    switch (sg_phase) {
+        case 0: return { 0x00, 0x10 };
+        case 1: return { 0x01, 0x81 };
+        case 2: return { 0x01, 0x18 };
     }
-    return { 0x00, 0x10 };
+    
+    throw DesignError("Invalid phase");
 }
 
 Capacitor &Capacitor::claim(int value) {                     

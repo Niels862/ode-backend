@@ -158,3 +158,20 @@ void InvSum::configure() {
                 .set_in(Capacitor::from_opamp(opamp, 1))
                 .set_out(Capacitor::to_opamp(opamp, 1));
 }
+
+Integrator::Integrator(double integ_const)
+        : AnalogModule{"Integrator", 1, 1}, m_integ_const{integ_const} {}
+
+void Integrator::configure() {
+    uint8_t num, den;
+    approximate_ratio(m_integ_const / 4, num, den);
+
+    OpAmp &opamp = cab().opamp(1).claim(true);
+
+    cab().cap(1).claim(num)
+                .set_in(Capacitor::from_input(in(), 1))
+                .set_out(Capacitor::to_opamp(opamp, 2));
+    cab().cap(2).claim(den)
+                .set_in(Capacitor::from_opamp(opamp))
+                .set_out(Capacitor::to_opamp(opamp));
+}
