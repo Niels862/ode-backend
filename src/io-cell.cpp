@@ -147,6 +147,14 @@ void IOCell::set_mode(IOMode mode) {
     m_mode = mode;
 }
 
+InputPort &IOCell::in(std::size_t i) {
+    if (i != 1) {
+        throw DesignError("IO-Cell can only access in(1)");
+    }
+
+    return in();
+}
+
 InputPort &IOCell::in() {
     if (m_mode != IOMode::OutputBypass) {
         throw DesignError(
@@ -154,6 +162,14 @@ InputPort &IOCell::in() {
     }
 
     return m_in;
+}
+
+OutputPort &IOCell::out(std::size_t i) {
+    if (i != 1) {
+        throw DesignError("IO-Cell can only access out(1)");
+    }
+
+    return out();
 }
 
 OutputPort &IOCell::out() {

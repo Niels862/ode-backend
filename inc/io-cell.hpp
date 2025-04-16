@@ -55,6 +55,7 @@ public:
 
     virtual uint8_t connection_nibble(AnalogModule &to); 
 
+    void parse(std::ifstream &) override {}
     void configure() override;
 
     IOMode mode() const { return m_mode; }
@@ -62,8 +63,10 @@ public:
 
     int id() const { return m_id; }
 
-    InputPort &in();
-    OutputPort &out();
+    InputPort &in(std::size_t i) override;
+    InputPort &in() override;
+    OutputPort &out(std::size_t i) override;
+    OutputPort &out() override;
 
     std::array<Connection, NBlocksPerChip> &connections() { 
         return m_conns; 

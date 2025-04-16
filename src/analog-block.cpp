@@ -38,9 +38,12 @@ void AnalogBlock::compile(ShadowSRam &ssram) const {
     bool use_far_pri = false, use_far_sec = false;
     for (auto &module : m_modules) {
         for (auto &in : module->ins()) {
-            AnalogModule &module = in.connection()->module();
+            OutputPort *port = in.connection();
+            if (!port) {
+                continue;
+            }
 
-            if (auto *cell = dynamic_cast<IOCell *>(&module)) {
+            if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
                 Connection &conn = cell->connection(*this);
 
                 if (conn.mode == Connection::Far) {

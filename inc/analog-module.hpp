@@ -6,6 +6,7 @@
 #include "defs.hpp"
 #include <bitset>
 #include <vector>
+#include <fstream>
 
 class AnalogBlock;
 
@@ -22,14 +23,17 @@ public:
 
     virtual ~AnalogModule() = default;
 
+    static AnalogModule *Build(std::string const &name);
+
     virtual uint8_t connection_nibble(AnalogModule &to); 
 
+    virtual void parse(std::ifstream &file) = 0;
     virtual void configure() = 0;
 
-    InputPort &in(std::size_t i);
-    InputPort &in();
-    OutputPort &out(std::size_t i);
-    OutputPort &out();
+    virtual InputPort &in(std::size_t i);
+    virtual InputPort &in();
+    virtual OutputPort &out(std::size_t i);
+    virtual OutputPort &out();
 
     std::vector<InputPort> &ins() { return m_ins; }
     std::vector<OutputPort> &outs() { return m_outs; }
@@ -50,20 +54,24 @@ protected:
     std::vector<OutputPort> m_outs;
 };
 
-class InvGain : public AnalogModule {
+class GainInv : public AnalogModule {
 public:
-    InvGain(double gain);
+    GainInv();
+    GainInv(double gain);
 
+    void parse(std::ifstream &file) override;
     void configure() override;
 
 private:
     double m_gain;
 };
 
-class InvSum : public AnalogModule {
+class SumInv : public AnalogModule {
 public:
-    InvSum(double lgain, double ugain);
+    SumInv();
+    SumInv(double lgain, double ugain);
 
+    void parse(std::ifstream &file) override;
     void configure() override;
 
 private:
@@ -73,8 +81,10 @@ private:
 
 class Integrator : public AnalogModule {
 public:
+    Integrator();
     Integrator(double integ_const);
 
+    void parse(std::ifstream &file) override;
     void configure() override;
 
 private:

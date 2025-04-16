@@ -16,6 +16,13 @@ AnalogModule::AnalogModule(std::string const &name, std::size_t in_n,
     }
 }
 
+AnalogModule *AnalogModule::Build(std::string const &name) {
+    if (name == "GainInv")      return new GainInv();
+    if (name == "SumInv")       return new SumInv();
+    if (name == "Integrator")   return new Integrator();
+    return nullptr;
+}
+
 uint8_t AnalogModule::connection_nibble(AnalogModule &to) {
     int id_from = cab().id();
     int id_to = to.cab().id();
@@ -105,10 +112,17 @@ void AnalogModule::set_cab(AnalogBlock &cab) {
     m_cab = &cab; 
 }
 
-InvGain::InvGain(double gain)
+GainInv::GainInv()
+        : AnalogModule{"GainInv", 1, 1}, m_gain{} {}
+
+GainInv::GainInv(double gain)
         : AnalogModule{"GainInv", 1, 1}, m_gain{gain} {}
 
-void InvGain::configure() {
+void GainInv::parse(std::ifstream &file) {
+    file >> m_gain;
+}
+
+void GainInv::configure() {
     uint8_t num, den;
     approximate_ratio(m_gain, num, den);
 
@@ -128,10 +142,18 @@ void InvGain::configure() {
                 .set_out(Capacitor::to_opamp(opamp, 1));
 }
 
-InvSum::InvSum(double lgain, double ugain)
+SumInv::SumInv()
+        : AnalogModule{"SumInv", 2, 1}, m_lgain{}, m_ugain{} {}
+
+SumInv::SumInv(double lgain, double ugain)
         : AnalogModule{"SumInv", 2, 1}, m_lgain{lgain}, m_ugain{ugain} {}
 
-void InvSum::configure() {
+void SumInv::parse(std::ifstream &file) {
+    file >> m_lgain;
+    file >> m_ugain;
+}
+
+void SumInv::configure() {
     std::vector<double> gains = { m_lgain, m_ugain };
     std::vector<uint8_t> nums;
     uint8_t den;
@@ -159,8 +181,15 @@ void InvSum::configure() {
                 .set_out(Capacitor::to_opamp(opamp, 1));
 }
 
+Integrator::Integrator()
+        : AnalogModule("Integrator", 1, 1), m_integ_const{} {}
+
 Integrator::Integrator(double integ_const)
         : AnalogModule{"Integrator", 1, 1}, m_integ_const{integ_const} {}
+
+void Integrator::parse(std::ifstream &file) {
+    file >> m_integ_const;
+}
 
 void Integrator::configure() {
     uint8_t num, den;

@@ -3,6 +3,7 @@
 #include "shadow-sram.hpp"
 #include "io-port.hpp"
 #include "settings.hpp"
+#include "parser.hpp"
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -76,14 +77,8 @@ int main(int argc, char *argv[]) {
     argp_parse(&argp, argc, argv, 0, 0, nullptr);
 
     AnalogChip chip;
-
-    chip.io_cell(1).set_mode(IOMode::InputBypass);
-    chip.io_cell(2).set_mode(IOMode::OutputBypass);
-
-    auto &integ = chip.cab(1).add(new Integrator(3.14));
-    chip.io_cell(1).out().connect(integ.in());
-    integ.out().connect(chip.io_cell(2).in());
-
+    Parser(chip).parse(args.infile);
+    
     write(chip);
     
     return 0;
