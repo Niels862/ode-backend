@@ -62,6 +62,10 @@ void write(AnalogChip &chip) {
     chip.to_header_bytestream(data);
     ssram.to_data_bytestream(data);
 
+    if (args.verbose) {
+        std::cerr << "Bytestream length: " << data.size() << std::endl;
+    }
+
     f << std::hex << std::setfill('0') << std::uppercase;
 
     f << "const unsigned char an_FPAA1_PrimaryConfigInfo[] = {\n";

@@ -16,6 +16,7 @@ void Parser::parse(std::string const &infile) {
 
     parse_io_setup();
     parse_modules();
+    parse_routing();
 }
 
 void Parser::parse_io_setup() {
@@ -57,12 +58,17 @@ void Parser::parse_modules() {
         std::size_t cab;
         m_file >> cab;
 
+        std::string key;
+        m_file >> key;
+
         AnalogModule *module = AnalogModule::Build(name);
         if (!module) {
             throw DesignError("Unrecognized module name: " + name);
         }
         module->parse(m_file);
         m_chip.cab(cab).add(module);
+
+        m_modules[key] = module;
     }
 }
 
@@ -74,6 +80,56 @@ void Parser::parse_routing() {
     }
 
     while (true) {
+        std::string from;
+        m_file >> from;
 
+        if (from == "end-routing") {
+            return;
+        }
+
+        std::string arrow;
+        m_file >> arrow;
+        if (arrow != "->") {
+            throw DesignError("Expected arrow");
+        }
+
+        std::string to;
+        m_file >> to;
+
+        OutputPort *outp = parse_output_port(from);
+        InputPort *inp = parse_input_port(to);
+        outp->connect(*inp);
     }
+}
+
+void Parser::split_port(std::string const &s, AnalogModule *&module, int &i) {
+    std::size_t pos = s.find(':');
+    std::string name;
+    if (pos != std::string::npos) {
+        name = s.substr(0, pos);
+        i = std::stoi(s.substr(pos + 1));
+    } else {
+        name = s;
+        i = 1;
+    }
+
+    auto kv = m_modules.find(name);
+    if (kv == m_modules.end()) {
+        throw DesignError(name + " is not defined");
+    }
+    module = kv->second;
+}
+
+InputPort *Parser::parse_input_port(std::string const &s) {
+    AnalogModule *module;
+    int i;
+    split_port(s, module, i);
+    return &module->in(i);
+}
+
+OutputPort *Parser::parse_output_port(std::string const &s) {
+    AnalogModule *module;
+    int i;
+    split_port(s, module, i);
+    return &module->out(i);
 }

@@ -126,20 +126,20 @@ void GainInv::configure() {
     uint8_t num, den;
     approximate_ratio(m_gain, num, den);
 
-    OpAmp &opamp = cab().opamp(1).claim(true);
+    OpAmp &opamp = cab().claim_opamp(true);
 
-    cab().cap(1).claim(num)
-                .set_in(Capacitor::from_input(in()))
-                .set_out(Capacitor::to_opamp(opamp));
-    cab().cap(2).claim(num)
-                .set_in(Capacitor::from_input(in(), 1))
-                .set_out(Capacitor::to_opamp(opamp, 1));
-    cab().cap(3).claim(den)
-                .set_in(Capacitor::from_opamp(opamp))
-                .set_out(Capacitor::to_opamp(opamp));
-    cab().cap(4).claim(den)
-                .set_in(Capacitor::from_opamp(opamp, 1))
-                .set_out(Capacitor::to_opamp(opamp, 1));
+    cab().claim_cap(num)
+         .set_in(Capacitor::from_input(in()))
+         .set_out(Capacitor::to_opamp(opamp));
+    cab().claim_cap(num)
+         .set_in(Capacitor::from_input(in(), 1))
+         .set_out(Capacitor::to_opamp(opamp, 1));
+    cab().claim_cap(den)
+         .set_in(Capacitor::from_opamp(opamp))
+         .set_out(Capacitor::to_opamp(opamp));
+    cab().claim_cap(den)
+         .set_in(Capacitor::from_opamp(opamp, 1))
+         .set_out(Capacitor::to_opamp(opamp, 1));
 }
 
 SumInv::SumInv()
@@ -159,26 +159,26 @@ void SumInv::configure() {
     uint8_t den;
     approximate_ratios(gains, nums, den);
 
-    OpAmp &opamp = cab().opamp(1).claim(true);
+    OpAmp &opamp = cab().claim_opamp(true);
 
-    cab().cap(1).claim(nums[0])
-                .set_in(Capacitor::from_input(in(1)))
-                .set_out(Capacitor::to_opamp(opamp));
-    cab().cap(2).claim(nums[0])
-                .set_in(Capacitor::from_input(in(1), 1))
-                .set_out(Capacitor::to_opamp(opamp, 1));
-    cab().cap(3).claim(nums[1])
-                .set_in(Capacitor::from_input(in(2)))
-                .set_out(Capacitor::to_opamp(opamp));
-    cab().cap(4).claim(nums[1])
-                .set_in(Capacitor::from_input(in(2), 1))
-                .set_out(Capacitor::to_opamp(opamp, 1));
-    cab().cap(5).claim(den)
-                .set_in(Capacitor::from_opamp(opamp))
-                .set_out(Capacitor::to_opamp(opamp));
-    cab().cap(6).claim(den)
-                .set_in(Capacitor::from_opamp(opamp, 1))
-                .set_out(Capacitor::to_opamp(opamp, 1));
+    cab().claim_cap(nums[0])
+         .set_in(Capacitor::from_input(in(1)))
+         .set_out(Capacitor::to_opamp(opamp));
+    cab().claim_cap(nums[0])
+         .set_in(Capacitor::from_input(in(1), 1))
+         .set_out(Capacitor::to_opamp(opamp, 1));
+    cab().claim_cap(nums[1])
+         .set_in(Capacitor::from_input(in(2)))
+         .set_out(Capacitor::to_opamp(opamp));
+    cab().claim_cap(nums[1])
+         .set_in(Capacitor::from_input(in(2), 1))
+         .set_out(Capacitor::to_opamp(opamp, 1));
+    cab().claim_cap(den)
+         .set_in(Capacitor::from_opamp(opamp))
+         .set_out(Capacitor::to_opamp(opamp));
+    cab().claim_cap(den)
+         .set_in(Capacitor::from_opamp(opamp, 1))
+         .set_out(Capacitor::to_opamp(opamp, 1));
 }
 
 Integrator::Integrator()
@@ -195,12 +195,12 @@ void Integrator::configure() {
     uint8_t num, den;
     approximate_ratio(m_integ_const / 4, num, den);
 
-    OpAmp &opamp = cab().opamp(1).claim(true);
+    OpAmp &opamp = cab().claim_opamp(true);
 
-    cab().cap(1).claim(num)
-                .set_in(Capacitor::from_input(in(), 1))
-                .set_out(Capacitor::to_opamp(opamp, 2));
-    cab().cap(2).claim(den)
-                .set_in(Capacitor::from_opamp(opamp))
-                .set_out(Capacitor::to_opamp(opamp));
+    cab().claim_cap(num)
+         .set_in(Capacitor::from_input(in(), 1))
+         .set_out(Capacitor::to_opamp(opamp, 2));
+    cab().claim_cap(den)
+         .set_in(Capacitor::from_opamp(opamp))
+         .set_out(Capacitor::to_opamp(opamp));
 }

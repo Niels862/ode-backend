@@ -26,6 +26,9 @@ public:
         return *module;
     }
 
+    Capacitor &claim_cap(int value);
+    OpAmp &claim_opamp(bool closed_loop);
+
     void configure();
 
     void compile(ShadowSRam &ssram) const;
@@ -44,7 +47,10 @@ private:
     int m_id;
 
     std::array<Capacitor, NCapacitorsPerBlock> m_caps;
+    std::size_t m_next_cap;
+
     std::array<OpAmp, NOpAmpsPerBlock> m_opamps;
+    std::size_t m_next_opamp;
 
     std::vector<std::unique_ptr<AnalogModule>> m_modules;
 };

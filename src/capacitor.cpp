@@ -21,23 +21,27 @@ SwitchConfiguration Capacitor::from_input(InputPort &port,
     return { 0x00, from_nibbles(nibble, 0x0) };
 }
 
-SwitchConfiguration Capacitor::from_opamp(OpAmp const &, 
+SwitchConfiguration Capacitor::from_opamp(OpAmp const &opamp, 
                                           int sg_phase) {
+    uint8_t n = opamp.id() == 1 ? 0x3 : 0x2;
+    
     switch (sg_phase) {
-        case 0: return { 0x00, 0x30 };
-        case 1: return { 0x01, 0x13 };
-        case 2: return { 0x01, 0x31 };
+        case 0: return { 0x00, from_nibbles(n, 0x0) };
+        case 1: return { 0x01, from_nibbles(0x1, n) };
+        case 2: return { 0x01, from_nibbles(n, 0x1) };
     }
     
     throw DesignError("Invalid phase");
 }
 
-SwitchConfiguration Capacitor::to_opamp(OpAmp const &, 
+SwitchConfiguration Capacitor::to_opamp(OpAmp const &opamp, 
                                         int sg_phase) {
+    uint8_t n = opamp.id() == 1 ? 0x1 : 0x2;
+
     switch (sg_phase) {
-        case 0: return { 0x00, 0x10 };
-        case 1: return { 0x01, 0x81 };
-        case 2: return { 0x01, 0x18 };
+        case 0: return { 0x00, from_nibbles(n, 0x0) };
+        case 1: return { 0x01, from_nibbles(0x8, n) };
+        case 2: return { 0x01, from_nibbles(n, 0x8) };
     }
     
     throw DesignError("Invalid phase");

@@ -1,13 +1,17 @@
 #include "analog-block.hpp"
 #include "settings.hpp"
 #include "io-cell.hpp"
+#include "error.hpp"
 #include <vector>
+#include <sstream>
 
 AnalogBlock::AnalogBlock()
-        : m_id{}, m_caps{}, m_opamps{} {}
+        : m_id{}, m_caps{}, m_next_cap{}, 
+          m_opamps{}, m_next_opamp{}, m_modules{} {}
 
 AnalogBlock::AnalogBlock(int id)
-        : m_id{id}, m_caps{}, m_opamps{}, m_modules{} {
+        : m_id{id}, m_caps{}, m_next_cap{}, 
+          m_opamps{}, m_next_opamp{}, m_modules{} {
     for (std::size_t i = 0; i < NCapacitorsPerBlock; i++) {
         m_caps[i] = Capacitor(i + 1);
     }
@@ -15,6 +19,30 @@ AnalogBlock::AnalogBlock(int id)
     for (std::size_t i = 0; i < NOpAmpsPerBlock; i++) {
         m_opamps[i] = OpAmp(i + 1);
     }
+}
+
+Capacitor &AnalogBlock::claim_cap(int value) {
+    if (m_next_cap >= m_caps.size()) {
+        std::stringstream ss;
+        ss << "CAB" << m_id << ": cannot claim capactitor";
+        throw DesignError(ss.str());
+    }
+
+    Capacitor &cap = m_caps[m_next_cap];
+    m_next_cap++;
+    return cap.claim(value);
+}
+
+OpAmp &AnalogBlock::claim_opamp(bool closed_loop) {
+    if (m_next_opamp >= m_opamps.size()) {
+        std::stringstream ss;
+        ss << "CAB" << m_id << ": cannot claim opamp";
+        throw DesignError(ss.str());
+    }
+
+    OpAmp &opamp = m_opamps[m_next_opamp];
+    m_next_opamp++;
+    return opamp.claim(closed_loop);
 }
 
 void AnalogBlock::configure() {

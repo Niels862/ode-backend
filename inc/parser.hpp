@@ -17,8 +17,10 @@ private:
     void parse_modules();
     void parse_routing();
 
-    InputPort *parse_input_port();
-    OutputPort *parse_output_port();
+    void split_port(std::string const &s, AnalogModule *&module, int &i);
+
+    InputPort *parse_input_port(std::string const &s);
+    OutputPort *parse_output_port(std::string const &s);
 
     AnalogChip &m_chip;
     std::ifstream m_file;
