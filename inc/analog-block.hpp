@@ -5,6 +5,7 @@
 #include "capacitor.hpp"
 #include "opamp.hpp"
 #include "comparator.hpp"
+#include "clock.hpp"
 #include "defs.hpp"
 #include "shadow-sram.hpp"
 #include <array>
@@ -18,7 +19,7 @@ class AnalogChip;
 class AnalogBlock {
 public:
     AnalogBlock();
-    AnalogBlock(int id);
+    AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock);
 
     template <typename T>
     T &add(T *module) {
@@ -44,6 +45,8 @@ public:
     OpAmp &opamp(int id) { return m_opamps.at(id - 1); }
     Comparator &comp() { return m_comp; }
 
+    void set_used_clock(int i, Clock &clock);
+
     operator bool() const { return m_id > 0; }
 
 private:
@@ -56,6 +59,8 @@ private:
     std::size_t m_next_opamp;
 
     Comparator m_comp;
+
+    std::array<Clock *, 2> m_used_clocks;
 
     std::vector<std::unique_ptr<AnalogModule>> m_modules;
 };

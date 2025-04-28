@@ -9,10 +9,11 @@ public:
     Clock();
     Clock(int id, std::size_t value, std::size_t offset);
 
-    void compile(ShadowSRam &ssram, std::size_t sys);
+    uint8_t id_nibble() const;
+    void compile(ShadowSRam &ssram, std::size_t sys) const;
 
     int id() const { return m_id; }
-    
+
     bool is_used() const { return m_is_used; }
     void set_is_used(bool is_used) { m_is_used = is_used; }
 

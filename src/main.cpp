@@ -81,6 +81,8 @@ int main(int argc, char *argv[]) {
     argp_parse(&argp, argc, argv, 0, 0, nullptr);
 
     AnalogChip chip;
+    chip.cab(1).set_used_clock(0, chip.clock(1));
+
     Parser(chip).parse(args.infile);
     
     write(chip);

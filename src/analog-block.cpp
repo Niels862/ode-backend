@@ -7,11 +7,13 @@
 
 AnalogBlock::AnalogBlock()
         : m_id{}, m_caps{}, m_next_cap{}, 
-          m_opamps{}, m_next_opamp{}, m_modules{} {}
+          m_opamps{}, m_next_opamp{},
+          m_used_clocks{}, m_modules{} {}
 
-AnalogBlock::AnalogBlock(int id)
+AnalogBlock::AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock)
         : m_id{id}, m_caps{}, m_next_cap{}, 
-          m_opamps{}, m_next_opamp{}, m_modules{} {
+          m_opamps{}, m_next_opamp{}, 
+          m_used_clocks{&pri_clock, &sec_clock}, m_modules{} {
     for (std::size_t i = 0; i < NCapacitorsPerBlock; i++) {
         m_caps[i] = Capacitor(i + 1);
     }
@@ -59,6 +61,11 @@ void AnalogBlock::configure() {
 }
 
 void AnalogBlock::compile(ShadowSRam &ssram) const {
+    /* Enable Clocks */
+    for (Clock *clock : m_used_clocks) {
+        clock->set_is_used(true);
+    }
+
     /* Compile each Capacitor: values and switches */
     for (Capacitor const &cap : m_caps) {
         cap.compile(*this, ssram);
@@ -108,5 +115,11 @@ void AnalogBlock::compile(ShadowSRam &ssram) const {
 
     ssram.set(bank_b(), 0x05, b05);
     ssram.set(bank_b(), 0x04, b04);
-    ssram.set(bank_b(), 0x0, m_modules.empty() ? 0x00 : 0x0C);
+    ssram.set(bank_b(), 0x0, 
+              from_nibbles(m_used_clocks[1]->id_nibble(), 
+                           m_used_clocks[0]->id_nibble()));
+}
+
+void AnalogBlock::set_used_clock(int i, Clock &clock) {
+    m_used_clocks[i] = &clock;
 }

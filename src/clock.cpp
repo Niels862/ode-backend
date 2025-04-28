@@ -8,7 +8,21 @@ Clock::Clock()
 Clock::Clock(int id, std::size_t value, std::size_t offset) 
         : m_id{id}, m_is_used{false}, m_value{value}, m_offset{offset} {}
 
-void Clock::compile(ShadowSRam &ssram, std::size_t sys) {
+uint8_t Clock::id_nibble() const {
+    switch (m_id) {
+        case 0: return 0x0;
+        case 1: return 0xC;
+        case 2: return 0xD;
+        case 3: return 0xE;
+        case 4: return 0xF;
+        case 5: return 0xA;
+        case 6: return 0xB;
+    }
+
+    return 0x0;
+}
+
+void Clock::compile(ShadowSRam &ssram, std::size_t sys) const {
     uint8_t data_value;
 
     if (m_value == sys) {
@@ -32,6 +46,6 @@ void Clock::compile(ShadowSRam &ssram, std::size_t sys) {
         case 5: ssram.set(0x0, 0x03, data_value);
                 ssram.set(0x0, 0x02, 0x0);        break;
         case 6: ssram.set(0x0, 0x01, data_value);
-                ssram.set(0x0, 0x00, 0x0);      break;
+                ssram.set(0x0, 0x00, 0x0);        break;
     }
 }

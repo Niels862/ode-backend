@@ -22,6 +22,7 @@ public:
     IOCell &io_cell(int id)         { return m_io_cells.at(id - 1); }
 
     Clock &clock(int id)            { return m_clocks.at(id - 1); }
+    Clock &null_clock()             { return m_null_clock; }
 
 private:
     void compile_clocks(ShadowSRam &ssram);
@@ -36,6 +37,7 @@ private:
     std::array<IOCell, 4> m_io_cells;
 
     std::array<Clock, 6> m_clocks;
+    Clock m_null_clock;
 };
 
 #endif

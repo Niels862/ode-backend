@@ -5,9 +5,11 @@
 #include <sstream>
 
 AnalogChip::AnalogChip()
-        : m_cabs{}, m_null_cab{0}, m_io_cells{} {
+        : m_cabs{}, m_null_cab{}, m_io_cells{}, 
+          m_clocks{}, m_null_clock{} {
+    m_null_cab = AnalogBlock(0, m_null_clock, m_null_clock);
     for (std::size_t i = 0; i < NBlocksPerChip; i++) {
-        m_cabs[i] = AnalogBlock(i + 1);
+        m_cabs[i] = AnalogBlock(i + 1, m_null_clock, m_null_clock);
     }
 
     for (std::size_t i = 0; i < NType1IOCellsPerChip; i++) {
@@ -27,13 +29,16 @@ AnalogChip::AnalogChip()
 ShadowSRam AnalogChip::compile() {
     auto ssram = ShadowSRam();
 
+    for (Clock &clock : m_clocks) {
+        clock.set_is_used(false);
+    }
+
     for (IOCell &cell : m_io_cells) {
         cell.configure();
     }
 
     compile_lut_io_control(ssram);
     compile_io_routing(ssram);
-    compile_clocks(ssram);
 
     for (AnalogBlock &cab : m_cabs) {
         if (args.verbose) {
@@ -45,6 +50,8 @@ ShadowSRam AnalogChip::compile() {
     for (AnalogBlock const &cab : m_cabs) {
         cab.compile(ssram);
     }
+
+    compile_clocks(ssram);
 
     return ssram;
 }
