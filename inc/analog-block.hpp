@@ -4,6 +4,7 @@
 #include "analog-module.hpp"
 #include "capacitor.hpp"
 #include "opamp.hpp"
+#include "comparator.hpp"
 #include "defs.hpp"
 #include "shadow-sram.hpp"
 #include <array>
@@ -28,6 +29,7 @@ public:
 
     Capacitor &claim_cap(int value);
     OpAmp &claim_opamp(bool closed_loop);
+    Comparator &claim_comp();
 
     void configure();
 
@@ -40,6 +42,7 @@ public:
 
     Capacitor &cap(int id) { return m_caps.at(id - 1); }
     OpAmp &opamp(int id) { return m_opamps.at(id - 1); }
+    Comparator &comp() { return m_comp; }
 
     operator bool() const { return m_id > 0; }
 
@@ -51,6 +54,8 @@ private:
 
     std::array<OpAmp, NOpAmpsPerBlock> m_opamps;
     std::size_t m_next_opamp;
+
+    Comparator m_comp;
 
     std::vector<std::unique_ptr<AnalogModule>> m_modules;
 };

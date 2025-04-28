@@ -182,13 +182,21 @@ void SumInv::configure() {
 }
 
 Integrator::Integrator()
-        : AnalogModule("Integrator", 1, 1), m_integ_const{} {}
+        : AnalogModule("Integrator", 1, 1), m_integ_const{}, m_gnd_reset{},
+          m_comp{} {}
 
-Integrator::Integrator(double integ_const)
-        : AnalogModule{"Integrator", 1, 1}, m_integ_const{integ_const} {}
+Integrator::Integrator(double integ_const, bool gnd_reset)
+        : AnalogModule{"Integrator", 1, 1}, 
+          m_integ_const{integ_const}, m_gnd_reset{gnd_reset},
+          m_comp{} {
+    if (m_gnd_reset) {
+        m_comp = &cab().claim_comp();
+    }
+}
 
 void Integrator::parse(std::ifstream &file) {
     file >> m_integ_const;
+    file >> m_gnd_reset;
 }
 
 void Integrator::configure() {
@@ -203,4 +211,8 @@ void Integrator::configure() {
     cab().claim_cap(den)
          .set_in(Capacitor::from_opamp(opamp))
          .set_out(Capacitor::to_opamp(opamp));
+
+    if (m_gnd_reset) {
+        cab().claim_comp();
+    }
 }

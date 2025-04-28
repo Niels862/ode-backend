@@ -13,6 +13,15 @@ AnalogChip::AnalogChip()
     for (std::size_t i = 0; i < NType1IOCellsPerChip; i++) {
         m_io_cells[i].initialize(i + 1, m_null_cab);
     }
+
+    m_clocks = {
+        Clock(1,  4'000, 0),
+        Clock(2, 16'000, 0),
+        Clock(3,  2'000, 0),
+        Clock(4,    250, 0),
+        Clock(5, 16'000, 0),
+        Clock(6, 16'000, 0)
+    };
 }
 
 ShadowSRam AnalogChip::compile() {
@@ -59,61 +68,18 @@ void AnalogChip::to_header_bytestream(std::vector<uint8_t> &data) const {
 void AnalogChip::compile_clocks(ShadowSRam &ssram) {
     const int ACLK = 16'000;
     const int Sys1 = ACLK;
-    //const int Sys2 = ACLK;
-
-    const std::array<int, 6> Clocks = {
-        4'000,
-        16'000,
-        2'000,
-        250,
-        16'000,
-        16'000,
-    };
-
-    const std::array<bool, 6> ClocksUsed = {
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-    };
-
-    std::array<uint8_t, 6> data;
-    for (std::size_t i = 0; i < Clocks.size(); i++) {
-        int clock = Clocks[i];
-
-        if (Sys1 == clock) {
-            data[i] = 0;
-        } else {
-            if (Sys1 % (2 * clock) != 0) {
-                std::stringstream ss;
-                ss << "Cannot realize value of Clock " << i << ": "
-                   << clock;
-                throw DesignError(ss.str());
-            }
-    
-            data[i] = Sys1 / clock / 2;
-        }
-    }
 
     ssram.set(0x0, 0x0B, 0x40);
 
     uint8_t data_used = 1 | (0 << 1);
-    for (std::size_t i = 0; i < ClocksUsed.size(); i++) {
-        data_used |= ClocksUsed[i] << (2 + i);
+    for (std::size_t i = 0; i < m_clocks.size(); i++) {
+        data_used |= clock(i + 1).is_used() << (2 + i);
     }
-
     ssram.set(0x0, 0x08, data_used);
 
-    ssram.set(0x0, 0x07, data[0]);
-    ssram.set(0x0, 0x06, data[1]);
-    ssram.set(0x0, 0x05, data[2]);
-    ssram.set(0x0, 0x04, data[3]);
-    ssram.set(0x0, 0x03, data[4]);
-    ssram.set(0x0, 0x02, 0x0); // Clock 4 offset = 0
-    ssram.set(0x0, 0x01, data[5]);
-    ssram.set(0x0, 0x00, 0x0); // Clock 5 offset = 0
+    for (Clock &clock : m_clocks) {
+        clock.compile(ssram, Sys1);
+    }
 
     ssram.set(0x0, 0x0E, { 0x51, 0xFF, 0x0F, 0xF1}); // Unknown
 }

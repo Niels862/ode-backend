@@ -45,6 +45,10 @@ OpAmp &AnalogBlock::claim_opamp(bool closed_loop) {
     return opamp.claim(closed_loop);
 }
 
+Comparator &AnalogBlock::claim_comp() {
+    return m_comp.claim();
+}
+
 void AnalogBlock::configure() {
     for (auto const &module : m_modules) {
         if (args.verbose) {
@@ -55,13 +59,19 @@ void AnalogBlock::configure() {
 }
 
 void AnalogBlock::compile(ShadowSRam &ssram) const {
+    /* Compile each Capacitor: values and switches */
     for (Capacitor const &cap : m_caps) {
         cap.compile(*this, ssram);
     }
 
+    /* Compile each OpAmp: switches */
     for (OpAmp const &opamp : m_opamps) {
         opamp.compile(*this, ssram);
     }
+
+    /* Compile Comparator: unknown setup values */
+    m_comp.compile(*this, ssram);
+
 
     bool use_far_pri = false, use_far_sec = false;
     for (auto &module : m_modules) {

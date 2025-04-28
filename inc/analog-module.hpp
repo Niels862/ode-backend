@@ -3,6 +3,7 @@
 
 #include "shadow-sram.hpp"
 #include "io-port.hpp"
+#include "comparator.hpp"
 #include "defs.hpp"
 #include <bitset>
 #include <vector>
@@ -82,13 +83,16 @@ private:
 class Integrator : public AnalogModule {
 public:
     Integrator();
-    Integrator(double integ_const);
+    Integrator(double integ_const, bool m_gnd_reset);
 
     void parse(std::ifstream &file) override;
     void configure() override;
 
 private:
     double m_integ_const;
+    bool m_gnd_reset;
+
+    Comparator *m_comp;
 };
 
 #endif

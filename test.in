@@ -1,18 +1,19 @@
-none
-none
-none
+input
+input
+output
 none
 
 start-modules
 
-GainInv 1 gain1
-0.14
-
-GainInv 1 gain2
-0.53
+Integrator 1 integ1
+0.85 
+1
 
 end-modules
 
 start-routing
+
+IO1 -> integ1:1
+integ1 -> IO3
 
 end-routing

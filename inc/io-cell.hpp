@@ -40,7 +40,6 @@ struct Connection {
     void initialize(AnalogBlock &cab, Block block);
 
     uint8_t io_nibble() const;
-
     uint8_t cab_nibble(IOCell &cell) const;
 
     bool equivalent(Connection const &other) const;

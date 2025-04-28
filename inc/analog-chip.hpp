@@ -2,6 +2,7 @@
 #define OBC_ANALOG_CHIP_HPP
 
 #include "io-cell.hpp"
+#include "clock.hpp"
 #include "shadow-sram.hpp"
 #include "analog-block.hpp"
 #include "connection-matrix.hpp"
@@ -15,12 +16,12 @@ public:
 
     void to_header_bytestream(std::vector<uint8_t> &data) const;
 
-    AnalogBlock &cab(int id) { return m_cabs.at(id - 1); }
-    AnalogBlock &null_cab() { return m_null_cab; }
+    AnalogBlock &cab(int id)        { return m_cabs.at(id - 1); }
+    AnalogBlock &null_cab()         { return m_null_cab; }
 
-    IOCell &io_cell(int id) { return m_io_cells.at(id - 1); }
+    IOCell &io_cell(int id)         { return m_io_cells.at(id - 1); }
 
-    ConnectionMatrix &conns() { return m_conns; }
+    Clock &clock(int id)            { return m_clocks.at(id - 1); }
 
 private:
     void compile_clocks(ShadowSRam &ssram);
@@ -34,7 +35,7 @@ private:
 
     std::array<IOCell, 4> m_io_cells;
 
-    ConnectionMatrix m_conns;
+    std::array<Clock, 6> m_clocks;
 };
 
 #endif
