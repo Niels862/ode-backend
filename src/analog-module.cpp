@@ -4,15 +4,11 @@
 #include "error.hpp"
 #include <sstream>
 
-AnalogModule::AnalogModule(std::string const &name, std::size_t in_n, 
-                           std::size_t out_n)
-        : m_cab{}, m_name{name}, m_in_n{in_n}, m_out_n{out_n},
-          m_ins{}, m_outs{} {
+AnalogModule::AnalogModule(std::string const &name, std::size_t in_n)
+        : m_cab{}, m_name{name}, m_in_n{in_n},
+          m_ins{}, m_caps{}, m_opamps{}, m_comp{} {
     for (std::size_t i = 0; i < m_in_n; i++) {
         m_ins.emplace_back(*this);
-    }
-    for (std::size_t i = 0; i < m_out_n; i++) {
-        m_outs.emplace_back(*this); // TODO: should interact with CAB to assign unique output port
     }
 }
 
@@ -68,6 +64,22 @@ uint8_t AnalogModule::connection_nibble(AnalogModule &to) {
     throw DesignError("Unreached todo");
 }
 
+void AnalogModule::claim_capacitors(size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        m_caps[i] = &m_cab->claim_cap(0); // FIXME
+    }
+}
+
+void AnalogModule::claim_opamps(size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        m_opamps[i] = &m_cab->claim_opamp(0); // FIXME
+    }
+}
+
+void AnalogModule::claim_comparator() {
+    m_comp = &m_cab->claim_comp();
+}
+
 InputPort &AnalogModule::in(std::size_t i) {
     if (i < 1 || i > m_in_n) {
         std::stringstream ss;
@@ -88,24 +100,41 @@ InputPort &AnalogModule::in() {
     return in(1);
 }
 
-OutputPort &AnalogModule::out(std::size_t i) {
-    if (i < 1 || i > m_out_n) {
-        std::stringstream ss;
-        ss << "`" << m_name << "` does not implement out(" << i << ")";
-        throw DesignError(ss.str());
-    }
-
-    return m_outs[i - 1];
+OutputPort &AnalogModule::out(std::size_t) {
+    throw DesignError("out() not implemented");
 }
 
 OutputPort &AnalogModule::out() {
-    if (m_out_n != 1) {
+    throw DesignError("out() not implemented");
+}
+
+Capacitor &AnalogModule::cap(int i) {
+    Capacitor *cap = m_caps.at(i);
+    if (cap == nullptr) {
         std::stringstream ss;
-        ss << "`" << m_name << "` does not support out()";
+        ss << "Capacitor # " << i << " was not claimed by " << m_name;
         throw DesignError(ss.str());
     }
+    return *cap;
+}
 
-    return out(1);
+OpAmp &AnalogModule::opamp(int i) {
+    OpAmp *opamp = m_opamps.at(i);
+    if (opamp == nullptr) {
+        std::stringstream ss;
+        ss << "OpAmp #" << i << " was not claimed by " << m_name;
+        throw DesignError(ss.str());
+    }
+    return *opamp;
+}
+
+Comparator &AnalogModule::comp() {
+    if (!m_comp) {
+        std::stringstream ss;
+        ss << "Comparator was not claimed by " << m_name;
+        throw DesignError(ss.str());
+    }
+    return *m_comp;
 }
 
 void AnalogModule::set_cab(AnalogBlock &cab) {
@@ -113,10 +142,10 @@ void AnalogModule::set_cab(AnalogBlock &cab) {
 }
 
 GainInv::GainInv()
-        : AnalogModule{"GainInv", 1, 1}, m_gain{} {}
+        : AnalogModule{"GainInv", 1}, m_gain{} {}
 
 GainInv::GainInv(double gain)
-        : AnalogModule{"GainInv", 1, 1}, m_gain{gain} {}
+        : AnalogModule{"GainInv", 1}, m_gain{gain} {}
 
 void GainInv::parse(std::ifstream &file) {
     file >> m_gain;
@@ -142,11 +171,20 @@ void GainInv::configure() {
          .set_out(Capacitor::to_opamp(opamp, 1));
 }
 
+void GainInv::claim_components() {
+    claim_capacitors(4);
+    claim_opamps(1);
+}
+
+void GainInv::finalize() {
+
+}
+
 SumInv::SumInv()
-        : AnalogModule{"SumInv", 2, 1}, m_lgain{}, m_ugain{} {}
+        : AnalogModule{"SumInv", 2}, m_lgain{}, m_ugain{} {}
 
 SumInv::SumInv(double lgain, double ugain)
-        : AnalogModule{"SumInv", 2, 1}, m_lgain{lgain}, m_ugain{ugain} {}
+        : AnalogModule{"SumInv", 2}, m_lgain{lgain}, m_ugain{ugain} {}
 
 void SumInv::parse(std::ifstream &file) {
     file >> m_lgain;
@@ -181,14 +219,23 @@ void SumInv::configure() {
          .set_out(Capacitor::to_opamp(opamp, 1));
 }
 
+void SumInv::claim_components() {
+    claim_capacitors(6);
+    claim_opamps(1);
+}
+
+void SumInv::finalize() {
+    
+}
+
 Integrator::Integrator()
-        : AnalogModule("Integrator", 1, 1), 
+        : AnalogModule("Integrator", 1), 
           comp_in{*this},
           m_integ_const{}, m_gnd_reset{},
           m_comp{} {}
 
 Integrator::Integrator(double integ_const, bool gnd_reset)
-        : AnalogModule{"Integrator", 1, 1}, 
+        : AnalogModule{"Integrator", 1}, 
           comp_in{*this},
           m_integ_const{integ_const}, m_gnd_reset{gnd_reset},
           m_comp{} {
@@ -218,4 +265,16 @@ void Integrator::configure() {
     if (m_gnd_reset) {
         cab().claim_comp();
     }
+}
+
+void Integrator::claim_components() {
+    claim_capacitors(2);
+    claim_opamps(1);
+    if (m_gnd_reset) {
+        claim_comparator();
+    }
+}
+
+void Integrator::finalize() {
+    
 }

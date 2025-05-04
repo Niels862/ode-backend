@@ -3,6 +3,8 @@
 
 #include "shadow-sram.hpp"
 #include "io-port.hpp"
+#include "capacitor.hpp"
+#include "opamp.hpp"
 #include "comparator.hpp"
 #include "defs.hpp"
 #include <bitset>
@@ -13,7 +15,7 @@ class AnalogBlock;
 
 class AnalogModule {
 public:
-    AnalogModule(std::string const &name, std::size_t n_in, std::size_t n_out);
+    AnalogModule(std::string const &name, std::size_t n_in);
 
     /* Delete copy/move semantics as this breaks links with Ports. */
     AnalogModule(AnalogModule const &) = delete;
@@ -31,13 +33,22 @@ public:
     virtual void parse(std::ifstream &file) = 0;
     virtual void configure() = 0;
 
+    virtual void claim_components() = 0;
+    virtual void finalize() = 0;
+
+    void claim_capacitors(size_t n);
+    void claim_opamps(size_t n);
+    void claim_comparator();
+
     virtual InputPort &in(std::size_t i);
     virtual InputPort &in();
     virtual OutputPort &out(std::size_t i);
     virtual OutputPort &out();
 
     std::vector<InputPort> &ins() { return m_ins; }
-    std::vector<OutputPort> &outs() { return m_outs; }
+    Capacitor &cap(int i);
+    OpAmp &opamp(int i = 0);
+    Comparator &comp();
 
     void set_cab(AnalogBlock &cab);
     AnalogBlock &cab() { return *m_cab; }
@@ -49,10 +60,11 @@ protected:
 
     std::string m_name;
     std::size_t m_in_n;
-    std::size_t m_out_n;
 
     std::vector<InputPort> m_ins;
-    std::vector<OutputPort> m_outs;
+    std::array<Capacitor *, NCapacitorsPerBlock> m_caps;
+    std::array<OpAmp *, NOpAmpsPerBlock> m_opamps;
+    Comparator *m_comp;
 };
 
 class GainInv : public AnalogModule {
@@ -62,6 +74,9 @@ public:
 
     void parse(std::ifstream &file) override;
     void configure() override;
+
+    void claim_components() override;
+    void finalize() override;
 
 private:
     double m_gain;
@@ -75,6 +90,9 @@ public:
     void parse(std::ifstream &file) override;
     void configure() override;
 
+    void claim_components() override;
+    void finalize() override;
+
 private:
     double m_lgain;
     double m_ugain;
@@ -87,6 +105,9 @@ public:
 
     void parse(std::ifstream &file) override;
     void configure() override;
+
+    void claim_components() override;
+    void finalize() override;
 
     InputPort comp_in;
 

@@ -1,6 +1,7 @@
 #ifndef OBC_OPAMP_HPP
 #define OBC_OPAMP_HPP
 
+#include "io-port.hpp"
 #include "shadow-sram.hpp"
 
 class AnalogBlock;
@@ -17,11 +18,15 @@ public:
     int id() const { return m_id; }
     bool is_used() const { return m_is_used; }
 
+    OutputPort &out() { return m_out; }
+
 private:
     int m_id;
     bool m_is_used;
 
     bool m_closed_loop;
+
+    OutputPort m_out;
 };
 
 #endif

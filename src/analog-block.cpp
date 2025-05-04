@@ -121,29 +121,7 @@ void AnalogBlock::compile(ShadowSRam &ssram) const {
     ssram.set(bank_b(), 0x05, b05);
     ssram.set(bank_b(), 0x04, b04);
 
-    uint8_t local_out = 0;
-    for (auto &module : m_modules) {
-        for (auto &out : module->outs()) {
-            auto &ports = out.connections();
-
-            for (InputPort *port : ports) {
-                if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
-                    Connection &conn = cell->connection(*this);
-    
-                    if (conn.mode == Connection::Far) {
-                        if (conn.channel == Connection::Primary) {
-                            local_out |= 0x01;
-                        }
-                        if (conn.channel == Connection::Secondary) {
-                            local_out |= 0x10;
-                        }
-                    }
-                }    
-            }
-        }
-    }
-
-    ssram.set(bank_b(), 0x02, local_out);
+    ssram.set(bank_b(), 0x02, 0xFF);
 
     ssram.set(bank_b(), 0x0, from_nibbles(m_used_clocks[1]->id_nibble(), 
                                           m_used_clocks[0]->id_nibble()));

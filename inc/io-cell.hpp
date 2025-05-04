@@ -57,6 +57,9 @@ public:
     void parse(std::ifstream &) override {}
     void configure() override;
 
+    void claim_components() override {}
+    void finalize() override {}
+
     IOMode mode() const { return m_mode; }
     void set_mode(IOMode mode);
 
