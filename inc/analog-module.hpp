@@ -88,6 +88,8 @@ public:
     void parse(std::ifstream &file) override;
     void configure() override;
 
+    InputPort comp_in;
+
 private:
     double m_integ_const;
     bool m_gnd_reset;

@@ -4,6 +4,7 @@
 #include "opamp.hpp"
 #include "io-port.hpp"
 #include "error.hpp"
+#include "cassert"
 #include <sstream>
 
 Capacitor::Capacitor() 
@@ -13,35 +14,51 @@ Capacitor::Capacitor(int id)
         : m_id{id}, m_is_used{false}, m_value{0x0}, m_switch_cfg{} {}
 
 SwitchConfiguration Capacitor::from_input(InputPort &port, 
-                                          int sg_phase) {
-    uint8_t nibble = port.connection_nibble();
-    if (sg_phase) {
-        return { 0x01, from_nibbles(0x1, nibble) };
+                                          int sg_phase,
+                                          Clock::Select select) {
+    assert(sg_phase || select != Clock::B);
+    
+    uint8_t n = port.connection_nibble();
+    uint8_t s = select == Clock::A ? 0x01 : 0x02;
+
+    switch (sg_phase) {
+        case 0: return { 0x00, from_nibbles(n, 0x0) };
+        case 1: return { s,    from_nibbles(0x1, n) };
+        case 2: return { s,    from_nibbles(n, 0x1) };
     }
-    return { 0x00, from_nibbles(nibble, 0x0) };
+
+    throw DesignError("Invalid phase");
 }
 
 SwitchConfiguration Capacitor::from_opamp(OpAmp const &opamp, 
-                                          int sg_phase) {
+                                          int sg_phase,
+                                          Clock::Select select) {
+    assert(sg_phase || select != Clock::B);
+                                            
     uint8_t n = opamp.id() == 1 ? 0x3 : 0x2;
-    
+    uint8_t s = select == Clock::A ? 0x01 : 0x02;
+
     switch (sg_phase) {
         case 0: return { 0x00, from_nibbles(n, 0x0) };
-        case 1: return { 0x01, from_nibbles(0x1, n) };
-        case 2: return { 0x01, from_nibbles(n, 0x1) };
+        case 1: return { s,    from_nibbles(0x1, n) };
+        case 2: return { s,    from_nibbles(n, 0x1) };
     }
     
     throw DesignError("Invalid phase");
 }
 
 SwitchConfiguration Capacitor::to_opamp(OpAmp const &opamp, 
-                                        int sg_phase) {
+                                        int sg_phase,
+                                        Clock::Select select) {
+    assert(sg_phase || select != Clock::B);
+    
     uint8_t n = opamp.id() == 1 ? 0x1 : 0x2;
+    uint8_t s = select == Clock::A ? 0x01 : 0x02;
 
     switch (sg_phase) {
         case 0: return { 0x00, from_nibbles(n, 0x0) };
-        case 1: return { 0x01, from_nibbles(0x8, n) };
-        case 2: return { 0x01, from_nibbles(n, 0x8) };
+        case 1: return { s,    from_nibbles(0x8, n) };
+        case 2: return { s,    from_nibbles(n, 0x8) };
     }
     
     throw DesignError("Invalid phase");

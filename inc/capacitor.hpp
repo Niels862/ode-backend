@@ -1,6 +1,7 @@
 #ifndef OBC_CAPACITOR_HPP
 #define OBC_CAPACITOR_HPP
 
+#include "clock.hpp"
 #include "shadow-sram.hpp"
 #include <initializer_list>
 #include <cstddef>
@@ -23,12 +24,15 @@ public:
     Capacitor(int id);
 
     static SwitchConfiguration from_input(InputPort &port,
-                                          int sg_phase = 0);
+                                          int sg_phase = 0,
+                                          Clock::Select select = Clock::A);
 
     static SwitchConfiguration from_opamp(OpAmp const &opamp, 
-                                          int sg_phase = 0);
+                                          int sg_phase = 0,
+                                          Clock::Select select = Clock::A);
     static SwitchConfiguration to_opamp(OpAmp const &opamp, 
-                                        int sg_phase = 0);
+                                        int sg_phase = 0,
+                                        Clock::Select select = Clock::A);
 
     Capacitor &claim(int value);
     Capacitor &set_in(SwitchConfiguration switch_cfg);

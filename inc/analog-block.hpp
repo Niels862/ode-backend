@@ -21,6 +21,8 @@ public:
     AnalogBlock();
     AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock);
 
+    void setup(Clock &clk_a, Clock &clk_b);
+
     template <typename T>
     T &add(T *module) {
         m_modules.push_back(std::unique_ptr<T>(module));

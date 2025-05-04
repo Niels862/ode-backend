@@ -20,6 +20,11 @@ public:
     std::size_t value() const { return m_value; }
     std::size_t offset() const { return m_offset; }
 
+    enum Select {
+        A, 
+        B
+    };
+
 private:
     int m_id;
     bool m_is_used;

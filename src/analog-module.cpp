@@ -12,7 +12,7 @@ AnalogModule::AnalogModule(std::string const &name, std::size_t in_n,
         m_ins.emplace_back(*this);
     }
     for (std::size_t i = 0; i < m_out_n; i++) {
-        m_outs.emplace_back(*this); // todo should interact with CAB to assign unique output port
+        m_outs.emplace_back(*this); // TODO: should interact with CAB to assign unique output port
     }
 }
 
@@ -182,16 +182,19 @@ void SumInv::configure() {
 }
 
 Integrator::Integrator()
-        : AnalogModule("Integrator", 1, 1), m_integ_const{}, m_gnd_reset{},
+        : AnalogModule("Integrator", 1, 1), 
+          comp_in{*this},
+          m_integ_const{}, m_gnd_reset{},
           m_comp{} {}
 
 Integrator::Integrator(double integ_const, bool gnd_reset)
         : AnalogModule{"Integrator", 1, 1}, 
+          comp_in{*this},
           m_integ_const{integ_const}, m_gnd_reset{gnd_reset},
           m_comp{} {
-    if (m_gnd_reset) {
+    /*if (m_gnd_reset) {
         m_comp = &cab().claim_comp();
-    }
+    }*/
 }
 
 void Integrator::parse(std::ifstream &file) {
@@ -206,8 +209,8 @@ void Integrator::configure() {
     OpAmp &opamp = cab().claim_opamp(true);
 
     cab().claim_cap(num)
-         .set_in(Capacitor::from_input(in(), 1))
-         .set_out(Capacitor::to_opamp(opamp, 2));
+         .set_in(Capacitor::from_input(in(), 1, Clock::B))
+         .set_out(Capacitor::to_opamp(opamp, 2, Clock::B));
     cab().claim_cap(den)
          .set_in(Capacitor::from_opamp(opamp))
          .set_out(Capacitor::to_opamp(opamp));

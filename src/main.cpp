@@ -77,14 +77,31 @@ void write(AnalogChip &chip) {
     f.close();
 }
 
+void load(AnalogChip &chip) {
+    chip.io_cell(1).set_mode(IOMode::InputBypass);
+    chip.io_cell(2).set_mode(IOMode::InputBypass);
+    chip.io_cell(3).set_mode(IOMode::OutputBypass);
+
+    chip.cab(1).setup(chip.clock(1), chip.clock(3));
+
+    auto &integ = chip.cab(1).add(new Integrator(1.0, true));
+    
+    chip.io_cell(1).out().connect(integ.in(1));
+    chip.io_cell(2).out().connect(integ.comp_in);
+    integ.out().connect(chip.io_cell(3).in());
+}
+
+void parse(AnalogChip &chip) {
+    chip.cab(1).setup(chip.clock(1), chip.clock(3));
+    Parser(chip).parse(args.infile);
+}
+
 int main(int argc, char *argv[]) {
     argp_parse(&argp, argc, argv, 0, 0, nullptr);
 
     AnalogChip chip;
-    chip.cab(1).set_used_clock(0, chip.clock(1));
-
-    Parser(chip).parse(args.infile);
     
+    load(chip);
     write(chip);
     
     return 0;

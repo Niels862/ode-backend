@@ -23,6 +23,11 @@ AnalogBlock::AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock)
     }
 }
 
+void AnalogBlock::setup(Clock &clk_a, Clock &clk_b) {
+    m_used_clocks[0] = &clk_a;
+    m_used_clocks[1] = &clk_b;
+}
+
 Capacitor &AnalogBlock::claim_cap(int value) {
     if (m_next_cap >= m_caps.size()) {
         std::stringstream ss;
@@ -115,9 +120,33 @@ void AnalogBlock::compile(ShadowSRam &ssram) const {
 
     ssram.set(bank_b(), 0x05, b05);
     ssram.set(bank_b(), 0x04, b04);
-    ssram.set(bank_b(), 0x0, 
-              from_nibbles(m_used_clocks[1]->id_nibble(), 
-                           m_used_clocks[0]->id_nibble()));
+
+    uint8_t local_out = 0;
+    for (auto &module : m_modules) {
+        for (auto &out : module->outs()) {
+            auto &ports = out.connections();
+
+            for (InputPort *port : ports) {
+                if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
+                    Connection &conn = cell->connection(*this);
+    
+                    if (conn.mode == Connection::Far) {
+                        if (conn.channel == Connection::Primary) {
+                            local_out |= 0x01;
+                        }
+                        if (conn.channel == Connection::Secondary) {
+                            local_out |= 0x10;
+                        }
+                    }
+                }    
+            }
+        }
+    }
+
+    ssram.set(bank_b(), 0x02, local_out);
+
+    ssram.set(bank_b(), 0x0, from_nibbles(m_used_clocks[1]->id_nibble(), 
+                                          m_used_clocks[0]->id_nibble()));
 }
 
 void AnalogBlock::set_used_clock(int i, Clock &clock) {
