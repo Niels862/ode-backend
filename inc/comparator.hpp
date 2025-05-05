@@ -4,19 +4,20 @@
 #include "shadow-sram.hpp"
 
 class AnalogBlock;
+class AnalogModule;
 
 class Comparator {
 public:
     Comparator();
 
-    Comparator &claim();
+    Comparator &claim(AnalogModule &module);
 
     void compile(AnalogBlock const &cab, ShadowSRam &ssram) const;
 
-    bool is_used() const { return m_is_used; }
+    bool is_used() const { return m_module != nullptr; }
 
 private:
-    bool m_is_used;
+    AnalogModule *m_module;
 };
 
 #endif

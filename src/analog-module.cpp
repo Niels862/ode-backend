@@ -64,22 +64,6 @@ uint8_t AnalogModule::connection_nibble(AnalogModule &to) {
     throw DesignError("Unreached todo");
 }
 
-void AnalogModule::claim_capacitors(size_t n) {
-    for (size_t i = 0; i < n; i++) {
-        m_caps[i] = &m_cab->claim_cap(0); // FIXME
-    }
-}
-
-void AnalogModule::claim_opamps(size_t n) {
-    for (size_t i = 0; i < n; i++) {
-        m_opamps[i] = &m_cab->claim_opamp(0); // FIXME
-    }
-}
-
-void AnalogModule::claim_comparator() {
-    m_comp = &m_cab->claim_comp();
-}
-
 InputPort &AnalogModule::in(std::size_t i) {
     if (i < 1 || i > m_in_n) {
         std::stringstream ss;
@@ -90,26 +74,12 @@ InputPort &AnalogModule::in(std::size_t i) {
     return m_ins[i - 1];
 }
 
-InputPort &AnalogModule::in() {
-    if (m_in_n != 1) {
-        std::stringstream ss;
-        ss << "`" << m_name << "` does not support in()";
-        throw DesignError(ss.str());
-    }
-
-    return in(1);
-}
-
 OutputPort &AnalogModule::out(std::size_t) {
     throw DesignError("out() not implemented");
 }
 
-OutputPort &AnalogModule::out() {
-    throw DesignError("out() not implemented");
-}
-
 Capacitor &AnalogModule::cap(int i) {
-    Capacitor *cap = m_caps.at(i);
+    Capacitor *cap = m_caps.at(i - 1);
     if (cap == nullptr) {
         std::stringstream ss;
         ss << "Capacitor # " << i << " was not claimed by " << m_name;
@@ -119,7 +89,7 @@ Capacitor &AnalogModule::cap(int i) {
 }
 
 OpAmp &AnalogModule::opamp(int i) {
-    OpAmp *opamp = m_opamps.at(i);
+    OpAmp *opamp = m_opamps.at(i - 1);
     if (opamp == nullptr) {
         std::stringstream ss;
         ss << "OpAmp #" << i << " was not claimed by " << m_name;
@@ -141,6 +111,22 @@ void AnalogModule::set_cab(AnalogBlock &cab) {
     m_cab = &cab; 
 }
 
+void AnalogModule::claim_capacitors(size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        m_caps[i] = &m_cab->claim_cap(*this); 
+    }
+}
+
+void AnalogModule::claim_opamps(size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        m_opamps[i] = &m_cab->claim_opamp(*this); 
+    }
+}
+
+void AnalogModule::claim_comparator() {
+    m_comp = &m_cab->claim_comp(*this);
+}
+
 GainInv::GainInv()
         : AnalogModule{"GainInv", 1}, m_gain{} {}
 
@@ -151,32 +137,29 @@ void GainInv::parse(std::ifstream &file) {
     file >> m_gain;
 }
 
-void GainInv::configure() {
-    uint8_t num, den;
-    approximate_ratio(m_gain, num, den);
-
-    OpAmp &opamp = cab().claim_opamp(true);
-
-    cab().claim_cap(num)
-         .set_in(Capacitor::from_input(in()))
-         .set_out(Capacitor::to_opamp(opamp));
-    cab().claim_cap(num)
-         .set_in(Capacitor::from_input(in(), 1))
-         .set_out(Capacitor::to_opamp(opamp, 1));
-    cab().claim_cap(den)
-         .set_in(Capacitor::from_opamp(opamp))
-         .set_out(Capacitor::to_opamp(opamp));
-    cab().claim_cap(den)
-         .set_in(Capacitor::from_opamp(opamp, 1))
-         .set_out(Capacitor::to_opamp(opamp, 1));
-}
-
 void GainInv::claim_components() {
     claim_capacitors(4);
     claim_opamps(1);
 }
 
 void GainInv::finalize() {
+    uint8_t num, den;
+    approximate_ratio(m_gain, num, den);
+
+    OpAmp &_opamp = opamp(1).set_closed_loop(true);
+
+    cap(1).set_value(num)
+          .set_in(Capacitor::from_input(in()))
+          .set_out(Capacitor::to_opamp(_opamp));
+    cap(2).set_value(num)
+          .set_in(Capacitor::from_input(in(), 1))
+          .set_out(Capacitor::to_opamp(_opamp, 1));
+    cap(3).set_value(den)
+          .set_in(Capacitor::from_opamp(_opamp))
+          .set_out(Capacitor::to_opamp(_opamp));
+    cap(4).set_value(den)
+          .set_in(Capacitor::from_opamp(_opamp, 1))
+          .set_out(Capacitor::to_opamp(_opamp, 1));
 
 }
 
@@ -191,41 +174,37 @@ void SumInv::parse(std::ifstream &file) {
     file >> m_ugain;
 }
 
-void SumInv::configure() {
-    std::vector<double> gains = { m_lgain, m_ugain };
-    std::vector<uint8_t> nums;
-    uint8_t den;
-    approximate_ratios(gains, nums, den);
-
-    OpAmp &opamp = cab().claim_opamp(true);
-
-    cab().claim_cap(nums[0])
-         .set_in(Capacitor::from_input(in(1)))
-         .set_out(Capacitor::to_opamp(opamp));
-    cab().claim_cap(nums[0])
-         .set_in(Capacitor::from_input(in(1), 1))
-         .set_out(Capacitor::to_opamp(opamp, 1));
-    cab().claim_cap(nums[1])
-         .set_in(Capacitor::from_input(in(2)))
-         .set_out(Capacitor::to_opamp(opamp));
-    cab().claim_cap(nums[1])
-         .set_in(Capacitor::from_input(in(2), 1))
-         .set_out(Capacitor::to_opamp(opamp, 1));
-    cab().claim_cap(den)
-         .set_in(Capacitor::from_opamp(opamp))
-         .set_out(Capacitor::to_opamp(opamp));
-    cab().claim_cap(den)
-         .set_in(Capacitor::from_opamp(opamp, 1))
-         .set_out(Capacitor::to_opamp(opamp, 1));
-}
-
 void SumInv::claim_components() {
     claim_capacitors(6);
     claim_opamps(1);
 }
 
 void SumInv::finalize() {
-    
+    std::vector<double> gains = { m_lgain, m_ugain };
+    std::vector<uint8_t> nums;
+    uint8_t den;
+    approximate_ratios(gains, nums, den);
+
+    OpAmp &_opamp = opamp(1).set_closed_loop(true);
+
+    cap(1).set_value(nums[0])
+          .set_in(Capacitor::from_input(in(1)))
+          .set_out(Capacitor::to_opamp(_opamp));
+    cap(2).set_value(nums[0])
+          .set_in(Capacitor::from_input(in(1), 1))
+          .set_out(Capacitor::to_opamp(_opamp, 1));
+    cap(3).set_value(nums[1])
+          .set_in(Capacitor::from_input(in(2)))
+          .set_out(Capacitor::to_opamp(_opamp));
+    cap(4).set_value(nums[1])
+          .set_in(Capacitor::from_input(in(2), 1))
+          .set_out(Capacitor::to_opamp(_opamp, 1));
+    cap(5).set_value(den)
+          .set_in(Capacitor::from_opamp(_opamp))
+          .set_out(Capacitor::to_opamp(_opamp));
+    cap(6).set_value(den)
+          .set_in(Capacitor::from_opamp(_opamp, 1))
+          .set_out(Capacitor::to_opamp(_opamp, 1));
 }
 
 Integrator::Integrator()
@@ -239,32 +218,11 @@ Integrator::Integrator(double integ_const, bool gnd_reset)
           comp_in{*this},
           m_integ_const{integ_const}, m_gnd_reset{gnd_reset},
           m_comp{} {
-    /*if (m_gnd_reset) {
-        m_comp = &cab().claim_comp();
-    }*/
 }
 
 void Integrator::parse(std::ifstream &file) {
     file >> m_integ_const;
     file >> m_gnd_reset;
-}
-
-void Integrator::configure() {
-    uint8_t num, den;
-    approximate_ratio(m_integ_const / 4, num, den);
-
-    OpAmp &opamp = cab().claim_opamp(true);
-
-    cab().claim_cap(num)
-         .set_in(Capacitor::from_input(in(), 1, Clock::B))
-         .set_out(Capacitor::to_opamp(opamp, 2, Clock::B));
-    cab().claim_cap(den)
-         .set_in(Capacitor::from_opamp(opamp))
-         .set_out(Capacitor::to_opamp(opamp));
-
-    if (m_gnd_reset) {
-        cab().claim_comp();
-    }
 }
 
 void Integrator::claim_components() {
@@ -276,5 +234,19 @@ void Integrator::claim_components() {
 }
 
 void Integrator::finalize() {
-    
+    uint8_t num, den;
+    approximate_ratio(m_integ_const / 4, num, den);
+
+    OpAmp &_opamp = opamp(1).set_closed_loop(true);
+
+    cap(1).set_value(num)
+          .set_in(Capacitor::from_input(in(), 1, Clock::B))
+          .set_out(Capacitor::to_opamp(_opamp, 2, Clock::B));
+    cap(2).set_value(den)
+          .set_in(Capacitor::from_opamp(_opamp))
+          .set_out(Capacitor::to_opamp(_opamp));
+
+    if (m_gnd_reset) {
+        // TODO
+    }
 }

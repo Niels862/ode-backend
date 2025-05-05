@@ -5,24 +5,26 @@
 #include "shadow-sram.hpp"
 
 class AnalogBlock;
+class AnalogModule;
 
 class OpAmp {
 public:
     OpAmp();
     OpAmp(int id);
 
-    OpAmp &claim(bool closed_loop);
+    OpAmp &claim(AnalogModule &module);
+    OpAmp &set_closed_loop(bool closed_loop);
 
     void compile(AnalogBlock const &cab, ShadowSRam &ssram) const;
 
     int id() const { return m_id; }
-    bool is_used() const { return m_is_used; }
+    bool is_used() const { return m_module != nullptr; }
 
     OutputPort &out() { return m_out; }
 
 private:
     int m_id;
-    bool m_is_used;
+    AnalogModule *m_module;
 
     bool m_closed_loop;
 

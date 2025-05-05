@@ -8,10 +8,10 @@
 #include <sstream>
 
 Capacitor::Capacitor() 
-        : m_id{}, m_is_used{false}, m_value{}, m_switch_cfg{} {}
+        : m_id{}, m_module{}, m_value{}, m_switch_cfg{} {}
 
 Capacitor::Capacitor(int id)
-        : m_id{id}, m_is_used{false}, m_value{0x0}, m_switch_cfg{} {}
+        : m_id{id}, m_module{}, m_value{0x0}, m_switch_cfg{} {}
 
 SwitchConfiguration Capacitor::from_input(InputPort &port, 
                                           int sg_phase,
@@ -64,15 +64,20 @@ SwitchConfiguration Capacitor::to_opamp(OpAmp const &opamp,
     throw DesignError("Invalid phase");
 }
 
-Capacitor &Capacitor::claim(int value) {                     
-    if (m_is_used) {
+Capacitor &Capacitor::claim(AnalogModule &module) {                     
+    if (m_module) {
         std::stringstream ss;
         ss << "Capacitor " << m_id << " is already in use";
         throw DesignError(ss.str());
     }
 
+    m_module = &module;
+
+    return *this;
+}
+
+Capacitor &Capacitor::set_value(uint8_t value) {
     m_value = value;
-    m_is_used = true;
 
     return *this;
 }

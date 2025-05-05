@@ -34,7 +34,7 @@ ShadowSRam AnalogChip::compile() {
     }
 
     for (IOCell &cell : m_io_cells) {
-        cell.configure();
+        cell.finalize();
     }
 
     compile_lut_io_control(ssram);
@@ -42,9 +42,9 @@ ShadowSRam AnalogChip::compile() {
 
     for (AnalogBlock &cab : m_cabs) {
         if (args.verbose) {
-            std::cerr << "Configuring CAB-" << cab.id() << "..." << std::endl;
+            std::cerr << "Finalizing CAB-" << cab.id() << "..." << std::endl;
         }
-        cab.configure();
+        cab.finalize();
     }
 
     for (AnalogBlock const &cab : m_cabs) {

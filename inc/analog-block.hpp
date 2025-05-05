@@ -27,14 +27,15 @@ public:
     T &add(T *module) {
         m_modules.push_back(std::unique_ptr<T>(module));
         module->set_cab(*this);
+        module->claim_components();
         return *module;
     }
 
-    Capacitor &claim_cap(int value);
-    OpAmp &claim_opamp(bool closed_loop);
-    Comparator &claim_comp();
+    Capacitor &claim_cap(AnalogModule &module);
+    OpAmp &claim_opamp(AnalogModule &module);
+    Comparator &claim_comp(AnalogModule &module);
 
-    void configure();
+    void finalize();
 
     void compile(ShadowSRam &ssram) const;
 
@@ -48,6 +49,8 @@ public:
     Comparator &comp() { return m_comp; }
 
     void set_used_clock(int i, Clock &clock);
+
+    void log_resources() const;
 
     operator bool() const { return m_id > 0; }
 

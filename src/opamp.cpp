@@ -4,19 +4,25 @@
 #include <sstream>
 
 OpAmp::OpAmp()
-        : m_id{}, m_is_used{false}, m_closed_loop{} {}
+        : m_id{}, m_module{}, m_closed_loop{} {}
 
 OpAmp::OpAmp(int id)
-        : m_id{id}, m_is_used{false} {}
+        : m_id{id}, m_module{}, m_closed_loop{true} {} // FIXME
 
-OpAmp &OpAmp::claim(bool closed_loop) {
-    if (m_is_used) {
+OpAmp &OpAmp::claim(AnalogModule &module) {
+    if (m_module) {
         std::stringstream ss;
         ss << "OpAmp " << m_id << " is already in use";
         throw DesignError(ss.str());
     }
 
-    m_is_used = true;
+    m_module = &module;
+    m_out = OutputPort(module);
+
+    return *this;
+}
+
+OpAmp &OpAmp::set_closed_loop(bool closed_loop) {
     m_closed_loop = closed_loop;
 
     return *this;
@@ -32,7 +38,7 @@ void OpAmp::compile(AnalogBlock const &cab, ShadowSRam &ssram) const {
         throw DesignError("Invalid ID");
     }
     
-    if (!m_is_used) {
+    if (!is_used()) {
         ssram.set(cab.bank_b(), m_byte_addr, { 0x00, 0x00 });
     } else if (m_closed_loop) {
         ssram.set(cab.bank_b(), m_byte_addr, { 0x00, 0x05 });

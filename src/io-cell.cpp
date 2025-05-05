@@ -99,7 +99,9 @@ bool Connection::equivalent(Connection const &other) const {
 IOCell::IOCell() /* IOCell manages its own in() and out() port */
         : AnalogModule{"IOCell", 0}, m_id{}, 
           m_mode{IOMode::Disabled},
-          m_in{*this}, m_out{*this}, m_conns{} {}
+          m_in{*this}, m_out{*this}, m_conns{} {
+    std::cout << m_id << ": " << &m_in << ", " << &m_in.module() << std::endl;
+}
 
 void IOCell::initialize(int id, AnalogBlock &cab) {
     set_cab(cab);
@@ -115,20 +117,20 @@ uint8_t IOCell::connection_nibble(AnalogModule &to) {
     return connection(to.cab()).cab_nibble(*this);
 }
 
-void IOCell::configure() {
+void IOCell::finalize() {
     for (Connection &conn : m_conns) {
         conn.reset();
     }
 
     if (m_mode == IOMode::InputBypass) {
-        for (InputPort *port : out().connections()) {
+        for (InputPort *port : out(1).connections()) {
             AnalogBlock &cab = port->module().cab();
             if (cab) {
                 connection(cab).initialize(cab, Connection::ToInput);
             }
         }
     } else if (m_mode == IOMode::OutputBypass) {
-        OutputPort *port = in().connection();
+        OutputPort *port = in(1).connection();
         if (port) {
             AnalogBlock &cab = port->module().cab();
             if (cab) {
@@ -152,30 +154,12 @@ InputPort &IOCell::in(std::size_t i) {
         throw DesignError("IO-Cell can only access in(1)");
     }
 
-    return in();
-}
-
-InputPort &IOCell::in() {
-    if (m_mode != IOMode::OutputBypass) {
-        throw DesignError(
-                "Can only access ::in() of output IO-Cell");
-    }
-
     return m_in;
 }
 
 OutputPort &IOCell::out(std::size_t i) {
     if (i != 1) {
         throw DesignError("IO-Cell can only access out(1)");
-    }
-
-    return out();
-}
-
-OutputPort &IOCell::out() {
-    if (m_mode != IOMode::InputBypass) {
-        throw DesignError(
-                "Can only access ::out() of input IO-Cell");
     }
 
     return m_out;

@@ -84,11 +84,11 @@ void load(AnalogChip &chip) {
 
     chip.cab(1).setup(chip.clock(1), chip.clock(3));
 
-    auto &integ = chip.cab(1).add(new Integrator(1.0, true));
-    
-    chip.io_cell(1).out().connect(integ.in(1));
-    chip.io_cell(2).out().connect(integ.comp_in);
-    integ.out().connect(chip.io_cell(3).in());
+    auto &integ = chip.cab(1).add(new SumInv(1.0, 1.0));
+
+    chip.io_cell(1).out(1).connect(integ.in(1));
+    chip.io_cell(2).out(1).connect(integ.in(2));
+    integ.opamp(1).out().connect(chip.io_cell(3).in(1));
 }
 
 void parse(AnalogChip &chip) {

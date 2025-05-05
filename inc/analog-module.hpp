@@ -31,19 +31,12 @@ public:
     virtual uint8_t connection_nibble(AnalogModule &to); 
 
     virtual void parse(std::ifstream &file) = 0;
-    virtual void configure() = 0;
 
     virtual void claim_components() = 0;
     virtual void finalize() = 0;
 
-    void claim_capacitors(size_t n);
-    void claim_opamps(size_t n);
-    void claim_comparator();
-
-    virtual InputPort &in(std::size_t i);
-    virtual InputPort &in();
-    virtual OutputPort &out(std::size_t i);
-    virtual OutputPort &out();
+    virtual InputPort &in(std::size_t i = 1);
+    virtual OutputPort &out(std::size_t i = 1);
 
     std::vector<InputPort> &ins() { return m_ins; }
     Capacitor &cap(int i);
@@ -56,6 +49,10 @@ public:
     std::string const &name() const { return m_name; }
 
 protected:
+    void claim_capacitors(size_t n);
+    void claim_opamps(size_t n);
+    void claim_comparator();
+
     AnalogBlock *m_cab;
 
     std::string m_name;
@@ -73,7 +70,6 @@ public:
     GainInv(double gain);
 
     void parse(std::ifstream &file) override;
-    void configure() override;
 
     void claim_components() override;
     void finalize() override;
@@ -88,7 +84,6 @@ public:
     SumInv(double lgain, double ugain);
 
     void parse(std::ifstream &file) override;
-    void configure() override;
 
     void claim_components() override;
     void finalize() override;
@@ -104,7 +99,6 @@ public:
     Integrator(double integ_const, bool m_gnd_reset);
 
     void parse(std::ifstream &file) override;
-    void configure() override;
 
     void claim_components() override;
     void finalize() override;

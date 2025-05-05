@@ -3,19 +3,19 @@
 #include "analog-block.hpp"
 
 Comparator::Comparator()
-        : m_is_used{false} {}
+        : m_module{} {}
 
-Comparator &Comparator::claim() {
-    if (m_is_used) {
+Comparator &Comparator::claim(AnalogModule &module) {
+    if (m_module) {
         throw DesignError("Comparator already claimed");
     }
-    m_is_used = true;
+    m_module = &module;
     
     return *this;
 }
 
 void Comparator::compile(AnalogBlock const &cab, ShadowSRam &ssram) const {
-    if (m_is_used) {
+    if (m_module) {
         ssram.set(cab.bank_b(), 0x09, { 0x07, 0xC9 });
         ssram.set(cab.bank_a(), 0x0E, 0x08);
 

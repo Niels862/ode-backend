@@ -28,7 +28,7 @@ void AnalogBlock::setup(Clock &clk_a, Clock &clk_b) {
     m_used_clocks[1] = &clk_b;
 }
 
-Capacitor &AnalogBlock::claim_cap(int value) {
+Capacitor &AnalogBlock::claim_cap(AnalogModule &module) {
     if (m_next_cap >= m_caps.size()) {
         std::stringstream ss;
         ss << "CAB" << m_id << ": cannot claim capactitor";
@@ -37,10 +37,10 @@ Capacitor &AnalogBlock::claim_cap(int value) {
 
     Capacitor &cap = m_caps[m_next_cap];
     m_next_cap++;
-    return cap.claim(value);
+    return cap.claim(module);
 }
 
-OpAmp &AnalogBlock::claim_opamp(bool closed_loop) {
+OpAmp &AnalogBlock::claim_opamp(AnalogModule &module) {
     if (m_next_opamp >= m_opamps.size()) {
         std::stringstream ss;
         ss << "CAB" << m_id << ": cannot claim opamp";
@@ -49,19 +49,20 @@ OpAmp &AnalogBlock::claim_opamp(bool closed_loop) {
 
     OpAmp &opamp = m_opamps[m_next_opamp];
     m_next_opamp++;
-    return opamp.claim(closed_loop);
+    return opamp.claim(module);
 }
 
-Comparator &AnalogBlock::claim_comp() {
-    return m_comp.claim();
+Comparator &AnalogBlock::claim_comp(AnalogModule &module) {
+    return m_comp.claim(module);
 }
 
-void AnalogBlock::configure() {
+void AnalogBlock::finalize() {
+    log_resources();
     for (auto const &module : m_modules) {
         if (args.verbose) {
             std::cerr << module->name() << ":" << std::endl;
         }
-        module->configure();
+        module->finalize();
     }
 }
 
@@ -129,4 +130,11 @@ void AnalogBlock::compile(ShadowSRam &ssram) const {
 
 void AnalogBlock::set_used_clock(int i, Clock &clock) {
     m_used_clocks[i] = &clock;
+}
+
+void AnalogBlock::log_resources() const {
+    std::cerr << m_next_cap << " / " 
+              << NCapacitorsPerBlock << " Capacitors, " 
+              << m_next_opamp << " / " << NOpAmpsPerBlock << " OpAmps, " 
+              << m_comp.is_used() << " / 1 Comparators" << std::endl;
 }
