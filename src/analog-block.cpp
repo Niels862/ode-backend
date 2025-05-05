@@ -66,7 +66,50 @@ void AnalogBlock::finalize() {
     }
 }
 
-void AnalogBlock::compile(ShadowSRam &ssram) const {
+static int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2, 
+                                   Connection::Channel channel) {
+    bool is1 = false, is2 = false;
+    
+    if (opamp1.is_used()) {
+        for (auto &port : opamp1.out().connections()) {
+            if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
+                Connection &conn = cell->connection(opamp1.out().module().cab());
+                is1 = conn.channel == channel;
+            }
+        }
+    }
+
+    if (opamp2.is_used()) {
+        for (auto &port : opamp2.out().connections()) {
+            if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
+                Connection &conn = cell->connection(opamp2.out().module().cab());
+                is2 = conn.channel == channel;
+            }
+        }
+    }
+    
+    if (is1 && is2) {
+        abort();
+    }
+
+    if (is1) return 1;
+    if (is2) return 2;
+    return 0;
+}
+
+/* FIXME: unreliable, needs more research */
+static uint8_t compile_local_output_routing(OpAmp &opamp1, OpAmp &opamp2) {
+    int pri = find_connection_channel(opamp1, opamp2, Connection::Primary);
+    int sec = find_connection_channel(opamp1, opamp2, Connection::Secondary);
+
+    if (sec) {
+        sec = sec == 2 ? 1 : 2;
+    }
+
+    return pri | (sec << 4);
+}
+
+void AnalogBlock::compile(ShadowSRam &ssram) {
     /* Enable Clocks */
     for (Clock *clock : m_used_clocks) {
         clock->set_is_used(true);
@@ -84,7 +127,6 @@ void AnalogBlock::compile(ShadowSRam &ssram) const {
 
     /* Compile Comparator: unknown setup values */
     m_comp.compile(*this, ssram);
-
 
     bool use_far_pri = false, use_far_sec = false;
     for (auto &module : m_modules) {
@@ -122,7 +164,8 @@ void AnalogBlock::compile(ShadowSRam &ssram) const {
     ssram.set(bank_b(), 0x05, b05);
     ssram.set(bank_b(), 0x04, b04);
 
-    ssram.set(bank_b(), 0x02, 0xFF);
+    uint8_t b = compile_local_output_routing(m_opamps[0], m_opamps[1]);
+    ssram.set(bank_b(), 0x02, b);
 
     ssram.set(bank_b(), 0x0, from_nibbles(m_used_clocks[1]->id_nibble(), 
                                           m_used_clocks[0]->id_nibble()));

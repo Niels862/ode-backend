@@ -34,7 +34,7 @@ uint8_t Connection::io_nibble() const {
         if (channel == Connection::Primary) {
             return 0xC;
         }
-        abort(); // ?? todo
+        return 0x8;
     }
 
     abort();
@@ -153,6 +153,9 @@ InputPort &IOCell::in(std::size_t i) {
     if (i != 1) {
         throw DesignError("IO-Cell can only access in(1)");
     }
+    if (m_mode != IOMode::OutputBypass) {
+        throw DesignError("TODO output");
+    }
 
     return m_in;
 }
@@ -160,6 +163,9 @@ InputPort &IOCell::in(std::size_t i) {
 OutputPort &IOCell::out(std::size_t i) {
     if (i != 1) {
         throw DesignError("IO-Cell can only access out(1)");
+    }
+    if (m_mode != IOMode::InputBypass) {
+        throw DesignError("TODO input");
     }
 
     return m_out;

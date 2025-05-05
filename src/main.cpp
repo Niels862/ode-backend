@@ -78,17 +78,16 @@ void write(AnalogChip &chip) {
 }
 
 void load(AnalogChip &chip) {
-    chip.io_cell(1).set_mode(IOMode::InputBypass);
-    chip.io_cell(2).set_mode(IOMode::InputBypass);
     chip.io_cell(3).set_mode(IOMode::OutputBypass);
+    chip.io_cell(4).set_mode(IOMode::OutputBypass);
 
     chip.cab(1).setup(chip.clock(1), chip.clock(3));
 
-    auto &integ = chip.cab(1).add(new SumInv(1.0, 1.0));
+    auto &gain1 = chip.cab(1).add(new GainInv(0.5));
+    auto &gain2 = chip.cab(1).add(new GainInv(1.0));
 
-    chip.io_cell(1).out(1).connect(integ.in(1));
-    chip.io_cell(2).out(1).connect(integ.in(2));
-    integ.opamp(1).out().connect(chip.io_cell(3).in(1));
+    gain1.opamp(1).out().connect(chip.io_cell(3).in(1));
+    gain2.opamp(1).out().connect(chip.io_cell(4).in(1));
 }
 
 void parse(AnalogChip &chip) {

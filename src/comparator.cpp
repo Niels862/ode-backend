@@ -3,14 +3,16 @@
 #include "analog-block.hpp"
 
 Comparator::Comparator()
-        : m_module{} {}
+        : m_module{}, m_in{} {}
 
 Comparator &Comparator::claim(AnalogModule &module) {
     if (m_module) {
         throw DesignError("Comparator already claimed");
     }
+
     m_module = &module;
-    
+    m_in = InputPort(module);
+
     return *this;
 }
 

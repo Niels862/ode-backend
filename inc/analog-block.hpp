@@ -37,7 +37,7 @@ public:
 
     void finalize();
 
-    void compile(ShadowSRam &ssram) const;
+    void compile(ShadowSRam &ssram);
 
     std::size_t bank_a() const { return 2 * m_id + 1; }
     std::size_t bank_b() const { return bank_a() + 1; }

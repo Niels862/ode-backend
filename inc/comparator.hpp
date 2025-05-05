@@ -1,6 +1,7 @@
 #ifndef OBC_COMPARATOR_HPP
 #define OBC_COMPARATOR_HPP
 
+#include "io-port.hpp"
 #include "shadow-sram.hpp"
 
 class AnalogBlock;
@@ -18,6 +19,11 @@ public:
 
 private:
     AnalogModule *m_module;
+
+    InputPort m_in;
+    
+    /* Comparator output can be implemented in the future but this requires more complex routing and is currently out of scope */
+    //OutputPort m_out; 
 };
 
 #endif

@@ -47,7 +47,7 @@ ShadowSRam AnalogChip::compile() {
         cab.finalize();
     }
 
-    for (AnalogBlock const &cab : m_cabs) {
+    for (AnalogBlock &cab : m_cabs) {
         cab.compile(ssram);
     }
 
@@ -122,7 +122,7 @@ void AnalogChip::compile_io_routing(ShadowSRam &ssram) {
     ssram.set(0x02, 0x01, from_nibbles(routing_hi[3], routing_hi[2]));
 }
 
-void setup_connection_matrix(IOCell &cell, Connection *conns[2][2]) {
+static void setup_connection_matrix(IOCell &cell, Connection *conns[2][2]) {
     for (auto &conn : cell.connections()) {
         if (conn.block == Connection::None) {
             continue;
@@ -141,7 +141,7 @@ void setup_connection_matrix(IOCell &cell, Connection *conns[2][2]) {
     }
 }
 
-void promote_near_connections(Connection *conns[2][2], bool c1c2_near) {
+static void promote_near_connections(Connection *conns[2][2], bool c1c2_near) {
     int far  = c1c2_near ? 1 : 0;
     
     if (!conns[0][far] && !conns[1][far]) {
@@ -157,7 +157,7 @@ void promote_near_connections(Connection *conns[2][2], bool c1c2_near) {
     }
 }
 
-Connection *get_local_representative(Connection *lconns[2]) {
+static Connection *get_local_representative(Connection *lconns[2]) {
     Connection *repr = nullptr;
 
     for (std::size_t i = 0; i < 2; i++) {
@@ -177,8 +177,8 @@ Connection *get_local_representative(Connection *lconns[2]) {
     return repr;
 }
 
-void resolve_local_connection_conflicts(Connection *lconns1[2], 
-                                        Connection *lconns2[2]) {
+static void resolve_local_connection_conflicts(Connection *lconns1[2], 
+                                               Connection *lconns2[2]) {
     auto repr1 = get_local_representative(lconns1);
     auto repr2 = get_local_representative(lconns2);
 
@@ -194,7 +194,7 @@ void resolve_local_connection_conflicts(Connection *lconns1[2],
     }
 }
 
-void initialize_routing_data(Connection *conns[2], uint8_t &entry) {
+static void initialize_routing_data(Connection *conns[2], uint8_t &entry) {
     Connection *repr = get_local_representative(conns);
 
     if (repr) {
