@@ -30,10 +30,17 @@ struct Connection {
         Secondary
     };
 
+    enum class Internal {
+        Unset,
+        P,
+        Q,
+    };
+
     Block block;
     Mode mode;
     Channel channel;
     AnalogBlock *cab;
+    Internal internal;
 
     void reset();
 

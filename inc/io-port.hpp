@@ -8,6 +8,8 @@
 class AnalogModule;
 class OutputPort;
 
+class IOCell;
+
 class InputPort {
 public:
     InputPort();
@@ -20,6 +22,7 @@ public:
     AnalogModule &module() { return *m_module; }
 
     OutputPort *connection() { return m_connection; }
+    IOCell *io_connection();
 
 private:
     void connect(OutputPort &port);

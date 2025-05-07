@@ -1,6 +1,7 @@
 #include "io-port.hpp"
 #include "analog-module.hpp"
 #include "analog-block.hpp"
+#include "io-cell.hpp"
 #include "error.hpp"
 
 InputPort::InputPort()
@@ -15,6 +16,18 @@ uint8_t InputPort::connection_nibble() const {
     }
 
     return m_connection->module().connection_nibble(*m_module);
+}
+
+IOCell *InputPort::io_connection() {
+    if (m_connection == nullptr) {
+        return nullptr;
+    }
+    AnalogModule *other = &m_connection->module();
+    if (auto cell = dynamic_cast<IOCell *>(other)) {
+        return cell;
+    } else {
+        return nullptr;
+    }
 }
 
 void InputPort::connect(OutputPort &port) {

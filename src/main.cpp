@@ -77,17 +77,27 @@ void write(AnalogChip &chip) {
     f.close();
 }
 
+void load_doubling_sum(AnalogChip &chip) {
+    chip.io_cell(1).set_mode(IOMode::InputBypass);
+
+    chip.cab(3).setup(chip.clock(1), chip.null_clock());
+
+    auto &suminv = chip.cab(3).add(new SumInv(0.32, 0.58));
+
+    chip.io_cell(1).out(1).connect(suminv.in(1));
+    chip.io_cell(1).out(1).connect(suminv.in(2));
+}
+
 void load(AnalogChip &chip) {
-    chip.io_cell(3).set_mode(IOMode::OutputBypass);
-    chip.io_cell(4).set_mode(IOMode::OutputBypass);
+    chip.io_cell(1).set_mode(IOMode::InputBypass);
+    chip.io_cell(2).set_mode(IOMode::InputBypass);
 
-    chip.cab(1).setup(chip.clock(1), chip.clock(3));
+    chip.cab(3).setup(chip.clock(1), chip.clock(3));
 
-    auto &gain1 = chip.cab(1).add(new GainInv(0.5));
-    auto &gain2 = chip.cab(1).add(new GainInv(1.0));
+    auto &integ = chip.cab(3).add(new Integrator(0.42, true));
 
-    gain1.opamp(1).out().connect(chip.io_cell(3).in(1));
-    gain2.opamp(1).out().connect(chip.io_cell(4).in(1));
+    chip.io_cell(1).out(1).connect(integ.in(1));
+    chip.io_cell(2).out(1).connect(integ.comp().in());
 }
 
 void parse(AnalogChip &chip) {
@@ -100,7 +110,7 @@ int main(int argc, char *argv[]) {
 
     AnalogChip chip;
     
-    load(chip);
+    load_doubling_sum(chip);
     write(chip);
     
     return 0;

@@ -15,6 +15,7 @@
 #include <memory>
 
 class AnalogChip;
+class IOCell;
 
 class AnalogBlock {
 public:
@@ -55,6 +56,9 @@ public:
     operator bool() const { return m_id > 0; }
 
 private:
+    void map_internal_channels();
+    uint8_t compile_internal_channel_routing(IOCell *channel);
+
     int m_id;
 
     std::array<Capacitor, NCapacitorsPerBlock> m_caps;
@@ -66,6 +70,8 @@ private:
     Comparator m_comp;
 
     std::array<Clock *, 2> m_used_clocks;
+    IOCell *m_internal_P;
+    IOCell *m_internal_Q;
 
     std::vector<std::unique_ptr<AnalogModule>> m_modules;
 };

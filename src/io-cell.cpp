@@ -8,6 +8,7 @@ void Connection::reset() {
     this->mode = Connection::Near;
     this->channel = Connection::Primary;
     this->cab = nullptr;
+    this->internal = Connection::Internal::Unset;
 }
 
 void Connection::initialize(AnalogBlock &cab, Block block) {

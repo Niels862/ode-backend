@@ -13,7 +13,9 @@ AnalogBlock::AnalogBlock()
 AnalogBlock::AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock)
         : m_id{id}, m_caps{}, m_next_cap{}, 
           m_opamps{}, m_next_opamp{}, 
-          m_used_clocks{&pri_clock, &sec_clock}, m_modules{} {
+          m_used_clocks{&pri_clock, &sec_clock}, 
+          m_internal_P{}, m_internal_Q{}, 
+          m_modules{} {
     for (std::size_t i = 0; i < NCapacitorsPerBlock; i++) {
         m_caps[i] = Capacitor(i + 1);
     }
@@ -109,6 +111,33 @@ static uint8_t compile_local_output_routing(OpAmp &opamp1, OpAmp &opamp2) {
     return pri | (sec << 4);
 }
 
+/*
+The CAB has two internal routing channels, P and Q.
+In the local routing configuration, external channels can be mapped 
+to the channels:
+
+Byte 05 controls the signal to Q, byte 04 controls the signal to P,
+possibly multiplexer values. In the CAB module routing, these channels
+can be referenced using the defined values. 
+
+Constraints: 
+- Capacitor switches can select either P or Q.
+- The single comparator is *only able* to use the Q channel, as the 
+  configuration to P is unknown / may not exist.
+
+These channels are used for `far` connections to IO-Cells. Whether a 
+connection is `near` or `far` is determind elsewhere and can be tested with 
+conn.channel.
+
+Approach:
+- Check if comparator is in use and if its connnection is to a far IO-Cell. 
+  If so, reserve Q for the signal from this IO-Cell. It may still be used by 
+  switches as well. 
+- Iterate over each switch connection to the CAB. If a connection is to a far 
+  IO-Cell, first check if it is to an existing mapping to P or Q. If not, 
+  add a mapping. If both P and Q are mapped and both do not match, throw a 
+  RoutingError.  
+*/
 void AnalogBlock::compile(ShadowSRam &ssram) {
     /* Enable Clocks */
     for (Clock *clock : m_used_clocks) {
@@ -128,41 +157,9 @@ void AnalogBlock::compile(ShadowSRam &ssram) {
     /* Compile Comparator: unknown setup values */
     m_comp.compile(*this, ssram);
 
-    bool use_far_pri = false, use_far_sec = false;
-    for (auto &module : m_modules) {
-        for (auto &in : module->ins()) {
-            OutputPort *port = in.connection();
-            if (!port) {
-                continue;
-            }
-
-            if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
-                Connection &conn = cell->connection(*this);
-
-                if (conn.mode == Connection::Far) {
-                    if (conn.channel == Connection::Primary) {
-                        use_far_pri = true;
-                    }
-                    if (conn.channel == Connection::Secondary) {
-                        use_far_sec = true;
-                    }
-                }
-            }
-        }
-    }
-
-    uint8_t b05 = 0x00, b04 = 0x00;
-    if (use_far_pri && use_far_sec) {
-        b05 = 0x01; // both present
-        b04 = 0x02;
-    } else if (use_far_pri) {
-        b05 = 0x01;
-    } else if (use_far_sec) {
-        b05 = 0x02;
-    }
-
-    ssram.set(bank_b(), 0x05, b05);
-    ssram.set(bank_b(), 0x04, b04);
+    map_internal_channels();
+    ssram.set(bank_b(), 0x05, compile_internal_channel_routing(m_internal_P));
+    ssram.set(bank_b(), 0x04, compile_internal_channel_routing(m_internal_Q));
 
     uint8_t b = compile_local_output_routing(m_opamps[0], m_opamps[1]);
     ssram.set(bank_b(), 0x02, b);
@@ -180,4 +177,56 @@ void AnalogBlock::log_resources() const {
               << NCapacitorsPerBlock << " Capacitors, " 
               << m_next_opamp << " / " << NOpAmpsPerBlock << " OpAmps, " 
               << m_comp.is_used() << " / 1 Comparators" << std::endl;
+}
+
+void AnalogBlock::map_internal_channels() {
+    IOCell *comp_io = m_comp.in().io_connection();
+    if (comp_io) {
+        Connection &conn = comp_io->connection(*this);
+        if (conn.mode == Connection::Far) {
+            conn.internal = Connection::Internal::Q;
+            m_internal_Q = comp_io;
+        }
+    }
+
+    for (auto &module : m_modules) {
+        for (InputPort &in : module->ins()) {
+            IOCell *in_io = in.io_connection();
+            if (!in_io) {
+                continue;
+            }
+            
+            Connection &conn = in_io->connection(*this);
+            if (conn.mode != Connection::Far) {
+                continue;
+            }
+
+            if (m_internal_P == in_io) {
+                conn.internal = Connection::Internal::P;
+            } else if (m_internal_Q == in_io) {
+                conn.internal = Connection::Internal::Q;
+            } else if (m_internal_P == nullptr) {
+                conn.internal = Connection::Internal::P;
+                m_internal_P = in_io;
+            } else if (m_internal_Q == nullptr) {
+                conn.internal = Connection::Internal::Q;
+                m_internal_Q = in_io;
+            } else {
+                throw DesignError(
+                        "Cannot realize routing: out of internal channels");
+            }
+        } 
+    }
+}
+
+uint8_t AnalogBlock::compile_internal_channel_routing(IOCell *channel) {
+    if (channel == nullptr) {
+        return 0x00;
+    }
+
+    Connection &conn = channel->connection(*this);
+    if (conn.channel == Connection::Primary) {
+        return 0x01;
+    }
+    return 0x02;
 }

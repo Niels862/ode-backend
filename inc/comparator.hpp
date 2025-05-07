@@ -17,6 +17,8 @@ public:
 
     bool is_used() const { return m_module != nullptr; }
 
+    InputPort &in() { return m_in; }
+
 private:
     AnalogModule *m_module;
 
