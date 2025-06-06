@@ -4,10 +4,10 @@
 #include <sstream>
 
 OpAmp::OpAmp()
-        : m_id{}, m_module{}, m_closed_loop{} {}
+        : m_id{}, m_module{} {}
 
 OpAmp::OpAmp(int id)
-        : m_id{id}, m_module{}, m_closed_loop{true} {} // FIXME
+        : m_id{id}, m_module{} {} // FIXME
 
 OpAmp &OpAmp::claim(AnalogModule &module) {
     if (m_module) {
@@ -19,11 +19,12 @@ OpAmp &OpAmp::claim(AnalogModule &module) {
     m_module = &module;
     m_out = OutputPort(module);
 
-    return *this;
+    return set_feedback({ 0x00, 0x05 });
 }
 
-OpAmp &OpAmp::set_closed_loop(bool closed_loop) {
-    m_closed_loop = closed_loop;
+OpAmp &OpAmp::set_feedback(SwitchConfiguration switch_cfg) {
+    m_switch_cfg[0] = switch_cfg.b1;
+    m_switch_cfg[1] = switch_cfg.b2;
 
     return *this;
 }
@@ -38,11 +39,7 @@ void OpAmp::compile(AnalogBlock const &cab, ShadowSRam &ssram) const {
         throw DesignError("Invalid ID");
     }
     
-    if (!is_used()) {
-        ssram.set(cab.bank_b(), m_byte_addr, { 0x00, 0x00 });
-    } else if (m_closed_loop) {
-        ssram.set(cab.bank_b(), m_byte_addr, { 0x00, 0x05 });
-    } else {
-        throw DesignError("Not implemented");
+    for (std::size_t i = 0; i < 2; i++) {
+        ssram.set(cab.bank_b(), m_byte_addr + i, m_switch_cfg[i]);
     }
 }

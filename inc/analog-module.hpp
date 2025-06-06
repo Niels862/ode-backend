@@ -112,4 +112,33 @@ private:
     Comparator *m_comp;
 };
 
+class SingleGainInv : public AnalogModule {
+public:
+    SingleGainInv();
+    SingleGainInv(double gain);
+
+    void parse(std::ifstream &file) override;
+
+    void claim_components() override;
+    void finalize() override;
+
+private:
+    double m_gain;
+};
+
+class SingleSumInv : public AnalogModule {
+public:
+    SingleSumInv();
+    SingleSumInv(double lgain, double ugain);
+
+    void parse(std::ifstream &file) override;
+
+    void claim_components() override;
+    void finalize() override;
+
+private:
+    double m_lgain;
+    double m_ugain;
+};    
+
 #endif

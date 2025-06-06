@@ -146,7 +146,7 @@ void GainInv::finalize() {
     uint8_t num, den;
     approximate_ratio(m_gain, num, den);
 
-    OpAmp &_opamp = opamp(1).set_closed_loop(true);
+    OpAmp &_opamp = opamp(1);
 
     cap(1).set_value(num)
           .set_in(Capacitor::from_input(in()))
@@ -185,7 +185,7 @@ void SumInv::finalize() {
     uint8_t den;
     approximate_ratios(gains, nums, den);
 
-    OpAmp &_opamp = opamp(1).set_closed_loop(true);
+    OpAmp &_opamp = opamp(1);
 
     cap(1).set_value(nums[0])
           .set_in(Capacitor::from_input(in(1)))
@@ -237,7 +237,7 @@ void Integrator::finalize() {
     uint8_t num, den;
     approximate_ratio(m_integ_const / 4, num, den);
 
-    OpAmp &_opamp = opamp(1).set_closed_loop(true);
+    OpAmp &_opamp = opamp(1);
 
     cap(1).set_value(num)
           .set_in(Capacitor::from_input(in(), 1, Clock::B))
@@ -249,4 +249,68 @@ void Integrator::finalize() {
     if (m_gnd_reset) {
         // TODO
     }
+}
+
+SingleGainInv::SingleGainInv()
+        : AnalogModule{"SingleGainInv", 1}, m_gain{} {}
+
+SingleGainInv::SingleGainInv(double gain)
+        : AnalogModule{"SingleGainInv", 1}, m_gain{gain} {}
+
+void SingleGainInv::parse(std::ifstream &file) {
+    file >> m_gain;
+}
+
+void SingleGainInv::claim_components() {
+    claim_capacitors(2);
+    claim_opamps(1);
+}
+
+void SingleGainInv::finalize() {
+    uint8_t num, den;
+    approximate_ratio(m_gain, num, den);
+
+    OpAmp &_opamp = opamp(1);
+
+    cap(1).set_value(num)
+          .set_in(Capacitor::from_input(in(), 1))
+          .set_out(Capacitor::to_opamp(_opamp, 2));
+    cap(2).set_value(den)
+          .set_in(Capacitor::from_opamp(_opamp, 1))
+          .set_out(Capacitor::to_opamp(_opamp, 2));
+}
+
+SingleSumInv::SingleSumInv()
+        : AnalogModule{"SingleSumInv", 2}, m_lgain{}, m_ugain{} {}
+
+SingleSumInv::SingleSumInv(double lgain, double ugain)
+        : AnalogModule{"SingleSumInv", 2}, m_lgain{lgain}, m_ugain{ugain} {}
+
+void SingleSumInv::parse(std::ifstream &file) {
+    file >> m_lgain;
+    file >> m_ugain;
+}
+
+void SingleSumInv::claim_components() {
+    claim_capacitors(3);
+    claim_opamps(1);
+}
+
+void SingleSumInv::finalize() {
+    std::vector<double> gains = { m_lgain, m_ugain };
+    std::vector<uint8_t> nums;
+    uint8_t den;
+    approximate_ratios(gains, nums, den);
+
+    OpAmp &_opamp = opamp(1);
+    
+    cap(1).set_value(nums[0])
+          .set_in(Capacitor::from_input(in(1), 1))
+          .set_out(Capacitor::to_opamp(_opamp, 2));
+    cap(2).set_value(nums[1])
+          .set_in(Capacitor::from_input(in(2), 1))
+          .set_out(Capacitor::to_opamp(_opamp, 2));
+    cap(3).set_value(den)
+          .set_in(Capacitor::from_opamp(_opamp, 1))
+          .set_out(Capacitor::to_opamp(_opamp, 2));
 }

@@ -2,6 +2,7 @@
 #define OBC_OPAMP_HPP
 
 #include "io-port.hpp"
+#include "switch.hpp"
 #include "shadow-sram.hpp"
 
 class AnalogBlock;
@@ -13,7 +14,7 @@ public:
     OpAmp(int id);
 
     OpAmp &claim(AnalogModule &module);
-    OpAmp &set_closed_loop(bool closed_loop);
+    OpAmp &set_feedback(SwitchConfiguration switch_cfg);
 
     void compile(AnalogBlock const &cab, ShadowSRam &ssram) const;
 
@@ -26,7 +27,7 @@ private:
     int m_id;
     AnalogModule *m_module;
 
-    bool m_closed_loop;
+    uint8_t m_switch_cfg[2];
 
     OutputPort m_out;
 };

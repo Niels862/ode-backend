@@ -2,6 +2,7 @@
 #define OBC_CAPACITOR_HPP
 
 #include "clock.hpp"
+#include "switch.hpp"
 #include "shadow-sram.hpp"
 #include <initializer_list>
 #include <cstddef>
@@ -13,11 +14,6 @@ class AnalogModule;
 class OpAmp;
 
 class InputPort;
-
-struct SwitchConfiguration {
-    uint8_t b1;
-    uint8_t b2;
-};
 
 class Capacitor {
 public:

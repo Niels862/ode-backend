@@ -22,12 +22,10 @@ static error_t parse_opt(int key, char *arg, argp_state *state) {
             break;
 
         case ARGP_KEY_ARG:
-            if (args.infile.empty()) {
-                args.infile = arg;
-            } else if (args.outfile.empty()) {
-                args.outfile = arg;
-            } else {
-                argp_usage(state);
+            switch (state->arg_num) {
+                case 0: args.infile = arg; break;
+                case 1: args.outfile = arg; break;
+                default: argp_usage(state);
             }
             break;
 
@@ -88,6 +86,30 @@ void load_doubling_sum(AnalogChip &chip) {
     chip.io_cell(1).out(1).connect(suminv.in(2));
 }
 
+void load_gain(AnalogChip &chip) {
+    chip.io_cell(1).set_mode(IOMode::InputBypass);
+    chip.io_cell(2).set_mode(IOMode::OutputBypass);
+
+    chip.cab(1).setup(chip.clock(1), chip.null_clock());
+    auto &gaininv = chip.cab(1).add(new GainInv(0.5));
+
+    chip.io_cell(1).out(1).connect(gaininv.in(1));
+    gaininv.opamp(1).out().connect(chip.io_cell(2).in(1));
+}
+
+void load_sum(AnalogChip &chip) {
+    chip.io_cell(1).set_mode(IOMode::InputBypass);
+    chip.io_cell(3).set_mode(IOMode::InputBypass);
+    chip.io_cell(2).set_mode(IOMode::OutputBypass);
+
+    chip.cab(3).setup(chip.clock(1), chip.null_clock());
+    auto &suminv = chip.cab(3).add(new SumInv(1.0, 1.0));
+
+    chip.io_cell(1).out(1).connect(suminv.in(1));
+    chip.io_cell(3).out(1).connect(suminv.in(2));
+    suminv.opamp(1).out().connect(chip.io_cell(2).in(1));
+}
+
 void load(AnalogChip &chip) {
     chip.io_cell(1).set_mode(IOMode::InputBypass);
     chip.io_cell(2).set_mode(IOMode::InputBypass);
@@ -110,7 +132,7 @@ int main(int argc, char *argv[]) {
 
     AnalogChip chip;
     
-    load_doubling_sum(chip);
+    load_gain(chip);
     write(chip);
     
     return 0;
