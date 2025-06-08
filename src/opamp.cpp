@@ -4,10 +4,10 @@
 #include <sstream>
 
 OpAmp::OpAmp()
-        : m_id{}, m_module{} {}
+        : m_id{}, m_module{}, m_switch_cfg{} {}
 
 OpAmp::OpAmp(int id)
-        : m_id{id}, m_module{} {} // FIXME
+        : m_id{id}, m_module{}, m_switch_cfg{} {} 
 
 OpAmp &OpAmp::claim(AnalogModule &module) {
     if (m_module) {

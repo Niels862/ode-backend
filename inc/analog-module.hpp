@@ -64,6 +64,8 @@ protected:
     Comparator *m_comp;
 };
 
+/* AD20 Modules */
+
 class GainInv : public AnalogModule {
 public:
     GainInv();
@@ -103,14 +105,22 @@ public:
     void claim_components() override;
     void finalize() override;
 
-    InputPort comp_in;
-
 private:
     double m_integ_const;
     bool m_gnd_reset;
-
-    Comparator *m_comp;
 };
+
+class GainSwitch : public AnalogModule {
+public:
+    GainSwitch();
+
+    void parse(std::ifstream &) override {}
+
+    void claim_components() override;
+    void finalize() override;
+};
+
+/* Custom Modules */
 
 class SingleGainInv : public AnalogModule {
 public:

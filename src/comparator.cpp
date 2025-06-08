@@ -22,12 +22,12 @@ void Comparator::compile(AnalogBlock const &cab, ShadowSRam &ssram) const {
         ssram.set(cab.bank_a(), 0x0E, 0x08);
 
         ssram.set(cab.bank_b(), 0x06, 0x80);
-        ssram.set(cab.bank_b(), 0x1A, 0x6C);
+        //ssram.set(cab.bank_b(), 0x1A, 0x6C);
     } else {
         ssram.set(cab.bank_b(), 0x09, { 0x00, 0x00 });
         ssram.set(cab.bank_a(), 0x0E, 0x00);
 
         ssram.set(cab.bank_b(), 0x06, 0x00);
-        ssram.set(cab.bank_b(), 0x1A, 0x00);
+        //ssram.set(cab.bank_b(), 0x1A, 0x00);
     }
 }

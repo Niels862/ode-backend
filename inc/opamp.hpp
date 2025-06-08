@@ -27,7 +27,7 @@ private:
     int m_id;
     AnalogModule *m_module;
 
-    uint8_t m_switch_cfg[2];
+    std::array<uint8_t, 4> m_switch_cfg;
 
     OutputPort m_out;
 };

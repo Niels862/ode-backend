@@ -209,16 +209,11 @@ void SumInv::finalize() {
 
 Integrator::Integrator()
         : AnalogModule("Integrator", 1), 
-          comp_in{*this},
-          m_integ_const{}, m_gnd_reset{},
-          m_comp{} {}
+          m_integ_const{}, m_gnd_reset{} {}
 
 Integrator::Integrator(double integ_const, bool gnd_reset)
         : AnalogModule{"Integrator", 1}, 
-          comp_in{*this},
-          m_integ_const{integ_const}, m_gnd_reset{gnd_reset},
-          m_comp{} {
-}
+          m_integ_const{integ_const}, m_gnd_reset{gnd_reset} {}
 
 void Integrator::parse(std::ifstream &file) {
     file >> m_integ_const;
@@ -249,6 +244,29 @@ void Integrator::finalize() {
     if (m_gnd_reset) {
         // TODO
     }
+}
+
+GainSwitch::GainSwitch()
+        : AnalogModule{"GainSwitch", 2} {}
+
+void GainSwitch::claim_components() {
+    claim_capacitors(3);
+    claim_opamps(1);
+    claim_comparator();
+}
+
+void GainSwitch::finalize() {
+    OpAmp &_opamp = opamp(1);
+
+    cap(1).set_value(255)
+          .set_in(Capacitor::from_input(in(1)))
+          .set_out(Capacitor::to_opamp(_opamp));
+    cap(2).set_value(255)
+          .set_in(Capacitor::from_input(in(2)))
+          .set_out(Capacitor::to_opamp(_opamp));
+    cap(3).set_value(255)
+          .set_in(Capacitor::from_opamp(_opamp, 1))
+          .set_out(Capacitor::to_opamp(_opamp));
 }
 
 SingleGainInv::SingleGainInv()

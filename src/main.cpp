@@ -110,6 +110,21 @@ void load_sum(AnalogChip &chip) {
     suminv.opamp(1).out().connect(chip.io_cell(3).in(1));
 }
 
+void load_gain_switch(AnalogChip &chip) {
+    chip.io_cell(1).set_mode(IOMode::InputBypass);
+    chip.io_cell(2).set_mode(IOMode::InputBypass);
+    chip.io_cell(3).set_mode(IOMode::InputBypass);
+    chip.io_cell(4).set_mode(IOMode::OutputBypass);
+
+    chip.cab(1).setup(chip.clock(1), chip.null_clock());
+    auto &gainswitch = chip.cab(1).add(new GainSwitch());
+
+    chip.io_cell(1).out(1).connect(gainswitch.in(1));
+    chip.io_cell(2).out(1).connect(gainswitch.in(2));
+    chip.io_cell(3).out(1).connect(gainswitch.comp().in());
+    gainswitch.opamp(1).out().connect(chip.io_cell(4).in(1));
+}
+
 void load(AnalogChip &chip) {
     chip.io_cell(1).set_mode(IOMode::InputBypass);
     chip.io_cell(2).set_mode(IOMode::InputBypass);
@@ -132,7 +147,7 @@ int main(int argc, char *argv[]) {
 
     AnalogChip chip;
     
-    load_gain(chip);
+    load_gain_switch(chip);
     write(chip);
     
     return 0;

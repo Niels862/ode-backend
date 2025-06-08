@@ -1,19 +1,29 @@
-input
-input
-output
-none
-
-start-modules
-
-Integrator 1 integ1
-0.85 
-1
-
-end-modules
-
-start-routing
-
-IO1 -> integ1:1
-integ1 -> IO3
-
-end-routing
+{
+    "io": {
+        "1": "input",
+        "2": "input",
+        "3": "output"
+    },
+    "cabs": {
+        "1": {
+            "clocks": [ 1, 0 ],
+            "cams": [
+                {
+                    "cam": "GainInv",
+                    "key": "gain1",
+                    "gain": 0.5
+                }
+            ]
+        }
+    },
+    "routing": [
+        {
+            "from": "io1:out",
+            "to": "gain1:opamp1:in"
+        },
+        {
+            "from": "gain1:opamp1:out",
+            "to": "io3:in"
+        }
+    ]
+}

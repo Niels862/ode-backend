@@ -1,5 +1,7 @@
 #include "memory-base.hpp"
+#include "error.hpp"
 #include <iomanip>
+#include <sstream>
 
 MemoryAddress::MemoryAddress()
         : bank_addr{}, byte_addr{} {}
@@ -39,10 +41,13 @@ MemoryCell const &MemoryBase::get(std::size_t bank_addr,
 void MemoryBase::set(std::size_t bank_addr, std::size_t byte_addr, 
                      uint8_t value) const {
     if (!includes(bank_addr, byte_addr)) {
-        /* error... */
+
     }
     if (get(bank_addr, byte_addr).is_set()) {
-        /* error... */
+        std::stringstream ss;
+        ss << "Memory at " << std::hex << bank_addr << ":" 
+           << byte_addr << std::dec << " already written";
+        throw DesignError(ss.str());
     }
     m_banks[translate(bank_addr, byte_addr)] = MemoryCell(value);
 }

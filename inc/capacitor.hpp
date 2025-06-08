@@ -49,7 +49,7 @@ private:
     AnalogModule *m_module;
 
     uint8_t m_value;
-    uint8_t m_switch_cfg[4];
+    std::array<uint8_t, 4> m_switch_cfg;
 };
 
 #endif
