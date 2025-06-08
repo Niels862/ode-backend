@@ -88,26 +88,26 @@ void load_doubling_sum(AnalogChip &chip) {
 
 void load_gain(AnalogChip &chip) {
     chip.io_cell(1).set_mode(IOMode::InputBypass);
-    chip.io_cell(2).set_mode(IOMode::OutputBypass);
+    chip.io_cell(3).set_mode(IOMode::OutputBypass);
 
     chip.cab(1).setup(chip.clock(1), chip.null_clock());
     auto &gaininv = chip.cab(1).add(new GainInv(0.5));
 
     chip.io_cell(1).out(1).connect(gaininv.in(1));
-    gaininv.opamp(1).out().connect(chip.io_cell(2).in(1));
+    gaininv.opamp(1).out().connect(chip.io_cell(3).in(1));
 }
 
 void load_sum(AnalogChip &chip) {
     chip.io_cell(1).set_mode(IOMode::InputBypass);
-    chip.io_cell(3).set_mode(IOMode::InputBypass);
-    chip.io_cell(2).set_mode(IOMode::OutputBypass);
+    chip.io_cell(2).set_mode(IOMode::InputBypass);
+    chip.io_cell(3).set_mode(IOMode::OutputBypass);
 
-    chip.cab(3).setup(chip.clock(1), chip.null_clock());
-    auto &suminv = chip.cab(3).add(new SumInv(1.0, 1.0));
+    chip.cab(1).setup(chip.clock(1), chip.null_clock());
+    auto &suminv = chip.cab(1).add(new SumInv(1.0, 1.0));
 
     chip.io_cell(1).out(1).connect(suminv.in(1));
-    chip.io_cell(3).out(1).connect(suminv.in(2));
-    suminv.opamp(1).out().connect(chip.io_cell(2).in(1));
+    chip.io_cell(2).out(1).connect(suminv.in(2));
+    suminv.opamp(1).out().connect(chip.io_cell(3).in(1));
 }
 
 void load(AnalogChip &chip) {
