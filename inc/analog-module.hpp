@@ -40,7 +40,7 @@ public:
 
     std::vector<InputPort> &ins() { return m_ins; }
     Capacitor &cap(int i);
-    OpAmp &opamp(int i = 0);
+    OpAmp &opamp(int i);
     Comparator &comp();
 
     void set_cab(AnalogBlock &cab);

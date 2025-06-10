@@ -233,6 +233,10 @@ void Integrator::finalize() {
     approximate_ratio(m_integ_const / 4, num, den);
 
     OpAmp &_opamp = opamp(1);
+    if (m_gnd_reset) {
+        comp().set_configuration({ 0x07, 0xC9 });
+        _opamp.set_feedback({ 0x6C, 0x05 });
+    }
 
     cap(1).set_value(num)
           .set_in(Capacitor::from_input(in(), 1, Clock::B))
@@ -240,10 +244,6 @@ void Integrator::finalize() {
     cap(2).set_value(den)
           .set_in(Capacitor::from_opamp(_opamp))
           .set_out(Capacitor::to_opamp(_opamp));
-
-    if (m_gnd_reset) {
-        // TODO
-    }
 }
 
 GainSwitch::GainSwitch()
@@ -257,6 +257,7 @@ void GainSwitch::claim_components() {
 
 void GainSwitch::finalize() {
     OpAmp &_opamp = opamp(1);
+    comp().set_configuration({ 0x81, 0x05 });
 
     cap(1).set_value(255)
           .set_in(Capacitor::from_input(in(1)))
