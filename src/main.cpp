@@ -103,7 +103,7 @@ void load_sum(AnalogChip &chip) {
     chip.io_cell(3).set_mode(IOMode::OutputBypass);
 
     chip.cab(1).setup(chip.clock(1), chip.null_clock());
-    auto &suminv = chip.cab(1).add(new SumInv(1.0, 1.0));
+    auto &suminv = chip.cab(1).add(new SingleSumInv(1.0, 1.0));
 
     chip.io_cell(1).out(1).connect(suminv.in(1));
     chip.io_cell(2).out(1).connect(suminv.in(2));
@@ -143,16 +143,46 @@ void load_integgnd(AnalogChip &chip) {
     integ.opamp(1).out().connect(chip.io_cell(io_out).in(1));
 }
 
+void load_gain_switch_gnd(AnalogChip &chip) {
+    int io_inp = 1;
+    int io_ctr = 2;
+    int io_out = 3;
+    int cab    = 1;
+
+    chip.io_cell(io_inp).set_mode(IOMode::InputBypass);
+    chip.io_cell(io_ctr).set_mode(IOMode::InputBypass);
+    chip.io_cell(io_out).set_mode(IOMode::OutputBypass);
+
+    chip.cab(cab).setup(chip.clock(1), chip.null_clock());
+    auto &integ = chip.cab(cab).add(new GainSwitch());
+
+    chip.io_cell(io_inp).out(1).connect(integ.in(1));
+    chip.io_cell(io_ctr).out(1).connect(integ.comp().in());
+    integ.opamp(1).out().connect(chip.io_cell(io_out).in(1));
+}
+
+void load_sample_and_hold(AnalogChip &chip) {
+    chip.io_cell(1).set_mode(IOMode::InputBypass);
+    chip.io_cell(3).set_mode(IOMode::OutputBypass);
+
+    chip.cab(1).setup(chip.clock(1), chip.null_clock());
+
+    auto &hold = chip.cab(1).add(new SampleAndHold());
+    
+    chip.io_cell(1).out(1).connect(hold.in(1));
+    hold.opamp(1).out().connect(chip.io_cell(3).in(1));
+}
+
 void load(AnalogChip &chip) {
     chip.io_cell(1).set_mode(IOMode::InputBypass);
-    chip.io_cell(2).set_mode(IOMode::InputBypass);
+    chip.io_cell(3).set_mode(IOMode::InputBypass);
 
     chip.cab(3).setup(chip.clock(1), chip.clock(3));
 
     auto &integ = chip.cab(3).add(new Integrator(0.42, true));
 
     chip.io_cell(1).out(1).connect(integ.in(1));
-    chip.io_cell(2).out(1).connect(integ.comp().in());
+    chip.io_cell(3).out(1).connect(integ.comp().in());
 }
 
 void parse(AnalogChip &chip) {
@@ -165,7 +195,7 @@ int main(int argc, char *argv[]) {
 
     AnalogChip chip;
     
-    load_integgnd(chip);
+    load_sample_and_hold(chip);
     write(chip);
     
     return 0;

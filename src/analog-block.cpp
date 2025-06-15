@@ -154,7 +154,6 @@ void AnalogBlock::compile(ShadowSRam &ssram) {
         opamp.compile(*this, ssram);
     }
 
-    /* Compile Comparator: unknown setup values */
     m_comp.compile(*this, ssram);
 
     map_internal_channels();

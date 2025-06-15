@@ -120,6 +120,16 @@ public:
     void finalize() override;
 };
 
+class SampleAndHold : public AnalogModule {
+public:
+    SampleAndHold();
+
+    void parse(std::ifstream &) override {}
+
+    void claim_components() override;
+    void finalize() override;
+};
+
 /* Custom Modules */
 
 class SingleGainInv : public AnalogModule {

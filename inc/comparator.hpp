@@ -14,7 +14,7 @@ public:
     Comparator &claim(AnalogModule &module);
     Comparator &set_configuration(std::array<uint8_t, 2> cfg);
 
-    void compile(AnalogBlock const &cab, ShadowSRam &ssram) const;
+    void compile(AnalogBlock const &cab, ShadowSRam &ssram);
 
     bool is_used() const { return m_module != nullptr; }
 

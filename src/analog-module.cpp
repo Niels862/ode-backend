@@ -160,7 +160,6 @@ void GainInv::finalize() {
     cap(4).set_value(den)
           .set_in(Capacitor::from_opamp(_opamp, 1))
           .set_out(Capacitor::to_opamp(_opamp, 1));
-
 }
 
 SumInv::SumInv()
@@ -255,19 +254,43 @@ void GainSwitch::claim_components() {
     claim_comparator();
 }
 
+#define TEMP_OPAMP_FEEDBACK_SWITCHING { 0x81, 0x05 }
+
+#define TEMP_CAP_IN_SWITCHED_IF_COMP_GT(p) { 0x3D, (uint8_t)(((p.connection_nibble()) << 4) | 0x1) }
+#define TEMP_CAP_IN_SWITCHED_IF_COMP_LT(p) { 0x2D, (uint8_t)(((p.connection_nibble()) << 4) | 0x1) }
+
 void GainSwitch::finalize() {
-    OpAmp &_opamp = opamp(1);
-    comp().set_configuration({ 0x81, 0x05 });
+    OpAmp &_opamp = opamp(1).set_feedback(TEMP_OPAMP_FEEDBACK_SWITCHING);
+    comp().set_configuration({ 0x07, 0x01 });
 
     cap(1).set_value(255)
-          .set_in(Capacitor::from_input(in(1)))
+          .set_in(TEMP_CAP_IN_SWITCHED_IF_COMP_GT(in(1)))
           .set_out(Capacitor::to_opamp(_opamp));
     cap(2).set_value(255)
-          .set_in(Capacitor::from_input(in(2)))
+          .set_in(TEMP_CAP_IN_SWITCHED_IF_COMP_LT(in(2)))
           .set_out(Capacitor::to_opamp(_opamp));
     cap(3).set_value(255)
           .set_in(Capacitor::from_opamp(_opamp, 1))
           .set_out(Capacitor::to_opamp(_opamp));
+}
+
+SampleAndHold::SampleAndHold()
+        : AnalogModule{"SampleAndHold", 1} {}
+
+void SampleAndHold::claim_components() {
+    claim_capacitors(2);
+    claim_opamps(1);
+}
+
+void SampleAndHold::finalize() {
+    OpAmp &_opamp = opamp(1);
+
+    cap(1).set_value(255)
+          .set_in(Capacitor::switched_in(_opamp, in(1)))
+          .set_out(Capacitor::to_opamp(_opamp, 2));
+    cap(2).set_value(255)
+          .set_in(Capacitor::from_opamp(_opamp))
+          .set_out(Capacitor::to_opamp(_opamp, 1));
 }
 
 SingleGainInv::SingleGainInv()

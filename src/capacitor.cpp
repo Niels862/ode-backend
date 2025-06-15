@@ -64,6 +64,13 @@ SwitchConfiguration Capacitor::to_opamp(OpAmp const &opamp,
     throw DesignError("Invalid phase");
 }
 
+SwitchConfiguration Capacitor::switched_in(InSwitch phase1,
+                                           InSwitch phase2,
+                                           Clock::Select select) {
+    uint8_t s = select == Clock::A ? 0x01 : 0x02;
+    return { s, from_nibbles(phase1.b, phase2.b) };
+}
+
 Capacitor &Capacitor::claim(AnalogModule &module) {                     
     if (m_module) {
         std::stringstream ss;

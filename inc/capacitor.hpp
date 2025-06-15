@@ -3,6 +3,7 @@
 
 #include "clock.hpp"
 #include "switch.hpp"
+#include "switch-config.hpp"
 #include "shadow-sram.hpp"
 #include <initializer_list>
 #include <cstddef>
@@ -30,6 +31,10 @@ public:
     static SwitchConfiguration to_opamp(OpAmp const &opamp, 
                                         int sg_phase = 0,
                                         Clock::Select select = Clock::A);
+
+    static SwitchConfiguration switched_in(InSwitch phase1,
+                                           InSwitch phase2,
+                                           Clock::Select select = Clock::A);
 
     Capacitor &claim(AnalogModule &module);
     Capacitor &set_value(uint8_t value);

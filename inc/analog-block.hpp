@@ -24,9 +24,9 @@ public:
 
     void setup(Clock &clk_a, Clock &clk_b);
 
-    template <typename T>
-    T &add(T *module) {
-        m_modules.push_back(std::unique_ptr<T>(module));
+    template <typename Module>
+    Module &add(Module *module) {
+        m_modules.push_back(std::unique_ptr<Module>(module));
         module->set_cab(*this);
         module->claim_components();
         return *module;

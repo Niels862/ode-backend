@@ -2,7 +2,7 @@
 #define OBC_OPAMP_HPP
 
 #include "io-port.hpp"
-#include "switch.hpp"
+#include "switch-config.hpp"
 #include "shadow-sram.hpp"
 
 class AnalogBlock;
@@ -22,6 +22,9 @@ public:
     bool is_used() const { return m_module != nullptr; }
 
     OutputPort &out() { return m_out; }
+
+    static const uint8_t In1 = 0x3;
+    static const uint8_t In2 = 0x2;
 
 private:
     int m_id;
