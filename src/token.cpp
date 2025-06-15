@@ -8,6 +8,7 @@ char const *to_string(TokenType type) {
         case TokenType::EndOfFile:      return "end-of-file";
         case TokenType::Chip:           return "chip";
         case TokenType::With:           return "with";
+        case TokenType::Clocks:         return "clocks";
         case TokenType::As:             return "as";
         case TokenType::Cab:            return "cab";
         case TokenType::Arrow:          return "->";

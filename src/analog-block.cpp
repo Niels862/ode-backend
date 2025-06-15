@@ -6,12 +6,12 @@
 #include <sstream>
 
 AnalogBlock::AnalogBlock()
-        : m_id{}, m_caps{}, m_next_cap{}, 
+        : m_id{}, m_set_up{false}, m_caps{}, m_next_cap{}, 
           m_opamps{}, m_next_opamp{},
           m_used_clocks{}, m_modules{} {}
 
 AnalogBlock::AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock)
-        : m_id{id}, m_caps{}, m_next_cap{}, 
+        : m_id{id}, m_set_up{false}, m_caps{}, m_next_cap{}, 
           m_opamps{}, m_next_opamp{}, 
           m_used_clocks{&pri_clock, &sec_clock}, 
           m_internal_P{}, m_internal_Q{}, 
@@ -26,8 +26,15 @@ AnalogBlock::AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock)
 }
 
 void AnalogBlock::setup(Clock &clk_a, Clock &clk_b) {
+    if (m_set_up) {
+        std::stringstream ss;
+        ss << "CAB" << m_id << ": already set up" << std::endl;
+        throw DesignError(ss.str());
+    }
     m_used_clocks[0] = &clk_a;
     m_used_clocks[1] = &clk_b;
+
+    m_set_up = true;
 }
 
 Capacitor &AnalogBlock::claim_cap(AnalogModule &module) {

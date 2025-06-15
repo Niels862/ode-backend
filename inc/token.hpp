@@ -11,6 +11,7 @@ enum class TokenType {
 
     Chip,
     With,
+    Clocks,
     As,
     Cab,
 

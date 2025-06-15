@@ -5,8 +5,11 @@ chip {
         output,
     ],
     cabs [
-        cab 1 with clocks [ 1, - ] {
-            cams {
+        cab 1 {
+            clocks: [
+
+            ],
+            cams: {
                 SumInv as sum1 {
                     gain1: 1.0,
                     gain2: 1.0

@@ -31,10 +31,10 @@ private:
 
     void configure_shared_routing(IOCell &pri, IOCell &sec, uint8_t data[]);
 
-    std::array<AnalogBlock, 4> m_cabs;
+    std::array<AnalogBlock, NBlocksPerChip> m_cabs;
     AnalogBlock m_null_cab;
 
-    std::array<IOCell, 4> m_io_cells;
+    std::array<IOCell, NType1IOCellsPerChip> m_io_cells;
 
     std::array<Clock, 6> m_clocks;
     Clock m_null_clock;

@@ -3,5 +3,10 @@ chip {
         input,
         -,
         output,
-    ] 
+    ],
+    cabs: [
+        cab 1 with clocks 1, - {
+            cams: 
+        }
+    ],
 }

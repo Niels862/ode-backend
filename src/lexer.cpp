@@ -24,6 +24,7 @@ static TokenType classify_keyword(std::string const &lexeme) {
     static const std::unordered_map<std::string, TokenType> keywords {
         { "chip",       TokenType::Chip },
         { "with",       TokenType::With },
+        { "clocks",     TokenType::Clocks },
         { "as",         TokenType::As },
         { "cab",        TokenType::Cab },
     };

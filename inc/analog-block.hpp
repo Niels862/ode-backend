@@ -60,6 +60,7 @@ private:
     uint8_t compile_internal_channel_routing(IOCell *channel);
 
     int m_id;
+    bool m_set_up;
 
     std::array<Capacitor, NCapacitorsPerBlock> m_caps;
     std::size_t m_next_cap;
