@@ -12,12 +12,7 @@ enum class TokenType {
     Chip,
     With,
     As,
-    Clocks,
-    Io,
     Cab,
-    Cabs,
-    Cams,
-    Routing,
 
     Arrow,
     Dash,
@@ -43,6 +38,7 @@ public:
     TokenType type() const { return m_type; }
     std::string const &lexeme() const { return m_lexeme; }
 
+    operator bool() { return m_type != TokenType::None; }
     friend std::ostream &operator <<(std::ostream &os, Token const &token);
 
 private:

@@ -1,0 +1,7 @@
+chip {
+    io: [
+        input,
+        -,
+        output,
+    ] 
+}

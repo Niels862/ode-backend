@@ -9,12 +9,7 @@ char const *to_string(TokenType type) {
         case TokenType::Chip:           return "chip";
         case TokenType::With:           return "with";
         case TokenType::As:             return "as";
-        case TokenType::Clocks:         return "clocks";
-        case TokenType::Io:             return "io";
         case TokenType::Cab:            return "cab";
-        case TokenType::Cabs:           return "cabs";
-        case TokenType::Cams:           return "cams";
-        case TokenType::Routing:        return "routing";
         case TokenType::Arrow:          return "->";
         case TokenType::Dash:           return "-";
         case TokenType::LBrace:         return "{";

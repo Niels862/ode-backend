@@ -25,12 +25,7 @@ static TokenType classify_keyword(std::string const &lexeme) {
         { "chip",       TokenType::Chip },
         { "with",       TokenType::With },
         { "as",         TokenType::As },
-        { "clocks",     TokenType::Clocks },
-        { "io",         TokenType::Io },
         { "cab",        TokenType::Cab },
-        { "cabs",       TokenType::Cabs },
-        { "cams",       TokenType::Cams },
-        { "routing",    TokenType::Routing }
     };
 
     auto iter = keywords.find(lexeme);

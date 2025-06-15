@@ -4,6 +4,7 @@
 #include "io-port.hpp"
 #include "settings.hpp"
 #include "lexer.hpp"
+#include "parser.hpp"
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -197,18 +198,17 @@ std::unique_ptr<AnalogChip> parse_file(std::string filename) {
         std::cout << "]" << std::endl;
     }
 
-    return std::make_unique<AnalogChip>();
+    Parser parser;
+    std::unique_ptr<AnalogChip> chip = parser.parse(tokens);
+
+    return chip;
 }
 
 int main(int argc, char *argv[]) {
     argp_parse(&argp, argc, argv, 0, 0, nullptr);
 
-    AnalogChip chip;
-    
-    parse_file(args.infile);
-
-    load_sample_and_hold(chip);
-    write(chip);
+    auto chip = parse_file(args.infile);
+    write(*chip);
     
     return 0;
 }
