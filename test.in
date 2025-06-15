@@ -1,29 +1,22 @@
-{
-    "io": {
-        "1": "input",
-        "2": "input",
-        "3": "output"
-    },
-    "cabs": {
-        "1": {
-            "clocks": [ 1, 0 ],
-            "cams": [
-                {
-                    "cam": "GainInv",
-                    "key": "gain1",
-                    "gain": 0.5
+chip {
+    io [
+        input,
+        input,
+        output,
+    ],
+    cabs [
+        cab 1 with clocks [ 1, - ] {
+            cams {
+                SumInv as sum1 {
+                    gain1: 1.0,
+                    gain2: 1.0
                 }
-            ]
+            }
         }
-    },
-    "routing": [
-        {
-            "from": "io1:out",
-            "to": "gain1:opamp1:in"
-        },
-        {
-            "from": "gain1:opamp1:out",
-            "to": "io3:in"
-        }
+    ],
+    routing [
+        io1 -> sum1:1,
+        io2 -> sum1:2,
+        sum1 -> io3
     ]
 }

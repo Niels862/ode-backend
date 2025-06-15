@@ -3,7 +3,7 @@
 #include "shadow-sram.hpp"
 #include "io-port.hpp"
 #include "settings.hpp"
-#include "parser.hpp"
+#include "lexer.hpp"
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -185,9 +185,19 @@ void load(AnalogChip &chip) {
     chip.io_cell(3).out(1).connect(integ.comp().in());
 }
 
-void parse(AnalogChip &chip) {
-    chip.cab(1).setup(chip.clock(1), chip.clock(3));
-    Parser(chip).parse(args.infile);
+std::unique_ptr<AnalogChip> parse_file(std::string filename) {
+    Lexer lexer;
+
+    std::vector<Token> tokens = lexer.lex(filename);
+    if (args.verbose) {
+        std::cout << "Tokens [" << std::endl;
+        for (Token const &token : tokens) {
+            std::cout << "  " << token << "," << std::endl;
+        }
+        std::cout << "]" << std::endl;
+    }
+
+    return std::make_unique<AnalogChip>();
 }
 
 int main(int argc, char *argv[]) {
@@ -195,6 +205,8 @@ int main(int argc, char *argv[]) {
 
     AnalogChip chip;
     
+    parse_file(args.infile);
+
     load_sample_and_hold(chip);
     write(chip);
     
