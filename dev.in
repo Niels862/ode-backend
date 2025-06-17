@@ -7,7 +7,17 @@ chip {
     cabs: [
         cab 1 with clocks 1, - {
             cams: [
-                
+                Integrator as integ1 {
+                    integ_const: 1,
+                }
+            ]
+        },
+        cab 2 with clocks 1, - {
+            cams: [
+                SumInv as sum1 {
+                    gain1: 2,
+                    gain2: 3
+                }
             ]
         }
     ],

@@ -26,10 +26,15 @@ public:
 
     template <typename Module>
     Module &add(Module *module) {
+        add_raw(module)->claim_components();
+        return *module;
+    }
+
+    template <typename Module>
+    Module *add_raw(Module *module) {
         m_modules.push_back(std::unique_ptr<Module>(module));
         module->set_cab(*this);
-        module->claim_components();
-        return *module;
+        return module;
     }
 
     Capacitor &claim_cap(AnalogModule &module);

@@ -12,7 +12,7 @@ AnalogModule::AnalogModule(std::string const &name, std::size_t in_n)
     }
 }
 
-AnalogModule *AnalogModule::Build(std::string const &name) {
+AnalogModule *AnalogModule::Build(std::string_view const &name) {
     if (name == "GainInv")      return new GainInv();
     if (name == "SumInv")       return new SumInv();
     if (name == "Integrator")   return new Integrator();
@@ -133,8 +133,13 @@ GainInv::GainInv()
 GainInv::GainInv(double gain)
         : AnalogModule{"GainInv", 1}, m_gain{gain} {}
 
-void GainInv::parse(std::ifstream &file) {
-    file >> m_gain;
+bool GainInv::set_parameter(std::string_view param, Parameter value) {
+    if (param == "gain") {
+        m_gain = value.as_double();
+    } else {
+        return false;
+    }
+    return true;
 }
 
 void GainInv::claim_components() {
@@ -168,9 +173,15 @@ SumInv::SumInv()
 SumInv::SumInv(double lgain, double ugain)
         : AnalogModule{"SumInv", 2}, m_lgain{lgain}, m_ugain{ugain} {}
 
-void SumInv::parse(std::ifstream &file) {
-    file >> m_lgain;
-    file >> m_ugain;
+bool SumInv::set_parameter(std::string_view param, Parameter value) {
+    if (param == "gain1") {
+        m_lgain = value.as_double();
+    } else if (param == "gain2") {
+        m_ugain = value.as_double();
+    } else {
+        return false;
+    }
+    return true;
 }
 
 void SumInv::claim_components() {
@@ -214,9 +225,15 @@ Integrator::Integrator(double integ_const, bool gnd_reset)
         : AnalogModule{"Integrator", 1}, 
           m_integ_const{integ_const}, m_gnd_reset{gnd_reset} {}
 
-void Integrator::parse(std::ifstream &file) {
-    file >> m_integ_const;
-    file >> m_gnd_reset;
+bool Integrator::set_parameter(std::string_view param, Parameter value) {
+    if (param == "integ_const") {
+        m_integ_const = value.as_double();
+    } else if (param == "reset") {
+        m_gnd_reset = value.as_bool();
+    } else {
+        return false;
+    }
+    return true;
 }
 
 void Integrator::claim_components() {
@@ -248,6 +265,10 @@ void Integrator::finalize() {
 GainSwitch::GainSwitch()
         : AnalogModule{"GainSwitch", 2} {}
 
+bool GainSwitch::set_parameter(std::string_view, Parameter) {
+    return false;
+}
+
 void GainSwitch::claim_components() {
     claim_capacitors(3);
     claim_opamps(1);
@@ -277,6 +298,10 @@ void GainSwitch::finalize() {
 SampleAndHold::SampleAndHold()
         : AnalogModule{"SampleAndHold", 1} {}
 
+bool SampleAndHold::set_parameter(std::string_view, Parameter) {
+    return false;
+}
+
 void SampleAndHold::claim_components() {
     claim_capacitors(2);
     claim_opamps(1);
@@ -291,68 +316,4 @@ void SampleAndHold::finalize() {
     cap(2).set_value(255)
           .set_in(Capacitor::from_opamp(_opamp))
           .set_out(Capacitor::to_opamp(_opamp, 1));
-}
-
-SingleGainInv::SingleGainInv()
-        : AnalogModule{"SingleGainInv", 1}, m_gain{} {}
-
-SingleGainInv::SingleGainInv(double gain)
-        : AnalogModule{"SingleGainInv", 1}, m_gain{gain} {}
-
-void SingleGainInv::parse(std::ifstream &file) {
-    file >> m_gain;
-}
-
-void SingleGainInv::claim_components() {
-    claim_capacitors(2);
-    claim_opamps(1);
-}
-
-void SingleGainInv::finalize() {
-    uint8_t num, den;
-    approximate_ratio(m_gain, num, den);
-
-    OpAmp &_opamp = opamp(1);
-
-    cap(1).set_value(num)
-          .set_in(Capacitor::from_input(in(), 1))
-          .set_out(Capacitor::to_opamp(_opamp, 2));
-    cap(2).set_value(den)
-          .set_in(Capacitor::from_opamp(_opamp, 1))
-          .set_out(Capacitor::to_opamp(_opamp, 2));
-}
-
-SingleSumInv::SingleSumInv()
-        : AnalogModule{"SingleSumInv", 2}, m_lgain{}, m_ugain{} {}
-
-SingleSumInv::SingleSumInv(double lgain, double ugain)
-        : AnalogModule{"SingleSumInv", 2}, m_lgain{lgain}, m_ugain{ugain} {}
-
-void SingleSumInv::parse(std::ifstream &file) {
-    file >> m_lgain;
-    file >> m_ugain;
-}
-
-void SingleSumInv::claim_components() {
-    claim_capacitors(3);
-    claim_opamps(1);
-}
-
-void SingleSumInv::finalize() {
-    std::vector<double> gains = { m_lgain, m_ugain };
-    std::vector<uint8_t> nums;
-    uint8_t den;
-    approximate_ratios(gains, nums, den);
-
-    OpAmp &_opamp = opamp(1);
-    
-    cap(1).set_value(nums[0])
-          .set_in(Capacitor::from_input(in(1), 1))
-          .set_out(Capacitor::to_opamp(_opamp, 2));
-    cap(2).set_value(nums[1])
-          .set_in(Capacitor::from_input(in(2), 1))
-          .set_out(Capacitor::to_opamp(_opamp, 2));
-    cap(3).set_value(den)
-          .set_in(Capacitor::from_opamp(_opamp, 1))
-          .set_out(Capacitor::to_opamp(_opamp, 2));
 }

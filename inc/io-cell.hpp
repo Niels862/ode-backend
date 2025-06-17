@@ -58,10 +58,10 @@ public:
 
     /* Only allow in-place (re)initialization */
     void initialize(int id, AnalogBlock &cab);
-
+   
     virtual uint8_t connection_nibble(AnalogModule &to); 
 
-    void parse(std::ifstream &) override {}
+    bool set_parameter(std::string_view, Parameter) override { return false; }
 
     void claim_components() override {}
     void finalize() override;

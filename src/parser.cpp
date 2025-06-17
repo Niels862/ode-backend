@@ -89,6 +89,7 @@ bool Parser::has_next_attribute() {
             return true;
         }
     }
+
     return !matches(TokenType::RBrace);
 }
 
@@ -110,11 +111,11 @@ Token &Parser::parse_attribute() {
     return attr;
 }
 
-void Parser::unknown_attribute(Token const &attr) {
+void Parser::unknown_attribute(Token &attr) {
     std::stringstream ss;
-    ss << "attribute '" << attr << "' is not recognized for '" 
+    ss << "attribute '" << attr.lexeme() << "' is not recognized for '" 
        << m_opened_names.back() << "'";
-    throw std::runtime_error(ss.str());
+    attr.error(ss.str());
 }
 
 void Parser::close_attribute_map() {
@@ -122,7 +123,6 @@ void Parser::close_attribute_map() {
     m_opened.pop_back();
     m_opened_names.pop_back();
 }
-
 
 bool Parser::open_list() {
     expect(TokenType::LSqBracket);
@@ -150,6 +150,8 @@ std::unique_ptr<AnalogChip> Parser::parse_chip() {
     expect(TokenType::Chip);
 
     auto chip = std::make_unique<AnalogChip>();
+    m_chip_cams = {};
+
     open_attribute_map("chip");
 
     while (has_next_attribute()) {
@@ -259,18 +261,55 @@ void Parser::parse_cab(AnalogBlock &cab) {
     close_attribute_map();
 }
 
-void Parser::parse_cam_list(AnalogBlock &) {
+void Parser::parse_cam_list(AnalogBlock &cab) {
     if (!open_list()) {
         return;
     }
 
     while (true) {
-        expect(TokenType::Dash);
-
+        parse_cam(cab);
+        
         if (is_list_end()) {
             return;
         }
     }
+}
+
+void Parser::parse_cam(AnalogBlock &cab) {
+    Token &name = expect(TokenType::Identifier);
+    expect(TokenType::As);
+    Token &key = expect(TokenType::Identifier);
+
+    AnalogModule *cam = AnalogModule::Build(name.lexeme());
+
+    if (!cam) {
+        std::stringstream ss;
+        ss << "undefined CAM name: " << name.lexeme();
+        name.error(ss.str());
+    }
+    cab.add_raw(cam);
+
+    if (m_chip_cams.find(key.lexeme()) != m_chip_cams.end()) {
+        std::stringstream ss;
+        ss << "shadowed CAM key: " << name.lexeme();
+        key.error(ss.str());
+    }
+
+    m_chip_cams[key.lexeme()] = cam;
+
+    open_attribute_map(std::string(name.lexeme()));
+
+    while (has_next_attribute()) {
+        Token &attr = parse_attribute();
+        double value = parse_double_expression();
+        if (!cam->set_parameter(attr.lexeme(), Parameter(value))) {
+            unknown_attribute(attr);
+        }
+    }
+
+    close_attribute_map();
+
+    cam->claim_components();
 }
 
 double Parser::parse_expression() {

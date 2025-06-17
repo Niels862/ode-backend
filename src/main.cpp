@@ -104,7 +104,7 @@ void load_sum(AnalogChip &chip) {
     chip.io_cell(3).set_mode(IOMode::OutputBypass);
 
     chip.cab(1).setup(chip.clock(1), chip.null_clock());
-    auto &suminv = chip.cab(1).add(new SingleSumInv(1.0, 1.0));
+    auto &suminv = chip.cab(1).add(new SumInv(1.0, 1.0));
 
     chip.io_cell(1).out(1).connect(suminv.in(1));
     chip.io_cell(2).out(1).connect(suminv.in(2));

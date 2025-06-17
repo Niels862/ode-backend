@@ -10,8 +10,22 @@
 #include <bitset>
 #include <vector>
 #include <fstream>
+#include <cmath>
 
 class AnalogBlock;
+
+class Parameter {
+public:
+    Parameter(double value)
+            : m_value{value} {}
+
+    double as_double() { return m_value; }
+    int64_t as_int() { return std::llround(m_value); }
+    bool as_bool() { return as_int(); }
+
+private:
+    double m_value;
+};
 
 class AnalogModule {
 public:
@@ -26,11 +40,11 @@ public:
 
     virtual ~AnalogModule() = default;
 
-    static AnalogModule *Build(std::string const &name);
+    static AnalogModule *Build(std::string_view const &name);
 
     virtual uint8_t connection_nibble(AnalogModule &to); 
 
-    virtual void parse(std::ifstream &file) = 0;
+    virtual bool set_parameter(std::string_view param, Parameter value) = 0;
 
     virtual void claim_components() = 0;
     virtual void finalize() = 0;
@@ -71,7 +85,7 @@ public:
     GainInv();
     GainInv(double gain);
 
-    void parse(std::ifstream &file) override;
+    bool set_parameter(std::string_view param, Parameter value) override;
 
     void claim_components() override;
     void finalize() override;
@@ -85,7 +99,7 @@ public:
     SumInv();
     SumInv(double lgain, double ugain);
 
-    void parse(std::ifstream &file) override;
+    bool set_parameter(std::string_view param, Parameter value) override;
 
     void claim_components() override;
     void finalize() override;
@@ -100,7 +114,7 @@ public:
     Integrator();
     Integrator(double integ_const, bool m_gnd_reset);
 
-    void parse(std::ifstream &file) override;
+    bool set_parameter(std::string_view param, Parameter value) override;
 
     void claim_components() override;
     void finalize() override;
@@ -114,7 +128,7 @@ class GainSwitch : public AnalogModule {
 public:
     GainSwitch();
 
-    void parse(std::ifstream &) override {}
+    bool set_parameter(std::string_view param, Parameter value) override;
 
     void claim_components() override;
     void finalize() override;
@@ -124,41 +138,10 @@ class SampleAndHold : public AnalogModule {
 public:
     SampleAndHold();
 
-    void parse(std::ifstream &) override {}
+    bool set_parameter(std::string_view param, Parameter value) override;
 
     void claim_components() override;
     void finalize() override;
 };
-
-/* Custom Modules */
-
-class SingleGainInv : public AnalogModule {
-public:
-    SingleGainInv();
-    SingleGainInv(double gain);
-
-    void parse(std::ifstream &file) override;
-
-    void claim_components() override;
-    void finalize() override;
-
-private:
-    double m_gain;
-};
-
-class SingleSumInv : public AnalogModule {
-public:
-    SingleSumInv();
-    SingleSumInv(double lgain, double ugain);
-
-    void parse(std::ifstream &file) override;
-
-    void claim_components() override;
-    void finalize() override;
-
-private:
-    double m_lgain;
-    double m_ugain;
-};    
 
 #endif
