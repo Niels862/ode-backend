@@ -4,7 +4,8 @@
 #include <cmath>
 
 Parser::Parser()
-        : m_tokens{}, m_curr{}, m_opened{} {}
+        : m_tokens{}, m_curr{}, m_opened{},
+          m_chip_cams{}, m_named_consts{} {}
 
 std::unique_ptr<AnalogChip> Parser::parse(std::vector<Token> tokens) {
     m_tokens = tokens;
@@ -14,7 +15,9 @@ std::unique_ptr<AnalogChip> Parser::parse(std::vector<Token> tokens) {
     while (!at_eof()) {
         std::cout << m_tokens[m_curr] << std::endl;
 
-        if (matches(TokenType::Chip)) {
+        if (matches(TokenType::Let)) {
+            parse_let_declaration();
+        } else if (matches(TokenType::Chip)) {
             auto chip = parse_chip();
             chips.push_back(std::move(chip));
         } else {
@@ -33,6 +36,41 @@ void Parser::expect_error(std::string const &expected) {
     std::stringstream ss;
     ss << "expected " << expected << ", but got " << token.type();
     token.error(ss.str());
+}
+
+void Parser::check_shadowed_definition(Token &name) {
+    if (m_chip_cams.find(name.lexeme()) != m_chip_cams.end()
+        || m_named_consts.find(name.lexeme()) != m_named_consts.end()) {
+        std::stringstream ss;
+        ss << "declaration of '" << name.lexeme() 
+           << "' shadows previous definition";
+        name.error(ss.str());
+    }
+}
+
+AnalogModule *Parser::find_cam(AnalogChip &chip, Token &name) {
+    static const std::unordered_map<std::string_view, int> io_map {
+        { "io1", 1 },
+        { "io2", 2 },
+        { "io3", 3 },
+        { "io4", 4 },
+    };
+
+    std::string_view const &lexeme = name.lexeme();
+
+    auto io_iter = io_map.find(lexeme);
+    if (io_iter != io_map.end()) {
+        return &chip.io_cell(io_iter->second);
+    }
+
+    auto cam_iter = m_chip_cams.find(lexeme);
+    if (cam_iter != m_chip_cams.end()) {
+        return cam_iter->second;
+    }
+
+    std::stringstream ss;
+    ss << lexeme << " is not a CAM";
+    name.error(ss.str());
 }
 
 bool Parser::at_eof() const {
@@ -146,6 +184,19 @@ bool Parser::is_list_end() {
     return false;
 }
 
+void Parser::parse_let_declaration() {
+    expect(TokenType::Let);
+    
+    Token &name = expect(TokenType::Identifier);
+    check_shadowed_definition(name);
+
+    expect(TokenType::Equals);
+    double value = parse_double_expression();
+    expect(TokenType::Semicolon);
+
+    m_named_consts[name.lexeme()] = value;
+}
+
 std::unique_ptr<AnalogChip> Parser::parse_chip() {
     expect(TokenType::Chip);
 
@@ -160,6 +211,8 @@ std::unique_ptr<AnalogChip> Parser::parse_chip() {
             parse_io_modes(*chip);
         } else if (attr == "cabs") {
             parse_cabs_list(*chip);
+        } else if (attr == "routing") {
+            parse_routing(*chip);
         } else {
             unknown_attribute(attr);
         }
@@ -184,7 +237,7 @@ void Parser::parse_io_modes(AnalogChip &chip) {
             throw std::runtime_error(ss.str());
         }
 
-        if (!accept(TokenType::Dash)) {
+        if (!accept(TokenType::Minus)) {
             Token &mode = expect(TokenType::Identifier);
             if (mode == "input") {
                 chip.io_cell(i).set_mode(IOMode::InputBypass);
@@ -238,7 +291,7 @@ void Parser::parse_cab_setup(AnalogChip &chip, AnalogBlock &cab) {
 }
 
 Clock &Parser::parse_clock_id(AnalogChip &chip) {
-    if (accept(TokenType::Dash)) {
+    if (accept(TokenType::Minus)) {
         return chip.null_clock();
     }
 
@@ -312,14 +365,100 @@ void Parser::parse_cam(AnalogBlock &cab) {
     cam->claim_components();
 }
 
-double Parser::parse_expression() {
-    Token &num = expect(TokenType::Number);
-
-    try {
-        return std::stod(std::string(num.lexeme())); // todo improve stod
-    } catch (...) {
-        throw std::runtime_error("malformed number");
+void Parser::parse_routing(AnalogChip &chip) {
+    if (!open_list()) {
+        return;
     }
+
+    while (true) {
+        parse_routing_entry(chip);
+
+        if (is_list_end()) {
+            return;
+        }
+    }
+}
+
+void Parser::parse_routing_entry(AnalogChip &chip) {
+    OutputPort &out = parse_output_port(chip);
+    expect(TokenType::Arrow);
+    InputPort &in = parse_input_port(chip);
+    out.connect(in);
+}
+
+OutputPort &Parser::parse_output_port(AnalogChip &chip) {
+    Token &name = expect(TokenType::Identifier);
+    AnalogModule *cam = find_cam(chip, name);
+    return cam->out();
+}
+
+InputPort &Parser::parse_input_port(AnalogChip &chip) {
+    Token &name = expect(TokenType::Identifier);
+    AnalogModule *cam = find_cam(chip, name);
+    return cam->in(1);
+}
+
+double Parser::parse_expression() {
+    return parse_sum();
+}
+
+double Parser::parse_sum() {
+    double value = parse_term();
+    while (true) {
+        if (accept(TokenType::Plus)) {
+            value = value + parse_term();
+        } else if (accept(TokenType::Minus)) {
+            value = value - parse_term();
+        } else {
+            return value;
+        }
+    }
+}
+
+double Parser::parse_term() {
+    double value = parse_unary();
+    while (true) {
+        if (accept(TokenType::Asterisk)) {
+            value = value * parse_unary();
+        } else if (accept(TokenType::Slash)) {
+            value = value / parse_unary();
+        } else {
+            return value;
+        }
+    }
+}
+
+double Parser::parse_unary() {
+    if (accept(TokenType::Minus)) {
+        return -parse_unary();
+    }
+    return parse_atom();
+}
+
+double Parser::parse_atom() {
+    if (Token &num = accept(TokenType::Number)) {
+        try {
+            return std::stod(std::string(num.lexeme())); // todo improve stod
+        } catch (...) {
+            std::stringstream ss;
+            ss << "malformed number: " << num.lexeme();
+            num.error(ss.str());
+        }
+    } 
+    if (accept(TokenType::True)) {
+        return 1.0;
+    } 
+    if (accept(TokenType::False)) {
+        return 0.0;
+    } 
+    if (Token &name = accept(TokenType::Identifier)) {
+        auto iter = m_named_consts.find(name.lexeme());
+        if (iter == m_named_consts.end()) {
+            // todo
+        }
+        return iter->second;
+    }
+    expect_error("atom");
 }
 
 int64_t Parser::parse_ranged_integer_expression(int64_t lo, int64_t hi, 

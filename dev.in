@@ -1,3 +1,5 @@
+let alpha = 0.04;
+
 chip {
     io: [
         input,
@@ -9,16 +11,21 @@ chip {
             cams: [
                 Integrator as integ1 {
                     integ_const: 1,
+                    reset: false
                 }
             ]
         },
         cab 2 with clocks 1, - {
             cams: [
                 SumInv as sum1 {
-                    gain1: 2,
-                    gain2: 3
+                    gain1: alpha,
+                    gain2: 2 * alpha
                 }
             ]
         }
     ],
+    routing: [
+        io1 -> integ1,
+        integ1 -> io3
+    ]
 }

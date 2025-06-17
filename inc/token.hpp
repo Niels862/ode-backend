@@ -10,24 +10,38 @@ enum class TokenType {
     Identifier,
     Number,
 
+    Let,
     Chip,
     With,
     Clocks,
     As,
     Cab,
+    True,
+    False,
 
     Arrow,
-    Dash,
+    Plus,
+    Minus,
+    Asterisk,
+    Slash,
+    Equals,
 
+    LBracket,
+    RBracket,
     LBrace,
     RBrace,
     LSqBracket,
     RSqBracket,
     Colon,
     Comma,
+    Semicolon,
     
     EndOfFile,
+
+    Final
 };
+
+std::size_t constexpr NTokenTypes = static_cast<std::size_t>(TokenType::Final);
 
 char const *to_string(TokenType type);
 std::ostream &operator <<(std::ostream &os, TokenType type);

@@ -12,72 +12,56 @@ static bool is_whitespace(uint32_t c) {
 
 static bool is_operator(uint32_t c) {
     switch (c) {
+        case '+':
         case '-':
+        case '*':
+        case '/':
         case '>':
+        case '=':
             return true;
     }
 
     return false;
 }
 
-static TokenType classify_keyword(std::string_view const &lexeme) {
-    static const std::unordered_map<std::string_view, TokenType> keywords {
-        { "chip",       TokenType::Chip },
-        { "with",       TokenType::With },
-        { "clocks",     TokenType::Clocks },
-        { "as",         TokenType::As },
-        { "cab",        TokenType::Cab },
-    };
-
-    auto iter = keywords.find(lexeme);
-    if (iter == keywords.end()) {
-        return TokenType::Identifier;
-    }
-    return iter->second;
-}
-
-static TokenType classify_operator(std::string_view const &lexeme) {
-    static const std::unordered_map<std::string_view, TokenType> operators {
-        { "->",         TokenType::Arrow },
-        { "-",          TokenType::Dash }
-    };
-
-    auto iter = operators.find(lexeme);
-    if (iter == operators.end()) {
-        return TokenType::None;
-    }
-    return iter->second;
-}
-
-static TokenType classify_separator(std::string_view const &lexeme) {
-    static const std::unordered_map<std::string_view, TokenType> keywords {
-        { "{",          TokenType::LBrace },
-        { "}",          TokenType::RBrace },
-        { "[",          TokenType::LSqBracket },
-        { "]",          TokenType::RSqBracket },
-        { ":",          TokenType::Colon },
-        { ",",          TokenType::Comma },
-    };
-
-    auto iter = keywords.find(lexeme);
-    if (iter == keywords.end()) {
-        return TokenType::None;
-    }
-    return iter->second;
-}
-
 static bool is_separator(uint32_t c) {
     switch (c) {
+        case '(':
+        case ')':
         case '{':
         case '}':
         case '[':
         case ']':
         case ':':
         case ',':
+        case ';':
             return true;
     }
 
     return false;
+}
+
+static TokenType classify_token(std::string_view const &lexeme, 
+                                TokenType fallback) {
+    for (std::size_t i = 0; i < NTokenTypes; i++) {
+        TokenType type = static_cast<TokenType>(i);
+        if (to_string(type) == lexeme) {
+            return type;
+        } 
+    }
+    return fallback;
+}
+
+static TokenType classify_keyword(std::string_view const &lexeme) {
+    return classify_token(lexeme, TokenType::Identifier);
+}
+
+static TokenType classify_operator(std::string_view const &lexeme) {
+    return classify_token(lexeme, TokenType::None);
+}
+
+static TokenType classify_separator(std::string_view const &lexeme) {
+    return classify_token(lexeme, TokenType::None);
 }
 
 Lexer::Lexer()

@@ -15,6 +15,9 @@ public:
 
 private:
     [[noreturn]] void expect_error(std::string const &expected);
+    void check_shadowed_definition(Token &name);
+
+    AnalogModule *find_cam(AnalogChip &chip, Token &name);
 
     bool at_eof() const;
     Token &accept(TokenType type);
@@ -31,6 +34,8 @@ private:
     bool open_list();
     bool is_list_end();
 
+    void parse_let_declaration();
+
     std::unique_ptr<AnalogChip> parse_chip();
     void parse_io_modes(AnalogChip &chip);
     
@@ -42,7 +47,17 @@ private:
     void parse_cam_list(AnalogBlock &cab);
     void parse_cam(AnalogBlock &cab);
 
+    void parse_routing(AnalogChip &chip);
+    void parse_routing_entry(AnalogChip &chip);
+    OutputPort &parse_output_port(AnalogChip &chip);
+    InputPort &parse_input_port(AnalogChip &chip);
+
+
     double parse_expression();
+    double parse_sum();
+    double parse_term();
+    double parse_unary();
+    double parse_atom();
 
     int64_t parse_ranged_integer_expression(int64_t lo, int64_t hi, 
                                             std::string ctx);
@@ -56,6 +71,7 @@ private:
     std::vector<std::string> m_opened_names;
 
     std::unordered_map<std::string_view, AnalogModule *> m_chip_cams;
+    std::unordered_map<std::string_view, double> m_named_consts;
 };
 
 #endif
