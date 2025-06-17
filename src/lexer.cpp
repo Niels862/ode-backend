@@ -20,8 +20,8 @@ static bool is_operator(uint32_t c) {
     return false;
 }
 
-static TokenType classify_keyword(std::string const &lexeme) {
-    static const std::unordered_map<std::string, TokenType> keywords {
+static TokenType classify_keyword(std::string_view const &lexeme) {
+    static const std::unordered_map<std::string_view, TokenType> keywords {
         { "chip",       TokenType::Chip },
         { "with",       TokenType::With },
         { "clocks",     TokenType::Clocks },
@@ -36,8 +36,8 @@ static TokenType classify_keyword(std::string const &lexeme) {
     return iter->second;
 }
 
-static TokenType classify_operator(std::string const &lexeme) {
-    static const std::unordered_map<std::string, TokenType> operators {
+static TokenType classify_operator(std::string_view const &lexeme) {
+    static const std::unordered_map<std::string_view, TokenType> operators {
         { "->",         TokenType::Arrow },
         { "-",          TokenType::Dash }
     };
@@ -49,8 +49,8 @@ static TokenType classify_operator(std::string const &lexeme) {
     return iter->second;
 }
 
-static TokenType classify_separator(std::string const &lexeme) {
-    static const std::unordered_map<std::string, TokenType> keywords {
+static TokenType classify_separator(std::string_view const &lexeme) {
+    static const std::unordered_map<std::string_view, TokenType> keywords {
         { "{",          TokenType::LBrace },
         { "}",          TokenType::RBrace },
         { "[",          TokenType::LSqBracket },
@@ -81,13 +81,13 @@ static bool is_separator(uint32_t c) {
 }
 
 Lexer::Lexer()
-        : m_text{}, m_curr{}, m_base{} {}
+        : m_text{}, m_curr{}, m_curr_pos{}, m_base{}, m_base_pos{} {}
 
-std::vector<Token> Lexer::lex(std::string const &filename) {
+std::vector<Token> Lexer::lex(std::string &filename) {
     read_file(filename);
 
     while (!at_eof()) {
-        m_base = m_curr;
+        set_base();
         uint32_t c = get();
 
         if (std::isalpha(c) || c == '_') {
@@ -113,7 +113,7 @@ std::vector<Token> Lexer::lex(std::string const &filename) {
     return m_tokens;
 }
 
-void Lexer::read_file(std::string const &filename) {
+void Lexer::read_file(std::string &filename) {
     std::ifstream file(filename);
 
     if (!file) {
@@ -124,6 +124,7 @@ void Lexer::read_file(std::string const &filename) {
     buffer << file.rdbuf();
 
     m_text = buffer.str();
+    m_curr_pos = TextPosition(filename);
 
     std::cout << m_text << std::endl;
 }
@@ -136,7 +137,18 @@ uint32_t Lexer::get() const {
     return m_text[m_curr];
 }
 
+void Lexer::set_base() {
+    m_base = m_curr;
+    m_base_pos = m_curr_pos;
+}
+
 void Lexer::forward() {
+    if (get() == '\n') {
+        m_curr_pos.next_line();
+    } else {
+        m_curr_pos.next_col();
+    }
+
     if (!at_eof()) {
         m_curr++;
     }
@@ -199,10 +211,10 @@ void Lexer::skip_comment() {
     forward();
 }
 
-std::string Lexer::lexeme() const {
-    return m_text.substr(m_base, m_curr - m_base);
+std::string_view Lexer::lexeme() const {
+    return std::string_view(m_text).substr(m_base, m_curr - m_base);
 }
 
 void Lexer::emit(TokenType type) {
-    m_tokens.emplace_back(type, lexeme());
+    m_tokens.emplace_back(type, lexeme(), m_base_pos);
 }

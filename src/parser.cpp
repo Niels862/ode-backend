@@ -28,14 +28,11 @@ std::unique_ptr<AnalogChip> Parser::parse(std::vector<Token> tokens) {
     return std::move(chips[0]);
 }
 
-void Parser::expect_error(std::string const &expected, std::string const &got) {
-    std::stringstream ss;
-    ss << "expected " << expected << ", but got " << got;
-    throw std::runtime_error(ss.str());
-}
-
 void Parser::expect_error(std::string const &expected) {
-    expect_error(expected, to_string(m_tokens[m_curr].type()));
+    Token &token = m_tokens[m_curr];
+    std::stringstream ss;
+    ss << "expected " << expected << ", but got " << token.type();
+    token.error(ss.str());
 }
 
 bool Parser::at_eof() const {
@@ -49,7 +46,7 @@ Token &Parser::accept(TokenType type) {
         return token;
     }
 
-    static Token none(TokenType::None, "");
+    static Token none;
     return none;
 }
 
@@ -95,25 +92,25 @@ bool Parser::has_next_attribute() {
     return !matches(TokenType::RBrace);
 }
 
-std::string Parser::parse_attribute() {
+Token &Parser::parse_attribute() {
     auto &attr_map = m_opened.back();
 
-    std::string attr = expect(TokenType::Identifier).lexeme();
-    auto const &iter = attr_map.find(attr);
+    Token &attr = expect(TokenType::Identifier);
+    auto const &iter = attr_map.find(attr.lexeme());
     if (iter != attr_map.end()) {
         std::stringstream ss;
         ss << "attribute '" << attr << "' was already declared";
         throw std::runtime_error(ss.str());
     }
 
-    attr_map.insert(attr);
+    attr_map.insert(attr.lexeme());
 
     expect(TokenType::Colon);
     
     return attr;
 }
 
-void Parser::unknown_attribute(std::string const &attr) {
+void Parser::unknown_attribute(Token const &attr) {
     std::stringstream ss;
     ss << "attribute '" << attr << "' is not recognized for '" 
        << m_opened_names.back() << "'";
@@ -156,7 +153,7 @@ std::unique_ptr<AnalogChip> Parser::parse_chip() {
     open_attribute_map("chip");
 
     while (has_next_attribute()) {
-        std::string attr = parse_attribute();
+        Token &attr = parse_attribute();
         if (attr == "io") {
             parse_io_modes(*chip);
         } else if (attr == "cabs") {
@@ -186,7 +183,7 @@ void Parser::parse_io_modes(AnalogChip &chip) {
         }
 
         if (!accept(TokenType::Dash)) {
-            std::string mode = expect(TokenType::Identifier).lexeme();
+            Token &mode = expect(TokenType::Identifier);
             if (mode == "input") {
                 chip.io_cell(i).set_mode(IOMode::InputBypass);
             } else if (mode == "output") {
@@ -225,8 +222,6 @@ void Parser::parse_cabs_list(AnalogChip &chip) {
             return;
         }
     }
-
-    expect(TokenType::RSqBracket);
 }
 
 void Parser::parse_cab_setup(AnalogChip &chip, AnalogBlock &cab) {
@@ -250,12 +245,12 @@ Clock &Parser::parse_clock_id(AnalogChip &chip) {
 }
 
 void Parser::parse_cab(AnalogBlock &cab) {
-    open_attribute_map("CAB" + std::to_string(cab.id()));
+    open_attribute_map("cab");
 
     while (has_next_attribute()) {
-        std::string attr = parse_attribute();
+        Token &attr = parse_attribute();
         if (attr == "cams") {
-
+            parse_cam_list(cab);
         } else {
             unknown_attribute(attr);
         }
@@ -264,11 +259,25 @@ void Parser::parse_cab(AnalogBlock &cab) {
     close_attribute_map();
 }
 
+void Parser::parse_cam_list(AnalogBlock &) {
+    if (!open_list()) {
+        return;
+    }
+
+    while (true) {
+        expect(TokenType::Dash);
+
+        if (is_list_end()) {
+            return;
+        }
+    }
+}
+
 double Parser::parse_expression() {
     Token &num = expect(TokenType::Number);
 
     try {
-        return std::stod(num.lexeme()); // todo improve stod
+        return std::stod(std::string(num.lexeme())); // todo improve stod
     } catch (...) {
         throw std::runtime_error("malformed number");
     }

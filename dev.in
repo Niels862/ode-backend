@@ -6,7 +6,9 @@ chip {
     ],
     cabs: [
         cab 1 with clocks 1, - {
-            cams: 
+            cams: [
+                
+            ]
         }
     ],
 }

@@ -1,4 +1,5 @@
 #include "token.hpp"
+#include <sstream>
 
 char const *to_string(TokenType type) {
     switch (type) {
@@ -28,8 +29,18 @@ std::ostream &operator <<(std::ostream &os, TokenType type) {
     return os;
 }
 
-std::ostream &operator <<(std::ostream &os, Token const &token) {
-    os << "<" << token.m_type << "> '" << token.m_lexeme << "'";
+std::ostream &operator <<(std::ostream &os, TextPosition const &pos) {
+    os << pos.m_filename << ":" << pos.m_line << ":" << pos.m_col;
+    return os;
+}
 
+void Token::error(std::string const &s) {
+    std::stringstream ss;
+    ss << pos() << ": " << s;
+    throw std::runtime_error(ss.str());
+}
+
+std::ostream &operator <<(std::ostream &os, Token const &token) {
+    os << token.m_pos << " <" << token.m_type << "> '" << token.m_lexeme << "'";
     return os;
 }

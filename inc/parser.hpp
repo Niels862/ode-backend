@@ -13,8 +13,6 @@ public:
     std::unique_ptr<AnalogChip> parse(std::vector<Token> tokens);
 
 private:
-    [[noreturn]] void expect_error(std::string const &expected, 
-                                   std::string const &got);
     [[noreturn]] void expect_error(std::string const &expected);
 
     bool at_eof() const;
@@ -25,8 +23,8 @@ private:
 
     void open_attribute_map(std::string const &name);
     bool has_next_attribute();
-    std::string parse_attribute();
-    [[noreturn]] void unknown_attribute(std::string const &attr);
+    Token &parse_attribute();
+    [[noreturn]] void unknown_attribute(Token const &attr);
     void close_attribute_map();
 
     bool open_list();
@@ -39,6 +37,7 @@ private:
     void parse_cab_setup(AnalogChip &chip, AnalogBlock &cab);
     Clock &parse_clock_id(AnalogChip &chip);
     void parse_cab(AnalogBlock &cab);
+    void parse_cam_list(AnalogBlock &cab);
 
     double parse_expression();
 
@@ -50,7 +49,7 @@ private:
     std::vector<Token> m_tokens;
     std::size_t m_curr;
 
-    std::vector<std::unordered_set<std::string>> m_opened;
+    std::vector<std::unordered_set<std::string_view>> m_opened;
     std::vector<std::string> m_opened_names;
 };
 
