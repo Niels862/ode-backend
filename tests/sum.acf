@@ -1,0 +1,9 @@
+chip {
+    cabs: [
+        cab 1 with clocks 1, - {
+            cams: [
+                SumInv as sum1 {}
+            ]
+        }
+    ]
+}

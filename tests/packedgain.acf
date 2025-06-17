@@ -1,0 +1,21 @@
+chip {
+    cabs: [
+        cab 1 with clocks 1, - {
+            cams: [
+                SumInv as sum1 {
+                    inputs: 2
+                }
+            ]
+        },
+        cab 4 with clocks 1, - {
+            cams: [
+                GainInv as gain1 {},
+                GainInv as gain2 {}
+            ]
+        }
+    ],
+    routing: [
+        gain1 -> sum1:1,
+        gain2 -> sum1:2
+    ]
+}

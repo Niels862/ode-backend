@@ -4,18 +4,16 @@
 #include "error.hpp"
 #include <sstream>
 
-AnalogModule::AnalogModule(std::string const &name, std::size_t in_n)
-        : m_cab{}, m_name{name}, m_in_n{in_n},
-          m_ins{}, m_caps{}, m_opamps{}, m_comp{} {
-    for (std::size_t i = 0; i < m_in_n; i++) {
-        m_ins.emplace_back(*this);
-    }
-}
+AnalogModule::AnalogModule(std::string const &name)
+        : m_cab{}, m_name{name},
+          m_ins{}, m_caps{}, m_opamps{}, m_comp{}, m_curr_cap{0} {}
 
 AnalogModule *AnalogModule::Build(std::string_view const &name) {
-    if (name == "GainInv")      return new GainInv();
-    if (name == "SumInv")       return new SumInv();
-    if (name == "Integrator")   return new Integrator();
+    if (name == "GainInv")              return new GainInv();
+    if (name == "SumInv")               return new SumInv();
+    if (name == "Integrator")           return new Integrator();
+    if (name == "GainSwitch")           return new GainSwitch();
+    if (name == "SampleAndHold")        return new SampleAndHold();
     return nullptr;
 }
 
@@ -65,11 +63,11 @@ uint8_t AnalogModule::connection_nibble(AnalogModule &to) {
 }
 
 InputPort &AnalogModule::in(std::size_t i) {
-    if (i == 0 && m_in_n == 1) {
+    if (i == 0 && m_ins.size() == 1) {
         return in(1);
     }
 
-    if (i < 1 || i > m_in_n) {
+    if (i < 1 || i > m_ins.size()) {
         std::stringstream ss;
         ss << "`" << m_name << "` does not implement in(" << i << ")";
         throw DesignError(ss.str());
@@ -87,10 +85,15 @@ OutputPort &AnalogModule::out(std::size_t i) {
 }
 
 Capacitor &AnalogModule::cap(int i) {
+    if (i == 0) {
+        m_curr_cap++;
+        return cap(m_curr_cap);
+    }
+
     Capacitor *cap = m_caps.at(i - 1);
     if (cap == nullptr) {
         std::stringstream ss;
-        ss << "Capacitor # " << i << " was not claimed by " << m_name;
+        ss << "Capacitor #" << i << " was not claimed by " << m_name;
         throw DesignError(ss.str());
     }
     return *cap;
@@ -119,13 +122,13 @@ void AnalogModule::set_cab(AnalogBlock &cab) {
     m_cab = &cab; 
 }
 
-void AnalogModule::claim_capacitors(size_t n) {
+void AnalogModule::claim_capacitors(std::size_t n) {
     for (size_t i = 0; i < n; i++) {
         m_caps[i] = &m_cab->claim_cap(*this); 
     }
 }
 
-void AnalogModule::claim_opamps(size_t n) {
+void AnalogModule::claim_opamps(std::size_t n) {
     for (size_t i = 0; i < n; i++) {
         m_opamps[i] = &m_cab->claim_opamp(*this); 
     }
@@ -135,11 +138,17 @@ void AnalogModule::claim_comparator() {
     m_comp = &m_cab->claim_comp(*this);
 }
 
+void AnalogModule::claim_inputs(std::size_t n) {
+    for (std::size_t i = 0; i < n; i++) {
+        m_ins.emplace_back(*this);
+    }
+}
+
 GainInv::GainInv()
-        : AnalogModule{"GainInv", 1}, m_gain{} {}
+        : AnalogModule{"GainInv"}, m_gain{1.0} {}
 
 GainInv::GainInv(double gain)
-        : AnalogModule{"GainInv", 1}, m_gain{gain} {}
+        : AnalogModule{"GainInv"}, m_gain{gain} {}
 
 bool GainInv::set_parameter(std::string_view param, Parameter value) {
     if (param == "gain") {
@@ -153,6 +162,7 @@ bool GainInv::set_parameter(std::string_view param, Parameter value) {
 void GainInv::claim_components() {
     claim_capacitors(4);
     claim_opamps(1);
+    claim_inputs(1);
 }
 
 void GainInv::finalize() {
@@ -161,31 +171,37 @@ void GainInv::finalize() {
 
     OpAmp &_opamp = opamp(1);
 
-    cap(1).set_value(num)
-          .set_in(Capacitor::from_input(in()))
-          .set_out(Capacitor::to_opamp(_opamp));
-    cap(2).set_value(num)
-          .set_in(Capacitor::from_input(in(), 1))
-          .set_out(Capacitor::to_opamp(_opamp, 1));
-    cap(3).set_value(den)
-          .set_in(Capacitor::from_opamp(_opamp))
-          .set_out(Capacitor::to_opamp(_opamp));
-    cap(4).set_value(den)
-          .set_in(Capacitor::from_opamp(_opamp, 1))
-          .set_out(Capacitor::to_opamp(_opamp, 1));
+    cap().set_value(num)
+         .set_in(Capacitor::from_input(in()))
+         .set_out(Capacitor::to_opamp(_opamp));
+    cap().set_value(num)
+         .set_in(Capacitor::from_input(in(), 1))
+         .set_out(Capacitor::to_opamp(_opamp, 1));
+    cap().set_value(den)
+         .set_in(Capacitor::from_opamp(_opamp))
+         .set_out(Capacitor::to_opamp(_opamp));
+    cap().set_value(den)
+         .set_in(Capacitor::from_opamp(_opamp, 1))
+         .set_out(Capacitor::to_opamp(_opamp, 1));
 }
 
 SumInv::SumInv()
-        : AnalogModule{"SumInv", 2}, m_lgain{}, m_ugain{} {}
+        : AnalogModule{"SumInv"}, m_gains{{1.0, 1.0, 1.0}},
+          m_n_inputs{2} {}
 
-SumInv::SumInv(double lgain, double ugain)
-        : AnalogModule{"SumInv", 2}, m_lgain{lgain}, m_ugain{ugain} {}
+SumInv::SumInv(double gain1, double gain2, std::size_t n_inputs)
+        : AnalogModule{"SumInv"}, m_gains{{gain1, gain2, 1.0}},
+          m_n_inputs{n_inputs} {}
 
 bool SumInv::set_parameter(std::string_view param, Parameter value) {
     if (param == "gain1") {
-        m_lgain = value.as_double();
+        m_gains[0] = value.as_double();
     } else if (param == "gain2") {
-        m_ugain = value.as_double();
+        m_gains[1] = value.as_double();
+    } else if (param == "gain3") {
+        m_gains[2] = value.as_double();
+    } else if (param == "inputs") {
+        m_n_inputs = value.as_int();
     } else {
         return false;
     }
@@ -193,44 +209,44 @@ bool SumInv::set_parameter(std::string_view param, Parameter value) {
 }
 
 void SumInv::claim_components() {
-    claim_capacitors(6);
+    claim_capacitors(2 + 2 * m_n_inputs);
     claim_opamps(1);
+    claim_inputs(m_n_inputs);
 }
 
 void SumInv::finalize() {
-    std::vector<double> gains = { m_lgain, m_ugain };
+    std::vector<double> gains(3);
+    for (std::size_t i = 0; i < m_n_inputs; i++) {
+        gains[i] = m_gains[i];
+    }
     std::vector<uint8_t> nums;
     uint8_t den;
     approximate_ratios(gains, nums, den);
 
     OpAmp &_opamp = opamp(1);
 
-    cap(1).set_value(nums[0])
-          .set_in(Capacitor::from_input(in(1)))
-          .set_out(Capacitor::to_opamp(_opamp));
-    cap(2).set_value(nums[0])
-          .set_in(Capacitor::from_input(in(1), 1))
-          .set_out(Capacitor::to_opamp(_opamp, 1));
-    cap(3).set_value(nums[1])
-          .set_in(Capacitor::from_input(in(2)))
-          .set_out(Capacitor::to_opamp(_opamp));
-    cap(4).set_value(nums[1])
-          .set_in(Capacitor::from_input(in(2), 1))
-          .set_out(Capacitor::to_opamp(_opamp, 1));
-    cap(5).set_value(den)
-          .set_in(Capacitor::from_opamp(_opamp))
-          .set_out(Capacitor::to_opamp(_opamp));
-    cap(6).set_value(den)
-          .set_in(Capacitor::from_opamp(_opamp, 1))
-          .set_out(Capacitor::to_opamp(_opamp, 1));
+    for (std::size_t i = 0; i < m_n_inputs; i++) {
+        cap().set_value(nums[i])
+             .set_in(Capacitor::from_input(in(i + 1)))
+             .set_out(Capacitor::to_opamp(_opamp));
+        cap().set_value(nums[i])
+             .set_in(Capacitor::from_input(in(i + 1), 1))
+             .set_out(Capacitor::to_opamp(_opamp, 1));
+    }
+    cap().set_value(den)
+         .set_in(Capacitor::from_opamp(_opamp))
+         .set_out(Capacitor::to_opamp(_opamp));
+    cap().set_value(den)
+         .set_in(Capacitor::from_opamp(_opamp, 1))
+         .set_out(Capacitor::to_opamp(_opamp, 1));
 }
 
 Integrator::Integrator()
-        : AnalogModule("Integrator", 1), 
+        : AnalogModule("Integrator"), 
           m_integ_const{}, m_gnd_reset{} {}
 
 Integrator::Integrator(double integ_const, bool gnd_reset)
-        : AnalogModule{"Integrator", 1}, 
+        : AnalogModule{"Integrator"}, 
           m_integ_const{integ_const}, m_gnd_reset{gnd_reset} {}
 
 bool Integrator::set_parameter(std::string_view param, Parameter value) {
@@ -250,6 +266,7 @@ void Integrator::claim_components() {
     if (m_gnd_reset) {
         claim_comparator();
     }
+    claim_inputs(1);
 }
 
 void Integrator::finalize() {
@@ -271,7 +288,7 @@ void Integrator::finalize() {
 }
 
 GainSwitch::GainSwitch()
-        : AnalogModule{"GainSwitch", 2} {}
+        : AnalogModule{"GainSwitch"} {}
 
 bool GainSwitch::set_parameter(std::string_view, Parameter) {
     return false;
@@ -281,6 +298,7 @@ void GainSwitch::claim_components() {
     claim_capacitors(3);
     claim_opamps(1);
     claim_comparator();
+    claim_inputs(2);
 }
 
 #define TEMP_OPAMP_FEEDBACK_SWITCHING { 0x81, 0x05 }
@@ -304,7 +322,7 @@ void GainSwitch::finalize() {
 }
 
 SampleAndHold::SampleAndHold()
-        : AnalogModule{"SampleAndHold", 1} {}
+        : AnalogModule{"SampleAndHold"} {}
 
 bool SampleAndHold::set_parameter(std::string_view, Parameter) {
     return false;
@@ -313,6 +331,7 @@ bool SampleAndHold::set_parameter(std::string_view, Parameter) {
 void SampleAndHold::claim_components() {
     claim_capacitors(2);
     claim_opamps(1);
+    claim_inputs(1);
 }
 
 void SampleAndHold::finalize() {

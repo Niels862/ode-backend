@@ -5,6 +5,7 @@
 
 struct Args {
     bool verbose;
+    bool raw;
     std::string infile;
     std::string outfile;
 };

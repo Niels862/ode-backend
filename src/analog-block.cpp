@@ -66,7 +66,9 @@ Comparator &AnalogBlock::claim_comp(AnalogModule &module) {
 }
 
 void AnalogBlock::finalize() {
-    log_resources();
+    if (args.verbose) {
+        log_resources();
+    }
     for (auto const &module : m_modules) {
         if (args.verbose) {
             std::cerr << module->name() << ":" << std::endl;

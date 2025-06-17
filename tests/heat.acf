@@ -1,0 +1,65 @@
+let ClkA = 1;
+
+let alpha = 1;
+let beta = 4;
+
+chip {
+    io: [
+        input,
+        input,
+        output
+    ],
+    cabs: [
+        cab 1 with clocks ClkA, - {
+            cams: [
+                SumInv as sum1 {
+                    inputs: 3,
+                    gain1: alpha,
+                    gain2: alpha,
+                    gain3: alpha,
+                }
+            ]
+        },
+        cab 2 with clocks ClkA, - {
+            cams: [
+                SumInv as sum2 {
+                    inputs: 3,
+                    gain1: alpha,
+                    gain2: alpha,
+                    gain3: alpha,
+                }
+            ]
+        },
+        cab 3 with clocks ClkA, - {
+            cams: [
+                GainInv as gain1 {},
+                GainInv as gain2 {}
+            ]
+        },
+        cab 4 with clocks ClkA, - {
+            cams: [
+                Integrator as integ1 {
+                    integ_const: beta,
+                },
+                Integrator as integ2 {
+                    integ_const: beta,
+                }
+            ]
+        }
+    ],
+    routing: [
+        io1 -> sum1:1,
+        integ1 -> sum1:2,
+        gain2 -> sum1:3,
+        sum1 -> integ1,
+        integ1 -> gain1,
+
+        gain1 -> sum2:1,
+        integ2 -> sum2:2,
+        io2 -> sum2:3,
+        sum2 -> integ2,
+        integ2 -> gain2,
+
+        integ2 -> io3
+    ]
+}

@@ -29,7 +29,7 @@ private:
 
 class AnalogModule {
 public:
-    AnalogModule(std::string const &name, std::size_t n_in);
+    AnalogModule(std::string const &name);
 
     /* Delete copy/move semantics as this breaks links with Ports. */
     AnalogModule(AnalogModule const &) = delete;
@@ -53,7 +53,7 @@ public:
     virtual OutputPort &out(std::size_t i = 0);
 
     std::vector<InputPort> &ins() { return m_ins; }
-    Capacitor &cap(int i);
+    Capacitor &cap(int i = 0);
     OpAmp &opamp(int i);
     Comparator &comp();
 
@@ -63,22 +63,22 @@ public:
     std::string const &name() const { return m_name; }
 
 protected:
-    void claim_capacitors(size_t n);
-    void claim_opamps(size_t n);
+    void claim_capacitors(std::size_t n);
+    void claim_opamps(std::size_t n);
     void claim_comparator();
+    void claim_inputs(std::size_t n);
 
     AnalogBlock *m_cab;
 
     std::string m_name;
-    std::size_t m_in_n;
 
     std::vector<InputPort> m_ins;
     std::array<Capacitor *, NCapacitorsPerBlock> m_caps;
     std::array<OpAmp *, NOpAmpsPerBlock> m_opamps;
     Comparator *m_comp;
-};
 
-/* AD20 Modules */
+    std::size_t m_curr_cap;
+};
 
 class GainInv : public AnalogModule {
 public:
@@ -97,7 +97,7 @@ private:
 class SumInv : public AnalogModule {
 public:
     SumInv();
-    SumInv(double lgain, double ugain);
+    SumInv(double gain1, double gain2, std::size_t n_inputs = 2);
 
     bool set_parameter(std::string_view param, Parameter value) override;
 
@@ -105,8 +105,8 @@ public:
     void finalize() override;
 
 private:
-    double m_lgain;
-    double m_ugain;
+    std::array<double, 3> m_gains;
+    std::size_t m_n_inputs;
 };
 
 class Integrator : public AnalogModule {

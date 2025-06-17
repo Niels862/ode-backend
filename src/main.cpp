@@ -13,6 +13,7 @@
 
 static argp_option options[] = {
     { "verbose",    'v', 0, 0,  "Use verbose output", 0 },
+    { "raw",        'r', 0, 0,  "Write output in raw format", 0 },
     {}
 };
 
@@ -20,6 +21,10 @@ static error_t parse_opt(int key, char *arg, argp_state *state) {
     switch (key) {
         case 'v':
             args.verbose = true;
+            break;
+
+        case 'r':
+            args.raw = true;
             break;
 
         case ARGP_KEY_ARG:
@@ -57,21 +62,37 @@ void write(AnalogChip &chip) {
         std::cerr << ssram << std::endl;
     }
 
-    std::vector<uint8_t> data;
-    chip.to_header_bytestream(data);
-    ssram.to_data_bytestream(data);
+    if (args.raw) {
+        if (args.verbose) {
+            std::cerr << "Writing raw data..." << std::endl;
+        }
+        for (std::size_t bank_addr = 0; bank_addr <= 0x1A; bank_addr++) {
+            for (std::size_t byte_addr = 0; byte_addr <= 0x20; byte_addr++) {
+                uint8_t byte = ssram.get(bank_addr, byte_addr).value();
+                f << static_cast<int>(byte) << std::endl;
+            }
+        }
+    } else {
+        if (args.verbose) {
+            std::cerr << "Writing C configuration..." << std::endl;
+        }
 
-    if (args.verbose) {
-        std::cerr << "Bytestream length: " << data.size() << std::endl;
+        std::vector<uint8_t> data;
+        chip.to_header_bytestream(data);
+        ssram.to_data_bytestream(data);
+    
+        if (args.verbose) {
+            std::cerr << "Bytestream length: " << data.size() << std::endl;
+        }
+    
+        f << std::hex << std::setfill('0') << std::uppercase;
+    
+        f << "const unsigned char an_FPAA1_PrimaryConfigInfo[] = {\n";
+        for (uint8_t byte : data) {
+            f << "  0x" << static_cast<int>(byte) << ",\n";
+        }
+        f << "};\n";
     }
-
-    f << std::hex << std::setfill('0') << std::uppercase;
-
-    f << "const unsigned char an_FPAA1_PrimaryConfigInfo[] = {\n";
-    for (uint8_t byte : data) {
-        f << "  0x" << static_cast<int>(byte) << ",\n";
-    }
-    f << "};\n";
 
     f.close();
 }
