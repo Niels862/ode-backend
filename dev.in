@@ -11,7 +11,7 @@ chip {
             cams: [
                 Integrator as integ1 {
                     integ_const: 1,
-                    reset: false
+                    reset: true
                 }
             ]
         },
@@ -25,7 +25,7 @@ chip {
         }
     ],
     routing: [
-        io1 -> integ1,
-        integ1 -> io3
+        io1 -> integ1:cmp,
+        integ1 -> integ1
     ]
 }

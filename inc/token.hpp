@@ -16,6 +16,7 @@ enum class TokenType {
     Clocks,
     As,
     Cab,
+    Cmp,
     True,
     False,
 

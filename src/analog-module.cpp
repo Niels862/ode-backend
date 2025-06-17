@@ -65,6 +65,10 @@ uint8_t AnalogModule::connection_nibble(AnalogModule &to) {
 }
 
 InputPort &AnalogModule::in(std::size_t i) {
+    if (i == 0 && m_in_n == 1) {
+        return in(1);
+    }
+
     if (i < 1 || i > m_in_n) {
         std::stringstream ss;
         ss << "`" << m_name << "` does not implement in(" << i << ")";
@@ -74,8 +78,12 @@ InputPort &AnalogModule::in(std::size_t i) {
     return m_ins[i - 1];
 }
 
-OutputPort &AnalogModule::out(std::size_t) {
-    throw DesignError("out() not implemented");
+OutputPort &AnalogModule::out(std::size_t i) {
+    if (i == 0 && !m_opamps[1]) {
+        return out(1);
+    }
+    
+    return opamp(i).out();
 }
 
 Capacitor &AnalogModule::cap(int i) {

@@ -192,7 +192,9 @@ void Lexer::lex_separator() {
 }
 
 void Lexer::skip_comment() {
-    forward();
+    while (get() != '\n' && !at_eof()) {
+        forward();
+    }
 }
 
 std::string_view Lexer::lexeme() const {

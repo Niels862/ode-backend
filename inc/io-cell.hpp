@@ -71,8 +71,8 @@ public:
 
     int id() const { return m_id; }
 
-    InputPort &in(std::size_t i) override;
-    OutputPort &out(std::size_t i) override;
+    InputPort &in(std::size_t i = 0) override;
+    OutputPort &out(std::size_t i = 0) override;
 
     std::array<Connection, NBlocksPerChip> &connections() { 
         return m_conns; 

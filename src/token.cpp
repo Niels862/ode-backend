@@ -13,6 +13,7 @@ char const *to_string(TokenType type) {
         case TokenType::Clocks:         return "clocks";
         case TokenType::As:             return "as";
         case TokenType::Cab:            return "cab";
+        case TokenType::Cmp:            return "cmp";
         case TokenType::True:           return "true";
         case TokenType::False:          return "false";
         case TokenType::Arrow:          return "->";

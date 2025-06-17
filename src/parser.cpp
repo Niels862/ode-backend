@@ -383,19 +383,32 @@ void Parser::parse_routing_entry(AnalogChip &chip) {
     OutputPort &out = parse_output_port(chip);
     expect(TokenType::Arrow);
     InputPort &in = parse_input_port(chip);
+    std::cout << m_tokens[m_curr] << " " << &out << " " << &in << std::endl;
     out.connect(in);
 }
 
 OutputPort &Parser::parse_output_port(AnalogChip &chip) {
     Token &name = expect(TokenType::Identifier);
     AnalogModule *cam = find_cam(chip, name);
+    if (accept(TokenType::Colon)) {
+        int64_t port = parse_integer_expression();
+        return cam->out(port); // fixme 
+    }
     return cam->out();
 }
 
 InputPort &Parser::parse_input_port(AnalogChip &chip) {
     Token &name = expect(TokenType::Identifier);
     AnalogModule *cam = find_cam(chip, name);
-    return cam->in(1);
+    if (accept(TokenType::Colon)) {
+        if (accept(TokenType::Cmp)) {
+            return cam->comp().in();
+        } else {
+            int64_t port = parse_integer_expression();
+            return cam->in(port); // fixme 
+        }
+    }
+    return cam->in();
 }
 
 double Parser::parse_expression() {
@@ -454,7 +467,9 @@ double Parser::parse_atom() {
     if (Token &name = accept(TokenType::Identifier)) {
         auto iter = m_named_consts.find(name.lexeme());
         if (iter == m_named_consts.end()) {
-            // todo
+            std::stringstream ss;
+            ss << "'" << name.lexeme() << "' is not a defined constant";
+            name.error(ss.str());
         }
         return iter->second;
     }

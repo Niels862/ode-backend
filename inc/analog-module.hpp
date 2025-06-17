@@ -49,8 +49,8 @@ public:
     virtual void claim_components() = 0;
     virtual void finalize() = 0;
 
-    virtual InputPort &in(std::size_t i = 1);
-    virtual OutputPort &out(std::size_t i = 1);
+    virtual InputPort &in(std::size_t i = 0);
+    virtual OutputPort &out(std::size_t i = 0);
 
     std::vector<InputPort> &ins() { return m_ins; }
     Capacitor &cap(int i);
