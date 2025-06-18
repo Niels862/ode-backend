@@ -85,7 +85,9 @@ static int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2,
         for (auto &port : opamp1.out().connections()) {
             if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
                 Connection &conn = cell->connection(opamp1.out().module().cab());
-                is1 = conn.channel == channel;
+                if (conn.channel == channel && conn.mode == Connection::Far) {
+                    is1 = true;
+                }
             }
         }
     }
@@ -94,7 +96,9 @@ static int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2,
         for (auto &port : opamp2.out().connections()) {
             if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
                 Connection &conn = cell->connection(opamp2.out().module().cab());
-                is2 = conn.channel == channel;
+                if (conn.channel == channel && conn.mode == Connection::Far) {
+                    is2 = true;
+                }
             }
         }
     }
@@ -114,7 +118,7 @@ static uint8_t compile_local_output_routing(OpAmp &opamp1, OpAmp &opamp2) {
     int sec = find_connection_channel(opamp1, opamp2, Connection::Secondary);
 
     if (sec) {
-        sec = sec == 2 ? 1 : 2;
+        sec = (sec == 2 ? 1 : 2);
     }
 
     return pri | (sec << 4);

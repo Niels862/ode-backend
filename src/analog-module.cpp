@@ -229,14 +229,17 @@ void Integrator::finalize() {
     approximate_ratio(m_integ_const / 4, num, den);
 
     OpAmp &_opamp = opamp(1);
+
+    Clock::Select clk = Clock::A;
     if (m_gnd_reset) {
         comp().set_configuration({ 0x07, 0xC9 });
         _opamp.set_feedback({ 0x6C, 0x05 });
+        clk = Clock::B;
     }
 
     cap(1).set_value(num)
-          .set_in(Capacitor::from_input(in(), 1, Clock::B))
-          .set_out(Capacitor::to_opamp(_opamp, 2, Clock::B));
+          .set_in(Capacitor::from_input(in(), 1, clk))
+          .set_out(Capacitor::to_opamp(_opamp, 2, clk));
     cap(2).set_value(den)
           .set_in(Capacitor::from_opamp(_opamp))
           .set_out(Capacitor::to_opamp(_opamp));

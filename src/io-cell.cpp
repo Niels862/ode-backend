@@ -2,6 +2,7 @@
 #include "error.hpp"
 #include "analog-block.hpp"
 #include "analog-chip.hpp"
+#include <cassert>
 
 void Connection::reset() {
     this->block = Connection::None;
@@ -31,14 +32,15 @@ uint8_t Connection::io_nibble() const {
         return 0x2;
     }
 
-    if (block == Connection::FromOutput1) {
+    if (block == Connection::FromOutput) {
         if (channel == Connection::Primary) {
             return 0xC;
         }
         return 0x8;
     }
 
-    abort();
+    assert(1);
+    return 0x0;
 }
 
 uint8_t Connection::cab_nibble(IOCell &cell_from) const {
@@ -122,14 +124,31 @@ void IOCell::finalize() {
             AnalogBlock &cab = port->module().cab();
             if (cab) {
                 connection(cab).initialize(cab, Connection::ToInput);
+            } else {
+                throw DesignError("cannot connect 2 IO-Cells");
             }
         }
     } else if (m_mode == IOMode::OutputBypass) {
         OutputPort *port = in(1).connection();
         if (port) {
             AnalogBlock &cab = port->module().cab();
-            if (cab) {
-                connection(cab).initialize(cab, Connection::FromOutput1);
+            Connection &conn = connection(cab);
+
+            switch (port->source()) {
+                case PortSource::None:
+                    break;
+                    
+                case PortSource::IOCell:
+                    throw DesignError("cannot connect 2 IO-Cells");
+
+                case PortSource::OpAmp1:
+                    conn.initialize(cab, Connection::FromOutput);
+                    break;
+
+                case PortSource::OpAmp2:
+                    conn.initialize(cab, Connection::FromOutput);
+                    conn.channel = Connection::Secondary;
+                    break;
             }
         }
     }

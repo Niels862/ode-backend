@@ -48,6 +48,7 @@ public:
     void connect(InputPort &port);
 
     AnalogModule &module() { return *m_module; }
+    PortSource source() const { return m_source; }
 
     std::vector<InputPort *> &connections() {
         return m_connections;

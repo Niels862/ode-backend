@@ -16,8 +16,7 @@ struct Connection {
     enum Block {
         None,
         ToInput,
-        FromOutput1,
-        FromOutput2
+        FromOutput,
     };
 
     enum Mode {

@@ -3,6 +3,7 @@
 #include "util.hpp"
 #include "settings.hpp"
 #include <sstream>
+#include <cassert>
 
 AnalogChip::AnalogChip()
         : m_cabs{}, m_null_cab{}, m_io_cells{}, 
@@ -103,7 +104,7 @@ void AnalogChip::compile_io_routing(ShadowSRam &ssram) {
             case IOMode::Disabled:      mode_data = 0x00; break;
             case IOMode::InputBypass:   mode_data = 0x40; break;
             case IOMode::OutputBypass:  mode_data = 0x10; break;
-            default:                    
+            default:
                 throw DesignError("Unexpected Mode");
         }
 

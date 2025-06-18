@@ -114,8 +114,6 @@ uint8_t OutputPort::input_connection_selector(InputPort &input) {
     int from = module().cab().id();
     int to   = input.module().cab().id();
 
-    printf("%d %d %d\n", from, to, (int)m_source);
-
     switch (m_source) {
         case PortSource::None:      
             return 0x0;
