@@ -66,8 +66,8 @@ void write(AnalogChip &chip) {
         if (args.verbose) {
             std::cerr << "Writing raw data..." << std::endl;
         }
-        for (std::size_t bank_addr = 0; bank_addr <= 0x1A; bank_addr++) {
-            for (std::size_t byte_addr = 0; byte_addr <= 0x20; byte_addr++) {
+        for (std::size_t bank_addr = 0; bank_addr <= 0x0A; bank_addr++) {
+            for (std::size_t byte_addr = 0; byte_addr < 0x20; byte_addr++) {
                 uint8_t byte = ssram.get(bank_addr, byte_addr).value();
                 f << static_cast<int>(byte) << std::endl;
             }

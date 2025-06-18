@@ -2,15 +2,25 @@ import os
 import sys
 from typing import List
 
+GREEN = "\033[92m"
+RED   = "\033[91m"
+RESET = "\033[0m"
+
 TEMP_OUT = "/tmp/test_out"
 
 failures = 0
-
+passes = 0
 
 def failure(test: str, reason: str):
     global failures
     failures += 1
     raise RuntimeError(f"{test} failed: {reason}")
+
+
+def success(test: str):
+    global passes
+    passes += 1
+    print(GREEN + f"{test} passed" + RESET)
 
 
 def remove_extension(file: str) -> str:
@@ -48,6 +58,8 @@ def run_test(test, tests_dir, executable):
     
     compare(test, actual, expected)
 
+    success(test)
+
 
 def main():
     if len(sys.argv) != 3:
@@ -63,7 +75,9 @@ def main():
         try:
             run_test(test, tests_dir, executable)
         except Exception as e:
-            print(e)
+            print(RED + str(e) + RESET)
+
+    print(f"{passes} / {passes + failures} passed.")
 
 
 if __name__ == "__main__":

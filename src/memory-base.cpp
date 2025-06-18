@@ -33,7 +33,10 @@ bool MemoryBase::includes(std::size_t bank_addr,
 MemoryCell const &MemoryBase::get(std::size_t bank_addr, 
                                   std::size_t byte_addr) const {
     if (!includes(bank_addr, byte_addr)) {
-        /* error... */
+        std::stringstream ss;
+        ss << "illegal access to bank " << std::hex << bank_addr << ", byte " 
+           << byte_addr << std::endl;
+        throw DesignError(ss.str());
     }
     return m_banks[translate(bank_addr, byte_addr)];
 }
@@ -41,7 +44,10 @@ MemoryCell const &MemoryBase::get(std::size_t bank_addr,
 void MemoryBase::set(std::size_t bank_addr, std::size_t byte_addr, 
                      uint8_t value) const {
     if (!includes(bank_addr, byte_addr)) {
-
+        std::stringstream ss;
+        ss << "illegal access to bank " << std::hex << bank_addr << ", byte " 
+           << byte_addr << std::endl;
+        throw DesignError(ss.str());
     }
     if (get(bank_addr, byte_addr).is_set()) {
         std::stringstream ss;
