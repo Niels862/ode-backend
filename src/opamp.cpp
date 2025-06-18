@@ -17,7 +17,11 @@ OpAmp &OpAmp::claim(AnalogModule &module) {
     }
 
     m_module = &module;
-    m_out = OutputPort(module);
+    if (m_id == 1) {
+        m_out = OutputPort(module, PortSource::OpAmp1);
+    } else {
+        m_out = OutputPort(module, PortSource::OpAmp2);
+    }
 
     return set_feedback({ 0x00, 0x05 });
 }

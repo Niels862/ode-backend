@@ -18,7 +18,7 @@ SwitchConfiguration Capacitor::from_input(InputPort &port,
                                           Clock::Select select) {
     assert(sg_phase || select != Clock::B);
     
-    uint8_t n = port.connection_nibble();
+    uint8_t n = port.input_connection_selector();
     uint8_t s = select == Clock::A ? 0x01 : 0x02;
 
     switch (sg_phase) {

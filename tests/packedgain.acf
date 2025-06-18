@@ -7,6 +7,20 @@ chip {
                 }
             ]
         },
+        cab 2 with clocks 1, - {
+            cams: [
+                SumInv as sum2 {
+                    inputs: 2
+                }
+            ]
+        },
+        cab 3 with clocks 1, - {
+            cams: [
+                SumInv as sum3 {
+                    inputs: 2
+                }
+            ]
+        },
         cab 4 with clocks 1, - {
             cams: [
                 GainInv as gain1 {},
@@ -16,6 +30,12 @@ chip {
     ],
     routing: [
         gain1 -> sum1:1,
-        gain2 -> sum1:2
+        gain2 -> sum1:2,
+        
+        gain1 -> sum2:1,
+        gain2 -> sum2:2,
+        
+        gain1 -> sum3:1,
+        gain2 -> sum3:2,
     ]
 }

@@ -17,51 +17,6 @@ AnalogModule *AnalogModule::Build(std::string_view const &name) {
     return nullptr;
 }
 
-uint8_t AnalogModule::connection_nibble(AnalogModule &to) {
-    int id_from = cab().id();
-    int id_to = to.cab().id();
-
-    switch (id_from) {
-        case 1:
-            switch (id_to) {
-                case 1: return 0x3;
-                case 2: return 0xB;
-                case 3: return 0xB;
-                case 4: return 0xB;
-            }
-            break;
-        
-        case 2:
-            switch (id_to) {
-                case 1: return 0xF;
-                case 2: return 0x3;
-                case 3: return 0x9;
-                case 4: return 0x9;
-            }
-            break;
-
-        case 3:
-            switch (id_to) {
-                case 1: return 0xB;
-                case 2: return 0xD;
-                case 3: return 0x7;
-                case 4: return 0xD;
-            }
-            break;
-
-        case 4:
-            switch (id_to) {
-                case 1: return 0xD;
-                case 2: return 0xF;
-                case 3: return 0xF;
-                case 4: return 0x3;
-            }
-            break;
-    }
-
-    throw DesignError("Unreached todo");
-}
-
 InputPort &AnalogModule::in(std::size_t i) {
     if (i == 0 && m_ins.size() == 1) {
         return in(1);
@@ -303,8 +258,8 @@ void GainSwitch::claim_components() {
 
 #define TEMP_OPAMP_FEEDBACK_SWITCHING { 0x81, 0x05 }
 
-#define TEMP_CAP_IN_SWITCHED_IF_COMP_GT(p) { 0x3D, (uint8_t)(((p.connection_nibble()) << 4) | 0x1) }
-#define TEMP_CAP_IN_SWITCHED_IF_COMP_LT(p) { 0x2D, (uint8_t)(((p.connection_nibble()) << 4) | 0x1) }
+#define TEMP_CAP_IN_SWITCHED_IF_COMP_GT(p) { 0x3D, (uint8_t)(((p.input_connection_selector()) << 4) | 0x1) }
+#define TEMP_CAP_IN_SWITCHED_IF_COMP_LT(p) { 0x2D, (uint8_t)(((p.input_connection_selector()) << 4) | 0x1) }
 
 void GainSwitch::finalize() {
     OpAmp &_opamp = opamp(1).set_feedback(TEMP_OPAMP_FEEDBACK_SWITCHING);

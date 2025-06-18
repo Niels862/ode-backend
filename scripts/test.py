@@ -37,7 +37,7 @@ def compare(test, actual: List[int], expected: List[int]):
 
 def load(filename):
     with open(filename, "r") as file:
-        return list(map(int, file.readlines()))
+        return list(map(int, file.read().split()))
 
 
 def run_test(test, tests_dir, executable):

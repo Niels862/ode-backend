@@ -42,8 +42,6 @@ public:
 
     static AnalogModule *Build(std::string_view const &name);
 
-    virtual uint8_t connection_nibble(AnalogModule &to); 
-
     virtual bool set_parameter(std::string_view param, Parameter value) = 0;
 
     virtual void claim_components() = 0;

@@ -41,8 +41,8 @@ uint8_t Connection::io_nibble() const {
     abort();
 }
 
-uint8_t Connection::cab_nibble(IOCell &cell) const {
-    int from_id = cell.id();
+uint8_t Connection::cab_nibble(IOCell &cell_from) const {
+    int from_id = cell_from.id();
     int to_id = cab->id();
     uint8_t n = 0x0;
 
@@ -100,9 +100,7 @@ bool Connection::equivalent(Connection const &other) const {
 IOCell::IOCell() /* IOCell manages its own in() and out() port */
         : AnalogModule{"IOCell"}, m_id{}, 
           m_mode{IOMode::Disabled},
-          m_in{*this}, m_out{*this}, m_conns{} {
-    std::cout << m_id << ": " << &m_in << ", " << &m_in.module() << std::endl;
-}
+          m_in{*this}, m_out{*this, PortSource::IOCell}, m_conns{} {}
 
 void IOCell::initialize(int id, AnalogBlock &cab) {
     set_cab(cab);
@@ -112,10 +110,6 @@ void IOCell::initialize(int id, AnalogBlock &cab) {
     for (Connection &conn : m_conns) {
         conn.reset();
     }
-}
-
-uint8_t IOCell::connection_nibble(AnalogModule &to) {
-    return connection(to.cab()).cab_nibble(*this);
 }
 
 void IOCell::finalize() {

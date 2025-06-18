@@ -3,13 +3,13 @@
 
 #include <cstddef>
 
-constexpr std::size_t NCapacitorsPerBlock = 8;
+constexpr int NCapacitorsPerBlock = 8;
 
-constexpr std::size_t NOpAmpsPerBlock = 2;
+constexpr int NOpAmpsPerBlock = 2;
 
-constexpr std::size_t NType1IOCellsPerChip = 4;
+constexpr int NType1IOCellsPerChip = 4;
 
-constexpr std::size_t NBlocksPerChip = 4;
+constexpr int NBlocksPerChip = 4;
 
 constexpr uint8_t from_nibbles(uint8_t n1, uint8_t n2) {
     return (n1 << 4) | n2;
