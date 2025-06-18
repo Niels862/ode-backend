@@ -1,0 +1,22 @@
+chip {
+    io: [
+        output,
+        output,
+        output,
+        output,
+    ],
+    cabs: [
+        cab 1 with clocks 1, - {
+            cams: [
+                GainInv as gain1 {},
+                GainInv as gain2 {}
+            ]
+        }
+    ],
+    routing: [
+        gain1 -> io1,
+        gain1 -> io3,
+        gain2 -> io2,
+        gain2 -> io4,
+    ]
+}
