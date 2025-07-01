@@ -11,7 +11,7 @@ class AnalogModule;
 class OpAmp {
 public:
     OpAmp();
-    OpAmp(int id);
+    OpAmp(AnalogBlock &cab, int id);
 
     OpAmp &claim(AnalogModule &module);
     OpAmp &set_feedback(SwitchConfiguration switch_cfg);

@@ -1,22 +1,15 @@
 chip {
     io: [
         input,
-        input,
-        output,
     ],
     cabs: [
         cab 1 with clocks 1, - {
-            cams: {
-                SumInv as sum1 {
-                    gain1: 1.0,
-                    gain2: 1.0
-                }
-            }
+            cams: [
+                SumInv as sum1 {}
+            ]
         }
     ],
-    routing [
-        io1 -> sum1:1,
-        io2 -> sum1:2,
-        sum1 -> io3
+    routing: [
+        io1 -> sum1:1
     ]
 }

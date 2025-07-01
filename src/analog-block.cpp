@@ -7,12 +7,12 @@
 
 AnalogBlock::AnalogBlock()
         : m_id{}, m_set_up{false}, m_caps{}, m_next_cap{}, 
-          m_opamps{}, m_next_opamp{},
+          m_opamps{}, m_next_opamp{}, m_comp{*this},
           m_used_clocks{}, m_modules{} {}
 
 AnalogBlock::AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock)
         : m_id{id}, m_set_up{false}, m_caps{}, m_next_cap{}, 
-          m_opamps{}, m_next_opamp{}, 
+          m_opamps{}, m_next_opamp{}, m_comp{*this},
           m_used_clocks{&pri_clock, &sec_clock}, 
           m_internal_P{}, m_internal_Q{}, 
           m_modules{} {
@@ -21,7 +21,7 @@ AnalogBlock::AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock)
     }
 
     for (std::size_t i = 0; i < NOpAmpsPerBlock; i++) {
-        m_opamps[i] = OpAmp(i + 1);
+        m_opamps[i] = OpAmp(*this, i + 1);
     }
 }
 
@@ -83,8 +83,8 @@ static int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2,
     
     if (opamp1.is_used()) {
         for (auto &port : opamp1.out().connections()) {
-            if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
-                Connection &conn = cell->connection(opamp1.out().cab());
+            if (port->source() == InPortSource::IOCell) {
+                Connection &conn = port->cell().connection(opamp1.out().cab());
                 if (conn.channel == channel && conn.mode == Connection::Far) {
                     is1 = true;
                 }
@@ -94,8 +94,8 @@ static int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2,
 
     if (opamp2.is_used()) {
         for (auto &port : opamp2.out().connections()) {
-            if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
-                Connection &conn = cell->connection(opamp2.out().cab());
+            if (port->source() == InPortSource::IOCell) {
+                Connection &conn = port->cell().connection(opamp2.out().cab());
                 if (conn.channel == channel && conn.mode == Connection::Far) {
                     is2 = true;
                 }

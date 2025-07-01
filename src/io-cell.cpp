@@ -15,6 +15,8 @@ void Connection::reset() {
 void Connection::initialize(AnalogBlock &cab, Block block) {
     this->cab = &cab;
     this->block = block;
+
+    std::cout << "init " << this << " to " << &cab << std::endl;
 }
 
 uint8_t Connection::io_nibble() const {
@@ -44,8 +46,11 @@ uint8_t Connection::io_nibble() const {
 }
 
 uint8_t Connection::cab_nibble(IOCell &cell_from) const {
+    std::cout << this << " has " << cab << std::endl;
+    
     int from_id = cell_from.id();
     int to_id = cab->id();
+
     uint8_t n = 0x0;
 
     switch (from_id) {
@@ -102,7 +107,8 @@ bool Connection::equivalent(Connection const &other) const {
 IOCell::IOCell() /* IOCell manages its own in() and out() port */
         : AnalogModule{"IOCell"}, m_id{}, 
           m_mode{IOMode::Disabled},
-          m_in{*this}, m_out{*this, PortSource::IOCell}, m_conns{} {}
+          m_in{*this}, m_out{*this}, 
+          m_conns{} {}
 
 void IOCell::initialize(int id, AnalogBlock &cab) {
     set_cab(cab);
@@ -121,12 +127,11 @@ void IOCell::finalize() {
 
     if (m_mode == IOMode::InputBypass) {
         for (InputPort *port : out(1).connections()) {
-            AnalogBlock &cab = port->module().cab();
-            if (cab) {
-                connection(cab).initialize(cab, Connection::ToInput);
-            } else {
+            AnalogBlock &cab = port->cab();
+            if (port->source() == InPortSource::IOCell) {
                 throw DesignError("cannot connect 2 IO-Cells");
             }
+            connection(cab).initialize(cab, Connection::ToInput);
         }
     } else if (m_mode == IOMode::OutputBypass) {
         OutputPort *port = in(1).connection();
@@ -135,17 +140,17 @@ void IOCell::finalize() {
             Connection &conn = connection(cab);
 
             switch (port->source()) {
-                case PortSource::None:
+                case OutPortSource::None:
                     break;
                     
-                case PortSource::IOCell:
+                case OutPortSource::IOCell:
                     throw DesignError("cannot connect 2 IO-Cells");
 
-                case PortSource::OpAmp1:
+                case OutPortSource::OpAmp1:
                     conn.initialize(cab, Connection::FromOutput);
                     break;
 
-                case PortSource::OpAmp2:
+                case OutPortSource::OpAmp2:
                     conn.initialize(cab, Connection::FromOutput);
                     conn.channel = Connection::Secondary;
                     break;

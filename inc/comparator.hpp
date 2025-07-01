@@ -9,7 +9,7 @@ class AnalogModule;
 
 class Comparator {
 public:
-    Comparator();
+    Comparator(AnalogBlock &cab);
 
     Comparator &claim(AnalogModule &module);
     Comparator &set_configuration(std::array<uint8_t, 2> cfg);

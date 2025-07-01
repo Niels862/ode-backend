@@ -3,8 +3,8 @@
 #include "analog-block.hpp"
 #include "io-cell.hpp"
 
-Comparator::Comparator()
-        : m_module{}, m_in{}, m_cfg{} {}
+Comparator::Comparator(AnalogBlock &cab)
+        : m_module{}, m_in{cab, InPortSource::Comparator}, m_cfg{} {}
 
 Comparator &Comparator::claim(AnalogModule &module) {
     if (m_module) {
@@ -12,7 +12,6 @@ Comparator &Comparator::claim(AnalogModule &module) {
     }
 
     m_module = &module;
-    m_in = InputPort(module);
 
     return *this;
 }
@@ -29,7 +28,7 @@ static bool is_internally_routed(InputPort &port) {
         throw DesignError("No connected to Comparator");
     }
 
-    Connection *conn = &cell->connection(port.module().cab());
+    Connection *conn = &cell->connection(port.cab());
     if (conn->mode == Connection::Mode::Far) {
         return true;
     }

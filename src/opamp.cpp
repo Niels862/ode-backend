@@ -6,8 +6,11 @@
 OpAmp::OpAmp()
         : m_id{}, m_module{}, m_switch_cfg{} {}
 
-OpAmp::OpAmp(int id)
-        : m_id{id}, m_module{}, m_switch_cfg{} {} 
+OpAmp::OpAmp(AnalogBlock &cab, int id)
+        : m_id{id}, m_module{}, m_switch_cfg{},
+          m_out{cab, id == 1 
+                     ? OutPortSource::OpAmp1
+                     : OutPortSource::OpAmp2} {} 
 
 OpAmp &OpAmp::claim(AnalogModule &module) {
     if (m_module) {
@@ -18,9 +21,9 @@ OpAmp &OpAmp::claim(AnalogModule &module) {
 
     m_module = &module;
     if (m_id == 1) {
-        m_out = OutputPort(module, PortSource::OpAmp1);
+        m_out = OutputPort(module.cab(), OutPortSource::OpAmp1);
     } else {
-        m_out = OutputPort(module, PortSource::OpAmp2);
+        m_out = OutputPort(module.cab(), OutPortSource::OpAmp2);
     }
 
     return set_feedback({ 0x00, 0x05 });

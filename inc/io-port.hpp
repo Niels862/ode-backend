@@ -11,7 +11,14 @@ class OutputPort;
 
 class IOCell;
 
-enum class PortSource {
+enum class InPortSource {
+    None,
+    IOCell,
+    Local,
+    Comparator,
+};
+
+enum class OutPortSource {
     None,
     IOCell,
     OpAmp1,
@@ -21,14 +28,16 @@ enum class PortSource {
 class InputPort {
 public:
     InputPort();
-    InputPort(AnalogModule &module);
+    InputPort(AnalogBlock &cab, InPortSource source);
+    InputPort(IOCell &cell);
 
     /* Returns the 4-bit nibble representing the connection to this 
        input port as it appears in the configuration data. */
     uint8_t input_connection_selector();
 
     AnalogBlock &cab();
-    AnalogModule &module() { return *m_module; }
+    IOCell &cell() { return *m_cell; }
+    InPortSource source() const { return m_source; }
 
     OutputPort *connection() { return m_connection; }
     IOCell *io_connection();
@@ -36,7 +45,10 @@ public:
 private:
     void connect(OutputPort &port);
 
+    AnalogBlock *m_cab;
     AnalogModule *m_module;
+    IOCell *m_cell;
+    InPortSource m_source;
     OutputPort *m_connection{nullptr};
 
     friend OutputPort;
@@ -45,13 +57,14 @@ private:
 class OutputPort {
 public:
     OutputPort();
-    OutputPort(AnalogModule &module, PortSource source);
+    OutputPort(AnalogBlock &cab, OutPortSource source);
+    OutputPort(IOCell &cell);
 
     void connect(InputPort &port);
 
     AnalogBlock &cab();
-    AnalogModule &module() { return *m_module; }
-    PortSource source() const { return m_source; }
+    IOCell &cell() { return *m_cell; }
+    OutPortSource source() const { return m_source; }
 
     std::vector<InputPort *> &connections() {
         return m_connections;
@@ -60,8 +73,10 @@ public:
 private:
     uint8_t input_connection_selector(InputPort &to);
 
+    AnalogBlock *m_cab;
     AnalogModule *m_module;
-    PortSource m_source;
+    IOCell *m_cell;
+    OutPortSource m_source;
     std::vector<InputPort *> m_connections{};
 
     friend InputPort;

@@ -41,6 +41,7 @@ struct Connection {
     AnalogBlock *cab;
     Internal internal;
 
+    Connection() { reset(); }
     void reset();
 
     void initialize(AnalogBlock &cab, Block block);

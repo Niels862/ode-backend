@@ -6,7 +6,8 @@
 
 AnalogModule::AnalogModule(std::string const &name)
         : m_cab{}, m_name{name},
-          m_ins{}, m_caps{}, m_opamps{}, m_comp{}, m_curr_cap{0} {}
+          m_ins{}, m_caps{}, m_opamps{}, m_comp{}, 
+          m_curr_cap{0}, m_n_ins{0} {}
 
 AnalogModule *AnalogModule::Build(std::string_view const &name) {
     if (name == "GainInv")              return new GainInv();
@@ -18,11 +19,11 @@ AnalogModule *AnalogModule::Build(std::string_view const &name) {
 }
 
 InputPort &AnalogModule::in(std::size_t i) {
-    if (i == 0 && m_ins.size() == 1) {
+    if (i == 0 && m_n_ins == 1) {
         return in(1);
     }
 
-    if (i < 1 || i > m_ins.size()) {
+    if (i < 1 || i > m_n_ins) {
         std::stringstream ss;
         ss << "`" << m_name << "` does not implement in(" << i << ")";
         throw DesignError(ss.str());
@@ -94,8 +95,9 @@ void AnalogModule::claim_comparator() {
 }
 
 void AnalogModule::claim_inputs(std::size_t n) {
+    m_n_ins = n;
     for (std::size_t i = 0; i < n; i++) {
-        m_ins.emplace_back(*this);
+        m_ins[i] = InputPort(cab(), InPortSource::Local);
     }
 }
 

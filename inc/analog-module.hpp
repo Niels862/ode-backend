@@ -50,7 +50,7 @@ public:
     virtual InputPort &in(std::size_t i = 0);
     virtual OutputPort &out(std::size_t i = 0);
 
-    std::vector<InputPort> &ins() { return m_ins; }
+    std::array<InputPort, 8> &ins() { return m_ins; }
     Capacitor &cap(int i = 0);
     OpAmp &opamp(int i);
     Comparator &comp();
@@ -70,12 +70,13 @@ protected:
 
     std::string m_name;
 
-    std::vector<InputPort> m_ins;
+    std::array<InputPort, 8> m_ins;
     std::array<Capacitor *, NCapacitorsPerBlock> m_caps;
     std::array<OpAmp *, NOpAmpsPerBlock> m_opamps;
     Comparator *m_comp;
 
     std::size_t m_curr_cap;
+    std::size_t m_n_ins;
 };
 
 class GainInv : public AnalogModule {
