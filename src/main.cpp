@@ -230,15 +230,7 @@ void load(AnalogChip &chip) {
 
 std::unique_ptr<AnalogChip> parse_file(std::string filename) {
     Lexer lexer;
-
     std::vector<Token> tokens = lexer.lex(filename);
-    if (args.verbose) {
-        std::cout << "Tokens [" << std::endl;
-        for (Token const &token : tokens) {
-            std::cout << "  " << token << "," << std::endl;
-        }
-        std::cout << "]" << std::endl;
-    }
 
     Parser parser;
     std::unique_ptr<AnalogChip> chip = parser.parse(tokens);

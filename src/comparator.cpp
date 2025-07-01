@@ -2,9 +2,11 @@
 #include "error.hpp"
 #include "analog-block.hpp"
 #include "io-cell.hpp"
+#include <stdio.h>
 
 Comparator::Comparator(AnalogBlock &cab)
-        : m_module{}, m_in{cab, InPortSource::Comparator}, m_cfg{} {}
+        : m_module{}, m_in{cab, InPortSource::Comparator}, 
+          m_cfg{} {}
 
 Comparator &Comparator::claim(AnalogModule &module) {
     if (m_module) {

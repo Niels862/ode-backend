@@ -8,9 +8,9 @@
 AnalogChip::AnalogChip()
         : m_cabs{}, m_null_cab{}, m_io_cells{}, 
           m_clocks{}, m_null_clock{} {
-    m_null_cab = AnalogBlock(0, m_null_clock, m_null_clock);
+    m_null_cab.initialize(0, m_null_clock, m_null_clock);
     for (std::size_t i = 0; i < NBlocksPerChip; i++) {
-        m_cabs[i] = AnalogBlock(i + 1, m_null_clock, m_null_clock);
+        m_cabs[i].initialize(i + 1, m_null_clock, m_null_clock);
     }
 
     for (std::size_t i = 0; i < NType1IOCellsPerChip; i++) {

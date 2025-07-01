@@ -50,6 +50,7 @@ void MemoryBase::set(std::size_t bank_addr, std::size_t byte_addr,
         throw DesignError(ss.str());
     }
     if (get(bank_addr, byte_addr).is_set()) {
+        std::cout << *this << std::endl;
         std::stringstream ss;
         ss << "Memory at " << std::hex << bank_addr << ":" 
            << byte_addr << std::dec << " already written";

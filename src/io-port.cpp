@@ -51,9 +51,7 @@ void InputPort::connect(OutputPort &port) {
 }
 
 OutputPort::OutputPort()
-        : m_cab{}, m_cell{}, m_source{}, m_connections{} {
-    m_connections.reserve(8);
-}
+        : m_cab{}, m_cell{}, m_source{}, m_connections{} {}
 
 OutputPort::OutputPort(AnalogBlock &cab, OutPortSource source)
         : m_cab{&cab}, m_cell{}, m_source{source} {}
@@ -75,7 +73,7 @@ AnalogBlock &OutputPort::cab() {
 }
 
 static uint8_t iocell_connection_selector(IOCell &cell_from,
-                                          AnalogBlock &cab_to) {
+                                          AnalogBlock &cab_to) {    
     Connection &conn = cell_from.connection(cab_to);
     return conn.cab_nibble(cell_from);
 }
@@ -137,7 +135,7 @@ uint8_t OutputPort::input_connection_selector(InputPort &input) {
             return 0x0;
 
         case OutPortSource::IOCell:    
-            return iocell_connection_selector(cell(), cab());
+            return iocell_connection_selector(cell(), input.cab());
 
         case OutPortSource::OpAmp1:    
             return opamp_connection_selector(from, to);

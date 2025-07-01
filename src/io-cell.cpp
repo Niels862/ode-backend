@@ -15,8 +15,6 @@ void Connection::reset() {
 void Connection::initialize(AnalogBlock &cab, Block block) {
     this->cab = &cab;
     this->block = block;
-
-    std::cout << "init " << this << " to " << &cab << std::endl;
 }
 
 uint8_t Connection::io_nibble() const {
@@ -45,9 +43,7 @@ uint8_t Connection::io_nibble() const {
     return 0x0;
 }
 
-uint8_t Connection::cab_nibble(IOCell &cell_from) const {
-    std::cout << this << " has " << cab << std::endl;
-    
+uint8_t Connection::cab_nibble(IOCell &cell_from) const {    
     int from_id = cell_from.id();
     int to_id = cab->id();
 
@@ -126,15 +122,19 @@ void IOCell::finalize() {
     }
 
     if (m_mode == IOMode::InputBypass) {
-        for (InputPort *port : out(1).connections()) {
+        std::cout << "++" << std::endl;
+        for (InputPort *port : m_out.connections()) {
             AnalogBlock &cab = port->cab();
+            printf("init to %d at %p\n", cab.id(), (void*)&cab);
+
             if (port->source() == InPortSource::IOCell) {
                 throw DesignError("cannot connect 2 IO-Cells");
             }
+            
             connection(cab).initialize(cab, Connection::ToInput);
         }
     } else if (m_mode == IOMode::OutputBypass) {
-        OutputPort *port = in(1).connection();
+        OutputPort *port = m_in.connection();
         if (port) {
             AnalogBlock &cab = port->cab();
             Connection &conn = connection(cab);

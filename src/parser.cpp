@@ -13,8 +13,6 @@ std::unique_ptr<AnalogChip> Parser::parse(std::vector<Token> tokens) {
     std::vector<std::unique_ptr<AnalogChip>> chips;
 
     while (!at_eof()) {
-        std::cout << m_tokens[m_curr] << std::endl;
-
         if (matches(TokenType::Let)) {
             parse_let_declaration();
         } else if (matches(TokenType::Chip)) {
@@ -383,7 +381,6 @@ void Parser::parse_routing_entry(AnalogChip &chip) {
     OutputPort &out = parse_output_port(chip);
     expect(TokenType::Arrow);
     InputPort &in = parse_input_port(chip);
-    std::cout << m_tokens[m_curr] << " " << &out << " " << &in << std::endl;
     out.connect(in);
 }
 

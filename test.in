@@ -5,11 +5,13 @@ chip {
     cabs: [
         cab 1 with clocks 1, - {
             cams: [
-                SumInv as sum1 {}
+                Integrator as integ1 {
+                    reset: true
+                }
             ]
         }
     ],
     routing: [
-        io1 -> sum1:1
+        io1 -> integ1:cmp
     ]
 }

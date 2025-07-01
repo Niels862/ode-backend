@@ -109,8 +109,6 @@ void Lexer::read_file(std::string &filename) {
 
     m_text = buffer.str();
     m_curr_pos = TextPosition(filename);
-
-    std::cout << m_text << std::endl;
 }
 
 bool Lexer::at_eof() const {

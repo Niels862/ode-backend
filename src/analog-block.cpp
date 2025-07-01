@@ -8,14 +8,16 @@
 AnalogBlock::AnalogBlock()
         : m_id{}, m_set_up{false}, m_caps{}, m_next_cap{}, 
           m_opamps{}, m_next_opamp{}, m_comp{*this},
-          m_used_clocks{}, m_modules{} {}
+          m_used_clocks{nullptr, nullptr}, 
+          m_internal_P{}, m_internal_Q{},
+          m_modules{} {}
 
-AnalogBlock::AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock)
-        : m_id{id}, m_set_up{false}, m_caps{}, m_next_cap{}, 
-          m_opamps{}, m_next_opamp{}, m_comp{*this},
-          m_used_clocks{&pri_clock, &sec_clock}, 
-          m_internal_P{}, m_internal_Q{}, 
-          m_modules{} {
+void AnalogBlock::initialize(int id, Clock &pri_clock, Clock &sec_clock) {
+    m_id = id;
+    
+    m_used_clocks[0] = &pri_clock;
+    m_used_clocks[1] = &sec_clock;
+    
     for (std::size_t i = 0; i < NCapacitorsPerBlock; i++) {
         m_caps[i] = Capacitor(i + 1);
     }

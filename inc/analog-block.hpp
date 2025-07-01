@@ -20,7 +20,15 @@ class IOCell;
 class AnalogBlock {
 public:
     AnalogBlock();
-    AnalogBlock(int id, Clock &pri_clock, Clock &sec_clock);
+    
+    /* Delete copy/move semantics as this breaks links with Ports. */
+    AnalogBlock(AnalogBlock const &) = delete;
+    AnalogBlock &operator=(AnalogBlock const &) = delete;
+    
+    AnalogBlock(AnalogBlock &&) = delete;
+    AnalogBlock &operator=(AnalogBlock &&) = delete;
+
+    void initialize(int id, Clock &pri_clock, Clock &sec_clock);
 
     void setup(Clock &clk_a, Clock &clk_b);
 
