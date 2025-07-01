@@ -1,0 +1,38 @@
+chip {
+    cabs: [
+        cab 1 with clocks 1, - {
+            cams: [
+                GainInv as gain1 {},
+                GainInv as gain2 {},
+            ]
+        },
+        cab 2 with clocks 1, - {
+            cams: [
+                GainInv as gain3 {},
+                GainInv as gain4 {},
+            ]
+        },
+        cab 3 with clocks 1, - {
+            cams: [
+                GainInv as gain5 {},
+                GainInv as gain6 {},
+            ]
+        },
+        cab 4 with clocks 1, - {
+            cams: [
+                GainInv as gain7 {},
+                GainInv as gain8 {},
+            ]
+        },
+    ],
+    routing: [
+        gain1 -> gain1,
+        gain2 -> gain2,
+        gain3 -> gain3,
+        gain4 -> gain4,
+        gain5 -> gain5,
+        gain6 -> gain6,
+        gain7 -> gain7,
+        gain8 -> gain8,
+    ]
+}

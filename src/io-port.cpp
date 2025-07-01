@@ -19,6 +19,10 @@ uint8_t InputPort::input_connection_selector() {
     return m_connection->input_connection_selector(*this);
 }
 
+AnalogBlock &InputPort::cab() {
+    return m_module->cab();
+}
+
 IOCell *InputPort::io_connection() {
     if (m_connection == nullptr) {
         return nullptr;
@@ -50,6 +54,10 @@ OutputPort::OutputPort(AnalogModule &module, PortSource source)
 void OutputPort::connect(InputPort &port) {
     m_connections.push_back(&port);
     port.connect(*this);
+}
+
+AnalogBlock &OutputPort::cab() {
+    return m_module->cab();
 }
 
 static uint8_t iocell_connection_selector(AnalogModule &from,
@@ -111,7 +119,7 @@ uint8_t OutputPort::input_connection_selector(InputPort &input) {
     // Assert that the method is not called on an IOCell's input port (cab == 0) 
     assert(input.module().cab().id() > 0);
 
-    int from = module().cab().id();
+    int from = cab().id();
     int to   = input.module().cab().id();
 
     switch (m_source) {

@@ -131,7 +131,7 @@ void IOCell::finalize() {
     } else if (m_mode == IOMode::OutputBypass) {
         OutputPort *port = in(1).connection();
         if (port) {
-            AnalogBlock &cab = port->module().cab();
+            AnalogBlock &cab = port->cab();
             Connection &conn = connection(cab);
 
             switch (port->source()) {

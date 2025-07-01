@@ -14,6 +14,8 @@
 static argp_option options[] = {
     { "verbose",    'v', 0, 0,  "Use verbose output", 0 },
     { "raw",        'r', 0, 0,  "Write output in raw format", 0 },
+    { "add-size",   's', 0, 0,  "Add size of configuration to output", 0 },
+    { "add-check",  'c', 0, 0,  "Add check value at end of configuration", 0 },
     {}
 };
 
@@ -25,6 +27,14 @@ static error_t parse_opt(int key, char *arg, argp_state *state) {
 
         case 'r':
             args.raw = true;
+            break;
+
+        case 's':
+            args.add_size = true;
+            break;
+
+        case 'c':
+            args.add_check = true;
             break;
 
         case ARGP_KEY_ARG:
@@ -84,7 +94,7 @@ void write(AnalogChip &chip) {
         if (args.verbose) {
             std::cerr << "Bytestream length: " << data.size() << std::endl;
         }
-    
+#if 0    
         f << std::hex << std::setfill('0') << std::uppercase;
     
         f << "const unsigned char an_FPAA1_PrimaryConfigInfo[] = {\n";
@@ -92,6 +102,17 @@ void write(AnalogChip &chip) {
             f << "  0x" << static_cast<int>(byte) << ",\n";
         }
         f << "};\n";
+#else
+        if (args.add_size) {
+            f << data.size() << std::endl;
+        }
+        for (uint8_t byte : data) {
+            f << static_cast<int>(byte) << std::endl;
+        }
+        if (args.add_check) {
+            f << 1337 << std::endl;
+        }
+#endif
     }
 
     f.close();

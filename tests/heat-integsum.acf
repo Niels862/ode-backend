@@ -1,0 +1,18 @@
+chip {
+    io: [
+        input,
+        input,
+        output,
+    ],
+    cabs: [
+        cab 1 with clocks 1, - {
+            cams: [
+                Integrator as integ1 {},
+                SampleAndHold as sah1 {},
+            ]
+        },
+    ],
+    routing: [
+        
+    ],
+}

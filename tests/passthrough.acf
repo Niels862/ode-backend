@@ -1,0 +1,21 @@
+chip {
+    io: [
+        input,
+        -,
+        output,
+        -,
+    ],
+    cabs: [
+        cab 3 with clocks 1, - {
+            cams: [
+                GainInv as gain1 {},
+                GainInv as gain2 {},
+            ],
+        },
+    ],
+    routing: [
+        io1 -> gain1,
+        gain1 -> gain2,
+        gain2 -> io3,
+    ],
+}

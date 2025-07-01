@@ -84,7 +84,7 @@ static int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2,
     if (opamp1.is_used()) {
         for (auto &port : opamp1.out().connections()) {
             if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
-                Connection &conn = cell->connection(opamp1.out().module().cab());
+                Connection &conn = cell->connection(opamp1.out().cab());
                 if (conn.channel == channel && conn.mode == Connection::Far) {
                     is1 = true;
                 }
@@ -95,7 +95,7 @@ static int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2,
     if (opamp2.is_used()) {
         for (auto &port : opamp2.out().connections()) {
             if (auto *cell = dynamic_cast<IOCell *>(&port->module())) {
-                Connection &conn = cell->connection(opamp2.out().module().cab());
+                Connection &conn = cell->connection(opamp2.out().cab());
                 if (conn.channel == channel && conn.mode == Connection::Far) {
                     is2 = true;
                 }

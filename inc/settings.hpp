@@ -6,6 +6,8 @@
 struct Args {
     bool verbose;
     bool raw;
+    bool add_size;
+    bool add_check;
     std::string infile;
     std::string outfile;
 };

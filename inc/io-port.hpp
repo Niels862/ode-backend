@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cinttypes>
 
+class AnalogBlock;
 class AnalogModule;
 class OutputPort;
 
@@ -26,6 +27,7 @@ public:
        input port as it appears in the configuration data. */
     uint8_t input_connection_selector();
 
+    AnalogBlock &cab();
     AnalogModule &module() { return *m_module; }
 
     OutputPort *connection() { return m_connection; }
@@ -47,6 +49,7 @@ public:
 
     void connect(InputPort &port);
 
+    AnalogBlock &cab();
     AnalogModule &module() { return *m_module; }
     PortSource source() const { return m_source; }
 
