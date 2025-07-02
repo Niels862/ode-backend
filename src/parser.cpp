@@ -379,9 +379,13 @@ void Parser::parse_routing(AnalogChip &chip) {
 
 void Parser::parse_routing_entry(AnalogChip &chip) {
     OutputPort &out = parse_output_port(chip);
-    expect(TokenType::Arrow);
+    Token &arrow = expect(TokenType::Arrow);
     InputPort &in = parse_input_port(chip);
-    out.connect(in);
+    try {
+        out.connect(in);
+    } catch (std::exception const &e) {
+        arrow.error(e.what());
+    }
 }
 
 OutputPort &Parser::parse_output_port(AnalogChip &chip) {

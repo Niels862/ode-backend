@@ -46,7 +46,7 @@ public:
     uint8_t input_connection_selector();
 
     AnalogBlock &cab();
-    IOCell &cell() { return *m_cell; }
+    IOCell &io_cell() { return *m_io_cell; }
     InPortSource source() const { return m_source; }
 
     IOCell *io_connection();
@@ -57,8 +57,7 @@ private:
     void connect(OutputPort &out);
 
     AnalogBlock *m_cab;
-    AnalogModule *m_module;
-    IOCell *m_cell;
+    IOCell *m_io_cell;
     InPortSource m_source;
     OutputPort *m_connection{nullptr};
 
@@ -77,7 +76,7 @@ public:
     void connect(InputPort &in);
 
     AnalogBlock &cab();
-    IOCell &cell() { return *m_cell; }
+    IOCell &io_cell() { return *m_io_cell; }
     OutPortSource source() const { return m_source; }
 
     std::vector<PortLink *> &links() { return m_links; }
@@ -86,8 +85,7 @@ private:
     uint8_t input_connection_selector(InputPort &to);
 
     AnalogBlock *m_cab;
-    AnalogModule *m_module;
-    IOCell *m_cell;
+    IOCell *m_io_cell;
     OutPortSource m_source;
     std::vector<InputPort *> m_connections{};
 

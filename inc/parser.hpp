@@ -52,7 +52,6 @@ private:
     OutputPort &parse_output_port(AnalogChip &chip);
     InputPort &parse_input_port(AnalogChip &chip);
 
-
     double parse_expression();
     double parse_sum();
     double parse_term();
