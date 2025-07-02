@@ -119,8 +119,10 @@ public:
     void finalize() override;
 
 private:
-    double m_integ_const;
+    std::array<double, 3> m_integ_consts;
+    std::array<bool, 3> m_invert;
     bool m_gnd_reset;
+    std::size_t m_n_inputs;
 };
 
 class GainSwitch : public AnalogModule {

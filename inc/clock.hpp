@@ -17,7 +17,8 @@ public:
     bool is_used() const { return m_is_used; }
     void set_is_used(bool is_used) { m_is_used = is_used; }
 
-    std::size_t value() const { return m_value; }
+    std::size_t freq_kHz() const { return m_freq_kHz; }
+    double freq_mHz() const { return static_cast<double>(m_freq_kHz) / 1'000; }
     std::size_t offset() const { return m_offset; }
 
     enum Select {
@@ -29,7 +30,7 @@ private:
     int m_id;
     bool m_is_used;
 
-    std::size_t m_value;
+    std::size_t m_freq_kHz;
     std::size_t m_offset;
 };
 

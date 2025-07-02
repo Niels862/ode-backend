@@ -63,6 +63,13 @@ public:
     Comparator &comp() { return m_comp; }
 
     void set_used_clock(int i, Clock &clock);
+    Clock &get_clock(Clock::Select select) {
+        if (select == Clock::A) {
+            return *m_used_clocks[0];
+        } else {
+            return *m_used_clocks[1];
+        }
+    }
 
     void log_resources() const;
 

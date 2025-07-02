@@ -200,17 +200,32 @@ void SumInv::finalize() {
 
 Integrator::Integrator()
         : AnalogModule("Integrator"), 
-          m_integ_const{}, m_gnd_reset{} {}
+          m_integ_consts{{4, 1, 1}}, m_invert{{0, 0, 0}}, 
+          m_gnd_reset{}, m_n_inputs{1} {}
 
 Integrator::Integrator(double integ_const, bool gnd_reset)
         : AnalogModule{"Integrator"}, 
-          m_integ_const{integ_const}, m_gnd_reset{gnd_reset} {}
+          m_integ_consts{{integ_const, 1, 1}}, m_invert{{0, 0, 0}}, 
+          m_gnd_reset{gnd_reset},
+          m_n_inputs{1} {}
 
 bool Integrator::set_parameter(std::string_view param, Parameter value) {
-    if (param == "integ_const") {
-        m_integ_const = value.as_double();
+    if (param == "integ_const1" || param == "integ_const") {
+        m_integ_consts[0] = value.as_double();
+    } else if (param == "integ_const2") {
+        m_integ_consts[1] = value.as_double();
+    } else if (param == "integ_const3") {
+        m_integ_consts[2] = value.as_double();
+    } else if (param == "invert1" || param == "invert") {
+        m_invert[0] = value.as_bool();
+    } else if (param == "invert2") {
+        m_invert[1] = value.as_bool();
+    } else if (param == "invert3") {
+        m_invert[2] = value.as_bool();
     } else if (param == "reset") {
         m_gnd_reset = value.as_bool();
+    } else if (param == "inputs") {
+        m_n_inputs = value.as_int();
     } else {
         return false;
     }
@@ -218,33 +233,52 @@ bool Integrator::set_parameter(std::string_view param, Parameter value) {
 }
 
 void Integrator::claim_components() {
-    claim_capacitors(2);
+    claim_capacitors(1 + m_n_inputs);
     claim_opamps(1);
     if (m_gnd_reset) {
         claim_comparator();
     }
-    claim_inputs(1);
+    claim_inputs(m_n_inputs);
 }
 
 void Integrator::finalize() {
-    uint8_t num, den;
-    approximate_ratio(m_integ_const / 4, num, den);
-
     OpAmp &_opamp = opamp(1);
 
-    Clock::Select clk = Clock::A;
+    Clock::Select s = Clock::A;
     if (m_gnd_reset) {
         comp().set_configuration({ 0x07, 0xC9 });
         _opamp.set_feedback({ 0x6C, 0x05 });
-        clk = Clock::B;
+        s = Clock::B;
     }
 
-    cap(1).set_value(num)
-          .set_in(Capacitor::from_input(in(), 1, clk))
-          .set_out(Capacitor::to_opamp(_opamp, 2, clk));
-    cap(2).set_value(den)
-          .set_in(Capacitor::from_opamp(_opamp))
-          .set_out(Capacitor::to_opamp(_opamp));
+    Clock &clk = m_cab->get_clock(s);
+
+    std::vector<double> k(3);
+    for (std::size_t i = 0; i < m_n_inputs; i++) {
+        k[i] = m_integ_consts[i] / clk.freq_mHz();
+    }
+    std::vector<uint8_t> nums;
+    uint8_t den;
+    approximate_ratios(k, nums, den);
+
+    if (m_n_inputs == 1) {
+        int out_phase = m_invert[0] ? 1 : 2;
+
+        cap().set_value(nums[0])
+             .set_in(Capacitor::from_input(in(1), 1, s))
+             .set_out(Capacitor::to_opamp(_opamp, out_phase, s));
+    } else {
+        for (std::size_t i = 0; i < m_n_inputs; i++) {
+            int in_phase = m_invert[i] ? 1 : 2;
+
+            cap().set_value(nums[i])
+                .set_in(Capacitor::from_input(in(i + 1), in_phase, s))
+                .set_out(Capacitor::to_opamp(_opamp, 1, s));
+        }
+    }
+    cap().set_value(den)
+         .set_in(Capacitor::from_opamp(_opamp))
+         .set_out(Capacitor::to_opamp(_opamp));
 }
 
 GainSwitch::GainSwitch()

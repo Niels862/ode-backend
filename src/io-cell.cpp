@@ -122,10 +122,8 @@ void IOCell::finalize() {
     }
 
     if (m_mode == IOMode::InputBypass) {
-        std::cout << "++" << std::endl;
         for (InputPort *port : m_out.connections()) {
             AnalogBlock &cab = port->cab();
-            printf("init to %d at %p\n", cab.id(), (void*)&cab);
 
             if (port->source() == InPortSource::IOCell) {
                 throw DesignError("cannot connect 2 IO-Cells");

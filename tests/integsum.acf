@@ -1,0 +1,15 @@
+chip {
+    cabs: [
+        cab 1 with clocks 1, - {
+            cams: [
+                Integrator as integ1 {
+                    inputs: 3,
+                    integ_const1: 1,
+                    integ_const2: 1.5,
+                    integ_const3: 2.4,
+                    invert2: true,
+                },
+            ],
+        },
+    ],
+}
