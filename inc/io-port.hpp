@@ -49,7 +49,6 @@ public:
     IOCell &cell() { return *m_cell; }
     InPortSource source() const { return m_source; }
 
-    OutputPort *connection() { return m_connection; }
     IOCell *io_connection();
 
     PortLink *link() { return m_link; }
@@ -80,10 +79,6 @@ public:
     AnalogBlock &cab();
     IOCell &cell() { return *m_cell; }
     OutPortSource source() const { return m_source; }
-
-    std::vector<InputPort *> &connections() {
-        return m_connections;
-    }
 
     std::vector<PortLink *> &links() { return m_links; }
 

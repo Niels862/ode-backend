@@ -122,17 +122,17 @@ void IOCell::finalize() {
     }
 
     if (m_mode == IOMode::InputBypass) {
-        for (InputPort *port : m_out.connections()) {
-            AnalogBlock &cab = port->cab();
+        for (PortLink *link : m_out.links()) {
+            AnalogBlock &cab = link->in->cab();
 
-            if (port->source() == InPortSource::IOCell) {
+            if (link->in->source() == InPortSource::IOCell) {
                 throw DesignError("cannot connect 2 IO-Cells");
             }
             
             connection(cab).initialize(cab, Connection::ToInput);
         }
     } else if (m_mode == IOMode::OutputBypass) {
-        OutputPort *port = m_in.connection();
+        OutputPort *port = m_in.link()->out;
         if (port) {
             AnalogBlock &cab = port->cab();
             Connection &conn = connection(cab);
