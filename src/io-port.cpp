@@ -3,13 +3,40 @@
 #include "analog-block.hpp"
 #include "io-cell.hpp"
 #include "error.hpp"
+#include <sstream>
 #include <cassert>
+
+char const *to_string(InPortSource source) {
+    switch (source) {
+        case InPortSource::None:        return "none";
+        case InPortSource::IOCell:      return "io-cell";
+        case InPortSource::Local:       return "local";
+        case InPortSource::Comparator:  return "comparator";
+    }
+    return "";
+}
+
+char const *to_string(OutPortSource source) {
+    switch (source) {
+        case OutPortSource::None:       return "none";
+        case OutPortSource::IOCell:     return "io-cell";
+        case OutPortSource::OpAmp1:     return "op-amp1";
+        case OutPortSource::OpAmp2:     return "op-amp2";
+    }
+    return "";
+}
 
 PortLink::PortLink() 
         : in{nullptr}, out{nullptr} {}
 
 PortLink::PortLink(InputPort *in, OutputPort *out)
         : in{in}, out{out} {}
+
+std::ostream &operator <<(std::ostream &os, PortLink const &link) {
+    os << to_string(link.out->source()) << " -> " 
+       << to_string(link.in->source());
+    return os;
+}
 
 InputPort::InputPort()
         : m_cab{}, m_io_cell{}, m_source{}, 
@@ -21,14 +48,15 @@ InputPort::InputPort(AnalogBlock &cab, InPortSource source)
 
 InputPort::InputPort(IOCell &cell)
         : m_cab{&cell.cab()}, m_io_cell{&cell}, 
-          m_source{InPortSource::IOCell} {}
+          m_source{InPortSource::IOCell},
+          m_link{}, m_owned_link{} {}
 
 uint8_t InputPort::input_connection_selector() {
-    if (!m_connection) {
+    if (!m_link) {
         return 0x0;
     }
 
-    return m_connection->input_connection_selector(*this);
+    return m_link->out->input_connection_selector(*this);
 }
 
 AnalogBlock &InputPort::cab() {
@@ -39,29 +67,30 @@ AnalogBlock &InputPort::cab() {
 }
 
 IOCell *InputPort::io_connection() {
-    if (m_connection == nullptr) {
+    if (m_link == nullptr) {
         return nullptr;
     }
-    if (m_connection->source() == OutPortSource::IOCell) {
-        return &m_connection->io_cell();
+    if (m_link->out->source() == OutPortSource::IOCell) {
+        return &m_link->out->io_cell();
     }
     return nullptr;
 }
 
 void InputPort::connect(OutputPort &out) {
-    if (m_connection) {
-        throw DesignError(
-            "Cannot connect multiple output ports"
-            " to single input port");
+    if (m_link) {
+        std::stringstream ss;
+        ss << "IO port already connected: " << *m_link << std::endl;
+        throw DesignError(ss.str());
     }
 
-    m_connection = &out;
     m_owned_link = PortLink(this, &out);
     m_link = &m_owned_link;
+
+    std::cout << *m_link << std::endl;
 }
 
 OutputPort::OutputPort()
-        : m_cab{}, m_io_cell{}, m_source{}, m_connections{} {}
+        : m_cab{}, m_io_cell{}, m_source{} {}
 
 OutputPort::OutputPort(AnalogBlock &cab, OutPortSource source)
         : m_cab{&cab}, m_io_cell{}, m_source{source} {}
@@ -72,7 +101,6 @@ OutputPort::OutputPort(IOCell &cell)
 
 void OutputPort::connect(InputPort &in) {
     in.connect(*this);
-    m_connections.push_back(&in);
     m_links.push_back(in.link());
 }
 

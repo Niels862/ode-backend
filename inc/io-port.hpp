@@ -1,6 +1,7 @@
 #ifndef OBC_IO_PORT_HPP
 #define OBC_IO_PORT_HPP
 
+#include <iostream>
 #include <vector>
 #include <cstddef>
 #include <cinttypes>
@@ -27,9 +28,14 @@ enum class OutPortSource {
     OpAmp2,
 };
 
+char const *to_string(InPortSource source);
+char const *to_string(OutPortSource source);
+
 struct PortLink {
     PortLink();
     PortLink(InputPort *in, OutputPort *out);
+
+    friend std::ostream &operator <<(std::ostream &os, PortLink const &link);
 
     InputPort *in;
     OutputPort *out;
@@ -59,7 +65,6 @@ private:
     AnalogBlock *m_cab;
     IOCell *m_io_cell;
     InPortSource m_source;
-    OutputPort *m_connection{nullptr};
 
     PortLink *m_link;
     PortLink m_owned_link;
@@ -87,7 +92,6 @@ private:
     AnalogBlock *m_cab;
     IOCell *m_io_cell;
     OutPortSource m_source;
-    std::vector<InputPort *> m_connections{};
 
     std::vector<PortLink *> m_links;
 
