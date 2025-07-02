@@ -12,15 +12,15 @@ PortLink::PortLink(InputPort *in, OutputPort *out)
         : in{in}, out{out} {}
 
 InputPort::InputPort()
-        : m_cab{}, m_cell{}, m_source{}, 
+        : m_cab{}, m_io_cell{}, m_source{}, 
           m_link{}, m_owned_link{} {}
 
 InputPort::InputPort(AnalogBlock &cab, InPortSource source)
-        : m_cab{&cab}, m_cell{}, m_source{source},
+        : m_cab{&cab}, m_io_cell{}, m_source{source},
           m_link{}, m_owned_link{} {}
 
 InputPort::InputPort(IOCell &cell)
-        : m_cab{&cell.cab()}, m_cell{&cell}, 
+        : m_cab{&cell.cab()}, m_io_cell{&cell}, 
           m_source{InPortSource::IOCell} {}
 
 uint8_t InputPort::input_connection_selector() {
@@ -32,8 +32,8 @@ uint8_t InputPort::input_connection_selector() {
 }
 
 AnalogBlock &InputPort::cab() {
-    if (m_cell) {
-        return m_cell->cab();
+    if (m_io_cell) {
+        return m_io_cell->cab();
     }
     return *m_cab;
 }
@@ -43,7 +43,7 @@ IOCell *InputPort::io_connection() {
         return nullptr;
     }
     if (m_connection->source() == OutPortSource::IOCell) {
-        return &m_connection->cell();
+        return &m_connection->io_cell();
     }
     return nullptr;
 }
@@ -61,13 +61,13 @@ void InputPort::connect(OutputPort &out) {
 }
 
 OutputPort::OutputPort()
-        : m_cab{}, m_cell{}, m_source{}, m_connections{} {}
+        : m_cab{}, m_io_cell{}, m_source{}, m_connections{} {}
 
 OutputPort::OutputPort(AnalogBlock &cab, OutPortSource source)
-        : m_cab{&cab}, m_cell{}, m_source{source} {}
+        : m_cab{&cab}, m_io_cell{}, m_source{source} {}
 
 OutputPort::OutputPort(IOCell &cell)
-        : m_cab{&cell.cab()}, m_cell{&cell}, 
+        : m_cab{&cell.cab()}, m_io_cell{&cell}, 
           m_source{OutPortSource::IOCell} {}
 
 void OutputPort::connect(InputPort &in) {
@@ -77,8 +77,8 @@ void OutputPort::connect(InputPort &in) {
 }
 
 AnalogBlock &OutputPort::cab() {
-    if (m_cell) {
-        return m_cell->cab();
+    if (m_io_cell) {
+        return m_io_cell->cab();
     }
     return *m_cab;
 }
@@ -146,7 +146,7 @@ uint8_t OutputPort::input_connection_selector(InputPort &input) {
             return 0x0;
 
         case OutPortSource::IOCell:    
-            return iocell_connection_selector(cell(), input.cab());
+            return iocell_connection_selector(*m_io_cell, input.cab());
 
         case OutPortSource::OpAmp1:    
             return opamp_connection_selector(from, to);
