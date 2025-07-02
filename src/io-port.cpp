@@ -5,11 +5,19 @@
 #include "error.hpp"
 #include <cassert>
 
+PortLink::PortLink() 
+        : in{nullptr}, out{nullptr} {}
+
+PortLink::PortLink(InputPort *in, OutputPort *out)
+        : in{in}, out{out} {}
+
 InputPort::InputPort()
-        : m_cab{}, m_cell{}, m_source{} {}
+        : m_cab{}, m_cell{}, m_source{}, 
+          m_link{}, m_owned_link{} {}
 
 InputPort::InputPort(AnalogBlock &cab, InPortSource source)
-        : m_cab{&cab}, m_cell{}, m_source{source} {}
+        : m_cab{&cab}, m_cell{}, m_source{source},
+          m_link{}, m_owned_link{} {}
 
 InputPort::InputPort(IOCell &cell)
         : m_cab{&cell.cab()}, m_cell{&cell}, 
@@ -40,14 +48,16 @@ IOCell *InputPort::io_connection() {
     return nullptr;
 }
 
-void InputPort::connect(OutputPort &port) {
+void InputPort::connect(OutputPort &out) {
     if (m_connection) {
         throw DesignError(
             "Cannot connect multiple output ports"
             " to single input port");
     }
 
-    m_connection = &port;
+    m_connection = &out;
+    m_owned_link = PortLink(this, &out);
+    m_link = &m_owned_link;
 }
 
 OutputPort::OutputPort()
@@ -60,9 +70,10 @@ OutputPort::OutputPort(IOCell &cell)
         : m_cab{&cell.cab()}, m_cell{&cell}, 
           m_source{OutPortSource::IOCell} {}
 
-void OutputPort::connect(InputPort &port) {
-    m_connections.push_back(&port);
-    port.connect(*this);
+void OutputPort::connect(InputPort &in) {
+    in.connect(*this);
+    m_connections.push_back(&in);
+    m_links.push_back(in.link());
 }
 
 AnalogBlock &OutputPort::cab() {

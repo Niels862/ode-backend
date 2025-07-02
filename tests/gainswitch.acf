@@ -1,0 +1,15 @@
+chip {
+    io: [
+        input,
+    ],
+    cabs: [
+        cab 1 with clocks 1, - {
+            cams: [
+                GainSwitch as gs1 {},
+            ],
+        },
+    ],
+    routing: [
+        io1 -> gs1:cmp,
+    ]
+}

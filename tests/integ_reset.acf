@@ -8,7 +8,7 @@ chip {
             cams: [
                 Integrator as integ1 {
                     reset: true,
-                    integ_const: 8,
+                    integ_const: 4,
                 },
             ],
         },
@@ -16,7 +16,7 @@ chip {
             cams: [
                 Integrator as integ2 {
                     reset: true,
-                    integ_const: 8,
+                    integ_const: 4,
                 },
             ],
         },
@@ -24,7 +24,7 @@ chip {
             cams: [
                 Integrator as integ3 {
                     reset: true,
-                    integ_const: 8,
+                    integ_const: 4,
                 },
             ],
         },
@@ -32,7 +32,7 @@ chip {
             cams: [
                 Integrator as integ4 {
                     reset: true,
-                    integ_const: 8,
+                    integ_const: 4,
                 },
             ],
         },

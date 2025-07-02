@@ -7,6 +7,8 @@
 
 class AnalogBlock;
 class AnalogModule;
+
+class InputPort;
 class OutputPort;
 
 class IOCell;
@@ -23,6 +25,14 @@ enum class OutPortSource {
     IOCell,
     OpAmp1,
     OpAmp2,
+};
+
+struct PortLink {
+    PortLink();
+    PortLink(InputPort *in, OutputPort *out);
+
+    InputPort *in;
+    OutputPort *out;
 };
 
 class InputPort {
@@ -42,14 +52,19 @@ public:
     OutputPort *connection() { return m_connection; }
     IOCell *io_connection();
 
+    PortLink *link() { return m_link; }
+
 private:
-    void connect(OutputPort &port);
+    void connect(OutputPort &out);
 
     AnalogBlock *m_cab;
     AnalogModule *m_module;
     IOCell *m_cell;
     InPortSource m_source;
     OutputPort *m_connection{nullptr};
+
+    PortLink *m_link;
+    PortLink m_owned_link;
 
     friend OutputPort;
 };
@@ -60,7 +75,7 @@ public:
     OutputPort(AnalogBlock &cab, OutPortSource source);
     OutputPort(IOCell &cell);
 
-    void connect(InputPort &port);
+    void connect(InputPort &in);
 
     AnalogBlock &cab();
     IOCell &cell() { return *m_cell; }
@@ -70,6 +85,8 @@ public:
         return m_connections;
     }
 
+    std::vector<PortLink *> &links() { return m_links; }
+
 private:
     uint8_t input_connection_selector(InputPort &to);
 
@@ -78,6 +95,8 @@ private:
     IOCell *m_cell;
     OutPortSource m_source;
     std::vector<InputPort *> m_connections{};
+
+    std::vector<PortLink *> m_links;
 
     friend InputPort;
 };
