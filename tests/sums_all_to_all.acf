@@ -1,0 +1,49 @@
+chip {
+    cabs: [
+        cab 1 with clocks 1, - {
+            cams: [
+                SumInv as sum1 {
+                    inputs: 3,
+                },
+            ],
+        },
+        cab 2 with clocks 1, - {
+            cams: [
+                SumInv as sum2 {
+                    inputs: 3,
+                },
+            ],
+        },
+        cab 3 with clocks 1, - {
+            cams: [  
+                SumInv as sum3 {
+                    inputs: 3,
+                },
+            ],
+        },
+        cab 4 with clocks 1, - {
+            cams: [
+                SumInv as sum4 {
+                    inputs: 3,
+                },
+            ],
+        },
+    ],
+    routing: [
+        sum1 -> sum2:1,
+        sum1 -> sum3:1,
+        sum1 -> sum4:1,
+
+        sum2 -> sum1:1,
+        sum2 -> sum3:2,
+        sum2 -> sum4:2,
+
+        sum3 -> sum1:2,
+        sum3 -> sum2:2,
+        sum3 -> sum4:3,
+
+        sum4 -> sum1:3,
+        sum4 -> sum2:3,
+        sum4 -> sum3:3,
+    ],
+}
