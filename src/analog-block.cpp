@@ -14,14 +14,17 @@ AnalogBlock::AnalogBlock()
           m_opamps{}, m_next_opamp{}, m_comp{*this},
           m_used_clocks{nullptr, nullptr}, 
           m_internal_P{}, m_internal_Q{},
-          m_local_opamp_channels{}, m_modules{} {
+          m_local_opamp_channels{}, 
+          m_local_input_channels{}, 
+          m_local_output_channels{}, m_modules{} {
     for (InputPort &in : m_local_ins) {
         in = InputPort(*this, InPortSource::Local);
     }
 
     for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
         local_opamp_channel(side) = Channel::IntraCab(side);
-        local_input_channel(side);
+        local_input_channel(side) = Channel::LocalInput(side);
+        local_output_channel(side) = Channel::LocalOutput(side);
     }
 }
 
@@ -124,6 +127,35 @@ void allocate_local_opamp_channel(AnalogBlock &cab, PortLink &link) {
     cab.local_opamp_channel(side).allocate(link);
 }
 
+void allocate_external_loopback_channels(AnalogBlock &cab, PortLink &link) {
+    InputPort &in = *link.in;
+    OutputPort &out = *link.out;
+
+    assert(in.source() == InPortSource::Local 
+           || in.source() == InPortSource::Comparator);
+
+    Channel::Side side = source_to_side(out.source());
+
+    /* OpAmpX -> OutputX -> GlobalY -> InputZ */
+    cab.local_output_channel(side).allocate(link);
+    // todo global
+
+    Channel *input{nullptr};
+    for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+        Channel &channel = cab.local_input_channel(side);
+        if (channel.available(link)) {
+            input = &channel;
+            break;
+        }
+    }
+
+    if (input) {
+        input->allocate(link);
+    } else {
+        throw DesignError("cannot route");
+    }
+}
+
 void AnalogBlock::finalize() {
     for (InputPort &in : m_local_ins) {
         if (!in.connected()) {
@@ -143,7 +175,11 @@ void AnalogBlock::finalize() {
             case OutPortSource::OpAmp1:
             case OutPortSource::OpAmp2:
                 if (out.cab() == in.cab()) {
-                    allocate_local_opamp_channel(*this, link);
+                    if (m_id == 3) {
+                        allocate_external_loopback_channels(*this, link);
+                    } else {
+                        allocate_local_opamp_channel(*this, link);
+                    }
                 } else {
                     allocate_intercab_channel(*this, link);
                 }

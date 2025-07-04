@@ -20,21 +20,22 @@ struct Channel {
         GlobalInputDirect,
         GlobalOutputDirect,
         GlobalBiIndirect,
-        LocalInput,
-        LocalOutput,
         InterCab,
         IntraCab,
+        LocalInput,
+        LocalOutput,
     };
     
     Channel();
     Channel(Channel::Type type, Channel::Side side);
 
-    static Channel LocalInput(Side side);
-    static Channel LocalOutput(Side side);
     static Channel InterCab(Side side, AnalogBlock &from, AnalogBlock &to);
     static Channel IntraCab(Side side);
+    static Channel LocalInput(Side side);
+    static Channel LocalOutput(Side side);
 
-    void allocate(PortLink &link);
+    bool available(PortLink &link);
+    Channel &allocate(PortLink &link);
 
     uint8_t switch_connection_selector() const;
 

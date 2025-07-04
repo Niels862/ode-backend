@@ -15,14 +15,6 @@ Channel Channel::IntraCab(Side side) {
     return Channel(Channel::Type::IntraCab, side);
 }
 
-Channel Channel::LocalInput(Side side) {
-    return Channel(Channel::Type::LocalInput, side);
-}
-
-Channel Channel::LocalOutput(Side side) {
-    return Channel(Channel::Type::LocalOutput, side);
-}
-
 Channel Channel::InterCab(Side side, AnalogBlock &from, AnalogBlock &to) {
     Channel channel(Channel::Type::InterCab, side);
 
@@ -33,19 +25,37 @@ Channel Channel::InterCab(Side side, AnalogBlock &from, AnalogBlock &to) {
     return channel;
 }
 
-void Channel::allocate(PortLink &link) {
+Channel Channel::LocalInput(Side side) {
+    return Channel(Channel::Type::LocalInput, side);
+}
+
+Channel Channel::LocalOutput(Side side) {
+    return Channel(Channel::Type::LocalOutput, side);
+}
+
+bool Channel::available(PortLink &link) {
     if (driver == link.out) {
-        link.channels.push_back(this);
-        return;
+        return true;
     }
+
     if (driver == nullptr) {
+        return true;
+    }
+
+    return false;
+}
+
+Channel &Channel::allocate(PortLink &link) {
+    if (available(link)) {
         link.channels.push_back(this);
         driver = link.out;
-        return;
+    } else {
+        std::stringstream ss;
+        ss << "Cannot allocate Channel " << *this << " for Link " << link;
+        throw std::runtime_error(ss.str());
     }
-    std::stringstream ss;
-    ss << "Cannot allocate Channel " << *this << " for Link " << link;
-    throw std::runtime_error(ss.str());
+
+    return *this;
 }
 
 static uint8_t intercab_selector(int from, int to) {
