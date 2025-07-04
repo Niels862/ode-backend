@@ -32,7 +32,7 @@ AnalogChip::AnalogChip()
                 continue;
             }
             for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
-                intercam_channel(from, to, side) = Channel(side);
+                intercam_channel(from, to, side) = Channel::InterCab(side, from, to);
             }
         }
     }

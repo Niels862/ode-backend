@@ -297,8 +297,8 @@ void GainSwitch::claim_components() {
 
 #define TEMP_OPAMP_FEEDBACK_SWITCHING { 0x81, 0x05 }
 
-#define TEMP_CAP_IN_SWITCHED_IF_COMP_GT(p) { 0x3D, (uint8_t)(((p.input_connection_selector()) << 4) | 0x1) }
-#define TEMP_CAP_IN_SWITCHED_IF_COMP_LT(p) { 0x2D, (uint8_t)(((p.input_connection_selector()) << 4) | 0x1) }
+#define TEMP_CAP_IN_SWITCHED_IF_COMP_GT(p) { 0x3D, (uint8_t)(((p.switch_connection_selector()) << 4) | 0x1) }
+#define TEMP_CAP_IN_SWITCHED_IF_COMP_LT(p) { 0x2D, (uint8_t)(((p.switch_connection_selector()) << 4) | 0x1) }
 
 void GainSwitch::finalize() {
     OpAmp &_opamp = opamp(1).set_feedback(TEMP_OPAMP_FEEDBACK_SWITCHING);

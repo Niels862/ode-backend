@@ -27,10 +27,18 @@ char const *to_string(OutPortSource source) {
 }
 
 PortLink::PortLink() 
-        : in{nullptr}, out{nullptr}, channel{nullptr} {}
+        : in{nullptr}, out{nullptr}, channels{} {}
 
 PortLink::PortLink(InputPort *in, OutputPort *out)
-        : in{in}, out{out}, channel{nullptr} {}
+        : in{in}, out{out}, channels{} {}
+
+uint8_t PortLink::switch_connection_selector() {
+    if (!channels.empty()) {
+        Channel const &final = *channels.back();
+        return final.switch_connection_selector();
+    }
+    return out->switch_connection_selector(*in);
+}
 
 std::ostream &operator <<(std::ostream &os, PortLink const &link) {
     if (!link.out || !link.in) {
@@ -38,8 +46,17 @@ std::ostream &operator <<(std::ostream &os, PortLink const &link) {
         return os;
     };
     os << *link.out << " -> " << *link.in;
-    if (link.channel) {
-        os << " in " << *link.channel;
+    if (!link.channels.empty()) {
+        os << " in "; 
+        bool first = true;
+        for (Channel *channel : link.channels) {
+            if (first) {
+                first = false;
+            } else {
+                os << " -> ";
+            }
+            os << *channel;
+        }
     } else {
         os << " (virtual)";
     }
@@ -59,12 +76,11 @@ InputPort::InputPort(IOCell &cell)
           m_source{InPortSource::IOCell},
           m_link{}, m_owned_link{} {}
 
-uint8_t InputPort::input_connection_selector() {
+uint8_t InputPort::switch_connection_selector() {
     if (!m_link) {
         return 0x0;
     }
-
-    return m_link->out->input_connection_selector(*this);
+    return m_link->switch_connection_selector();
 }
 
 AnalogBlock &InputPort::cab() {
@@ -102,8 +118,6 @@ void InputPort::connect(OutputPort &out) {
 
     m_owned_link = PortLink(this, &out);
     m_link = &m_owned_link;
-
-    std::cout << *m_link << std::endl;
 }
 
 OutputPort::OutputPort()
@@ -143,57 +157,9 @@ static uint8_t iocell_connection_selector(IOCell &cell_from,
     return conn.cab_nibble(cell_from);
 }
 
-static uint8_t opamp_connection_selector(int from, int to) {
-    assert(from > 0 && from <= NBlocksPerChip);
-    assert(to > 0 && to <= NBlocksPerChip);
-    
-    switch (from) {
-        case 1:
-            switch (to) {
-                case 1: return 0x3;
-                case 2: return 0xB;
-                case 3: return 0xB;
-                case 4: return 0xB;
-            }
-            break;
-        
-        case 2:
-            switch (to) {
-                case 1: return 0xF;
-                case 2: return 0x3;
-                case 3: return 0x9;
-                case 4: return 0x9;
-            }
-            break;
-
-        case 3:
-            switch (to) {
-                case 1: return 0xB;
-                case 2: return 0xD;
-                case 3: return 0x7;
-                case 4: return 0xD;
-            }
-            break;
-
-        case 4:
-            switch (to) {
-                case 1: return 0xD;
-                case 2: return 0xF;
-                case 3: return 0xF;
-                case 4: return 0x3;
-            }
-            break;
-    }
-
-    return 0x0;
-}
-
-uint8_t OutputPort::input_connection_selector(InputPort &input) {
+uint8_t OutputPort::switch_connection_selector(InputPort &input) {
     // Assert that the method is not called on an IOCell's input port (cab == 0) 
     assert(input.source() != InPortSource::IOCell);
-
-    int from = cab().id();
-    int to   = input.cab().id();
 
     switch (m_source) {
         case OutPortSource::None:    
@@ -202,11 +168,9 @@ uint8_t OutputPort::input_connection_selector(InputPort &input) {
         case OutPortSource::IOCell:    
             return iocell_connection_selector(*m_io_cell, input.cab());
 
-        case OutPortSource::OpAmp1:    
-            return opamp_connection_selector(from, to);
-
+        case OutPortSource::OpAmp1:
         case OutPortSource::OpAmp2:    
-            return opamp_connection_selector(from, to) - 1;
+            return 0x0;
     }
 
     return 0x0;

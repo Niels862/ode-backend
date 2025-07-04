@@ -49,7 +49,7 @@ def run_test(test, tests_dir, executable):
     expected = load(out_file)
     
     test_file = os.path.join(tests_dir, test)
-    res = os.system(f"{executable} {test_file} {TEMP_OUT} -r > /dev/null")
+    res = os.system(f"{executable} {test_file} {TEMP_OUT} -r > /dev/null 2> /dev/null")
     
     if res != 0:
         failure(test, f"compiler exited with exit code {res}")

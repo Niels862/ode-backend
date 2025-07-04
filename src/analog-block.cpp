@@ -20,7 +20,7 @@ AnalogBlock::AnalogBlock()
     }
 
     for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
-        local_opamp_channel(side) = Channel(side);
+        local_opamp_channel(side) = Channel::IntraCab(side);
     }
 }
 
@@ -134,6 +134,8 @@ void AnalogBlock::finalize() {
 
         switch (out.source()) {
             case OutPortSource::None:
+                break;
+                
             case OutPortSource::IOCell:
                 break;
 

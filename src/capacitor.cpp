@@ -13,12 +13,12 @@ Capacitor::Capacitor()
 Capacitor::Capacitor(int id)
         : m_id{id}, m_module{}, m_value{0x0}, m_switch_cfg{} {}
 
-SwitchConfiguration Capacitor::from_input(InputPort &port, 
+SwitchConfiguration Capacitor::from_input(InputPort &in, 
                                           int sg_phase,
                                           Clock::Select select) {
     assert(sg_phase || select != Clock::B);
     
-    uint8_t n = port.input_connection_selector();
+    uint8_t n = in.switch_connection_selector();
     uint8_t s = select == Clock::A ? 0x01 : 0x02;
 
     switch (sg_phase) {

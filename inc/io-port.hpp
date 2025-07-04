@@ -36,11 +36,13 @@ struct PortLink {
     PortLink();
     PortLink(InputPort *in, OutputPort *out);
 
+    uint8_t switch_connection_selector();
+
     friend std::ostream &operator <<(std::ostream &os, PortLink const &link);
 
     InputPort *in;
     OutputPort *out;
-    Channel *channel;
+    std::vector<Channel *> channels;
 };
 
 class InputPort {
@@ -51,7 +53,7 @@ public:
 
     /* Returns the 4-bit nibble representing the connection to this 
        input port as it appears in the configuration data. */
-    uint8_t input_connection_selector();
+    uint8_t switch_connection_selector();
 
     AnalogBlock &cab();
     IOCell &io_cell() { return *m_io_cell; }
@@ -85,6 +87,8 @@ public:
 
     void connect(InputPort &in);
 
+    uint8_t switch_connection_selector(InputPort &to);
+
     AnalogBlock &cab();
     IOCell &io_cell() { return *m_io_cell; }
     OutPortSource source() const { return m_source; }
@@ -95,8 +99,6 @@ public:
     friend std::ostream &operator <<(std::ostream &os, OutputPort const &out);
 
 private:
-    uint8_t input_connection_selector(InputPort &to);
-
     AnalogBlock *m_cab;
     IOCell *m_io_cell;
     OutPortSource m_source;

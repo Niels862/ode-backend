@@ -9,7 +9,7 @@ SOURCES = $(sort $(shell find $(SRC_DIR) -name '*.cpp'))
 OBJECTS = $(SOURCES:.cpp=.o)
 DEPS = $(OBJECTS:.o=.d)
 
-.PHONY: all clean
+.PHONY: all test clean
 
 all: $(TARGET)
 
@@ -18,6 +18,9 @@ $(TARGET): $(OBJECTS)
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) $(INCFLAGS) -MMD -o $@ -c $<
+
+test: $(TARGET)
+	@python3 scripts/test.py obc tests
 
 clean:
 	rm -f $(OBJECTS) $(DEPS) $(TARGET)
