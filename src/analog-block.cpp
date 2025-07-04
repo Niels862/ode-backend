@@ -6,11 +6,17 @@
 #include <sstream>
 
 AnalogBlock::AnalogBlock()
-        : m_id{}, m_set_up{false}, m_caps{}, m_next_cap{}, 
+        : m_id{}, m_set_up{false}, 
+          m_local_ins{}, m_next_local_in{},
+          m_caps{}, m_next_cap{}, 
           m_opamps{}, m_next_opamp{}, m_comp{*this},
           m_used_clocks{nullptr, nullptr}, 
           m_internal_P{}, m_internal_Q{},
-          m_modules{} {}
+          m_modules{} {
+    for (InputPort &in : m_local_ins) {
+        in = InputPort(*this, InPortSource::Local);
+    }
+}
 
 void AnalogBlock::initialize(int id, Clock &pri_clock, Clock &sec_clock) {
     m_id = id;
@@ -37,6 +43,18 @@ void AnalogBlock::setup(Clock &clk_a, Clock &clk_b) {
     m_used_clocks[1] = &clk_b;
 
     m_set_up = true;
+}
+
+InputPort &AnalogBlock::claim_in(AnalogModule &) {
+    if (m_next_local_in >= m_local_ins.size()) {
+        std::stringstream ss;
+        ss << "CAB" << m_id << ": cannot claim input port";
+        throw DesignError(ss.str());
+    }
+
+    InputPort &in = m_local_ins[m_next_local_in];
+    m_next_local_in++;
+    return in;
 }
 
 Capacitor &AnalogBlock::claim_cap(AnalogModule &module) {
@@ -203,33 +221,31 @@ void AnalogBlock::map_internal_channels() {
         }
     }
 
-    for (auto &module : m_modules) {
-        for (InputPort &in : module->ins()) {
-            IOCell *in_io = in.io_connection();
-            if (!in_io) {
-                continue;
-            }
-            
-            Connection &conn = in_io->connection(*this);
-            if (conn.mode != Connection::Far) {
-                continue;
-            }
+    for (InputPort &in : m_local_ins) {
+        IOCell *in_io = in.io_connection();
+        if (!in_io) {
+            continue;
+        }
+        
+        Connection &conn = in_io->connection(*this);
+        if (conn.mode != Connection::Far) {
+            continue;
+        }
 
-            if (m_internal_P == in_io) {
-                conn.internal = Connection::Internal::P;
-            } else if (m_internal_Q == in_io) {
-                conn.internal = Connection::Internal::Q;
-            } else if (m_internal_P == nullptr) {
-                conn.internal = Connection::Internal::P;
-                m_internal_P = in_io;
-            } else if (m_internal_Q == nullptr) {
-                conn.internal = Connection::Internal::Q;
-                m_internal_Q = in_io;
-            } else {
-                throw DesignError(
-                        "Cannot realize routing: out of internal channels");
-            }
-        } 
+        if (m_internal_P == in_io) {
+            conn.internal = Connection::Internal::P;
+        } else if (m_internal_Q == in_io) {
+            conn.internal = Connection::Internal::Q;
+        } else if (m_internal_P == nullptr) {
+            conn.internal = Connection::Internal::P;
+            m_internal_P = in_io;
+        } else if (m_internal_Q == nullptr) {
+            conn.internal = Connection::Internal::Q;
+            m_internal_Q = in_io;
+        } else {
+            throw DesignError(
+                    "Cannot realize routing: out of internal channels");
+        }
     }
 }
 

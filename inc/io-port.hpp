@@ -1,6 +1,7 @@
 #ifndef OBC_IO_PORT_HPP
 #define OBC_IO_PORT_HPP
 
+#include "io-channel.hpp"
 #include <iostream>
 #include <vector>
 #include <cstddef>
@@ -39,6 +40,7 @@ struct PortLink {
 
     InputPort *in;
     OutputPort *out;
+    Channel *driving;
 };
 
 class InputPort {

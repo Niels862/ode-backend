@@ -27,24 +27,22 @@ char const *to_string(OutPortSource source) {
 }
 
 PortLink::PortLink() 
-        : in{nullptr}, out{nullptr} {}
+        : in{nullptr}, out{nullptr}, driving{nullptr} {}
 
 PortLink::PortLink(InputPort *in, OutputPort *out)
-        : in{in}, out{out} {}
-
-template <typename T>
-static void write_port(T port, std::ostream &os) {
-    if (port) {
-        os << *port;
-    } else {
-        os << "(null)";
-    }
-}
+        : in{in}, out{out}, driving{nullptr} {}
 
 std::ostream &operator <<(std::ostream &os, PortLink const &link) {
-    write_port(link.out, os);
-    os << " -> ";
-    write_port(link.in, os);
+    if (!link.out || !link.in) {
+        os << "(empty link)";
+        return os;
+    };
+    os << *link.out << " -> " << *link.in;
+    if (link.driving) {
+        os << " in " << *link.driving;
+    } else {
+        os << " (virtual)";
+    }
     return os;
 }
 

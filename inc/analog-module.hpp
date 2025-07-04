@@ -50,7 +50,7 @@ public:
     virtual InputPort &in(std::size_t i = 0);
     virtual OutputPort &out(std::size_t i = 0);
 
-    std::array<InputPort, 8> &ins() { return m_ins; }
+    std::array<InputPort *, 8> &ins() { return m_ins; }
     Capacitor &cap(int i = 0);
     OpAmp &opamp(int i);
     Comparator &comp();
@@ -61,16 +61,16 @@ public:
     std::string const &name() const { return m_name; }
 
 protected:
+    void claim_inputs(std::size_t n);
     void claim_capacitors(std::size_t n);
     void claim_opamps(std::size_t n);
     void claim_comparator();
-    void claim_inputs(std::size_t n);
 
     AnalogBlock *m_cab;
 
     std::string m_name;
 
-    std::array<InputPort, 8> m_ins;
+    std::array<InputPort *, 8> m_ins;
     std::array<Capacitor *, NCapacitorsPerBlock> m_caps;
     std::array<OpAmp *, NOpAmpsPerBlock> m_opamps;
     Comparator *m_comp;

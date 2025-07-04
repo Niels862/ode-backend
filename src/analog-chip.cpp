@@ -7,7 +7,7 @@
 
 AnalogChip::AnalogChip()
         : m_cabs{}, m_null_cab{}, m_io_cells{}, 
-          m_clocks{}, m_null_clock{} {
+          m_clocks{}, m_null_clock{}, m_intercam_channels{} {
     m_null_cab.initialize(0, m_null_clock, m_null_clock);
     for (std::size_t i = 0; i < NBlocksPerChip; i++) {
         m_cabs[i].initialize(i + 1, m_null_clock, m_null_clock);
@@ -25,6 +25,17 @@ AnalogChip::AnalogChip()
         Clock(5, 16'000, 0),
         Clock(6, 16'000, 0)
     };
+
+    for (AnalogBlock &from : m_cabs) {
+        for (AnalogBlock &to : m_cabs) {
+            if (from.id() == to.id()) {
+                continue;
+            }
+            for (Channel::Side s : { Channel::Primary, Channel::Secondary }) {
+                intercam_channel(from, to, s) = Channel();
+            }
+        }
+    }
 }
 
 ShadowSRam AnalogChip::compile() {
@@ -71,6 +82,18 @@ void AnalogChip::to_header_bytestream(std::vector<uint8_t> &data) const {
     for (uint8_t entry : header) {
         data.push_back(entry);
     }
+}
+
+Channel &AnalogChip::intercam_channel(AnalogBlock &from, AnalogBlock &to, 
+                                      Channel::Side side) {
+    assert(from.id() != to.id());
+    assert(from.id() > 0);
+    assert(to.id() > 0);
+
+    return m_intercam_channels
+        .at(from.id() - 1)
+        .at(to.id() - 1)
+        .at(static_cast<int>(side));
 }
 
 void AnalogChip::compile_clocks(ShadowSRam &ssram) {

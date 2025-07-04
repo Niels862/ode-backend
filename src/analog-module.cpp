@@ -29,7 +29,7 @@ InputPort &AnalogModule::in(std::size_t i) {
         throw DesignError(ss.str());
     }
 
-    return m_ins[i - 1];
+    return *m_ins[i - 1];
 }
 
 OutputPort &AnalogModule::out(std::size_t i) {
@@ -78,6 +78,13 @@ void AnalogModule::set_cab(AnalogBlock &cab) {
     m_cab = &cab; 
 }
 
+void AnalogModule::claim_inputs(std::size_t n) {
+    m_n_ins = n;
+    for (std::size_t i = 0; i < n; i++) {
+        m_ins[i] = &m_cab->claim_in(*this);
+    }
+}
+
 void AnalogModule::claim_capacitors(std::size_t n) {
     for (size_t i = 0; i < n; i++) {
         m_caps[i] = &m_cab->claim_cap(*this); 
@@ -92,13 +99,6 @@ void AnalogModule::claim_opamps(std::size_t n) {
 
 void AnalogModule::claim_comparator() {
     m_comp = &m_cab->claim_comp(*this);
-}
-
-void AnalogModule::claim_inputs(std::size_t n) {
-    m_n_ins = n;
-    for (std::size_t i = 0; i < n; i++) {
-        m_ins[i] = InputPort(cab(), InPortSource::Local);
-    }
 }
 
 GainInv::GainInv()

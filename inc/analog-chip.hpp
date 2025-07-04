@@ -2,6 +2,7 @@
 #define OBC_ANALOG_CHIP_HPP
 
 #include "io-cell.hpp"
+#include "io-channel.hpp"
 #include "clock.hpp"
 #include "shadow-sram.hpp"
 #include "analog-block.hpp"
@@ -24,6 +25,9 @@ public:
     Clock &clock(int id)            { return m_clocks.at(id - 1); }
     Clock &null_clock()             { return m_null_clock; }
 
+    Channel &intercam_channel(AnalogBlock &from, AnalogBlock &to, 
+                              Channel::Side side);
+
 private:
     void compile_clocks(ShadowSRam &ssram);
     void compile_lut_io_control(ShadowSRam &ssram);
@@ -38,6 +42,9 @@ private:
 
     std::array<Clock, 6> m_clocks;
     Clock m_null_clock;
+
+    // [from][to][side]
+    std::array<std::array<std::array<Channel, 2>, 4>, 4> m_intercam_channels;
 };
 
 #endif

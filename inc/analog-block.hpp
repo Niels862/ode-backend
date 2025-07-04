@@ -45,6 +45,7 @@ public:
         return module;
     }
 
+    InputPort &claim_in(AnalogModule &module);
     Capacitor &claim_cap(AnalogModule &module);
     OpAmp &claim_opamp(AnalogModule &module);
     Comparator &claim_comp(AnalogModule &module);
@@ -81,6 +82,9 @@ private:
 
     int m_id;
     bool m_set_up;
+
+    std::array<InputPort, 8> m_local_ins;
+    std::size_t m_next_local_in;
 
     std::array<Capacitor, NCapacitorsPerBlock> m_caps;
     std::size_t m_next_cap;
