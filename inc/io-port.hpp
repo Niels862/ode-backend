@@ -59,6 +59,8 @@ public:
 
     PortLink *link() { return m_link; }
 
+    friend std::ostream &operator <<(std::ostream &os, InputPort const &in);
+
 private:
     void connect(OutputPort &out);
 
@@ -85,6 +87,8 @@ public:
     OutPortSource source() const { return m_source; }
 
     std::vector<PortLink *> &links() { return m_links; }
+
+    friend std::ostream &operator <<(std::ostream &os, OutputPort const &out);
 
 private:
     uint8_t input_connection_selector(InputPort &to);

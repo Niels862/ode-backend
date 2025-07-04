@@ -76,7 +76,6 @@ public:
         return m_conns; 
     }
     Connection &connection(AnalogBlock const &cab) {
-        std::cout << "connection from io " << m_id << " to cab " << cab.id() << " at " << &m_conns[cab.id() - 1] << std::endl;
         return m_conns[cab.id() - 1];
     }
 

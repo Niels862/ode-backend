@@ -32,9 +32,19 @@ PortLink::PortLink()
 PortLink::PortLink(InputPort *in, OutputPort *out)
         : in{in}, out{out} {}
 
+template <typename T>
+static void write_port(T port, std::ostream &os) {
+    if (port) {
+        os << *port;
+    } else {
+        os << "(null)";
+    }
+}
+
 std::ostream &operator <<(std::ostream &os, PortLink const &link) {
-    os << to_string(link.out->source()) << " -> " 
-       << to_string(link.in->source());
+    write_port(link.out, os);
+    os << " -> ";
+    write_port(link.in, os);
     return os;
 }
 
@@ -76,6 +86,15 @@ IOCell *InputPort::io_connection() {
     return nullptr;
 }
 
+std::ostream &operator <<(std::ostream &os, InputPort const &in) {
+    if (in.m_source == InPortSource::IOCell) {
+        os << "IO" << in.m_io_cell->id();
+    } else {
+        os << "CAB" << in.m_cab->id() << ":" << to_string(in.m_source);
+    }
+    return os;
+}
+
 void InputPort::connect(OutputPort &out) {
     if (m_link) {
         std::stringstream ss;
@@ -109,6 +128,15 @@ AnalogBlock &OutputPort::cab() {
         return m_io_cell->cab();
     }
     return *m_cab;
+}
+
+std::ostream &operator <<(std::ostream &os, OutputPort const &out) {
+    if (out.m_source == OutPortSource::IOCell) {
+        os << "IO" << out.m_io_cell->id();
+    } else {
+        os << "CAB" << out.m_cab->id() << ":" << to_string(out.m_source);
+    }
+    return os;
 }
 
 static uint8_t iocell_connection_selector(IOCell &cell_from,
