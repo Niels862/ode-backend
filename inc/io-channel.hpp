@@ -49,6 +49,8 @@ struct Channel {
     void set_local_output_dest(Channel &dest);
 
     uint8_t switch_connection_selector() const;
+    uint8_t local_input_source_selector() const;
+    uint8_t local_output_dest_selector() const;
 
     friend std::ostream &operator <<(std::ostream &os, Channel const &channel);
 

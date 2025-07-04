@@ -185,6 +185,45 @@ uint8_t Channel::switch_connection_selector() const {
     }
 }
 
+uint8_t Channel::local_input_source_selector() const {
+    assert(type == Channel::Type::LocalInput);
+
+    Channel *source = data.local_input.source;
+    if (source == nullptr) {
+        return 0x0;
+    }
+
+    switch (source->side) {
+        case Channel::Primary:      return 0x1;
+        case Channel::Secondary:    return 0x2;
+    }
+
+    return 0x0;
+}
+
+uint8_t Channel::local_output_dest_selector() const {
+    assert(type == Channel::Type::LocalOutput);
+
+    Channel *dest = data.local_output.dest;
+    if (dest == nullptr) {
+        return 0x0;
+    }
+
+    if (side == Channel::Primary) {
+        switch (dest->side) {
+            case Channel::Primary:      return 0x01;
+            case Channel::Secondary:    return 0x02;
+        }
+    } else {
+        switch (dest->side) {
+            case Channel::Primary:      return 0x20;
+            case Channel::Secondary:    return 0x10;
+        }
+    }
+
+    return 0x0;
+}
+
 std::ostream &operator <<(std::ostream &os, Channel const &channel) {    
     os << "Channel [";
 

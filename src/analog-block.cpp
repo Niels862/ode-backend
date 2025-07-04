@@ -218,7 +218,7 @@ void AnalogBlock::finalize() {
     }
 }
 
-static int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2, 
+int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2, 
                                    Connection::Channel channel) {
     bool is1 = false, is2 = false;
     
@@ -254,7 +254,7 @@ static int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2,
 }
 
 /* FIXME: unreliable, needs more research */
-static uint8_t compile_local_output_routing(OpAmp &opamp1, OpAmp &opamp2) {
+uint8_t compile_local_output_routing(OpAmp &opamp1, OpAmp &opamp2) {
     int pri = find_connection_channel(opamp1, opamp2, Connection::Primary);
     int sec = find_connection_channel(opamp1, opamp2, Connection::Secondary);
 
@@ -310,12 +310,27 @@ void AnalogBlock::compile(ShadowSRam &ssram) {
 
     m_comp.compile(*this, ssram);
 
+    /*
     map_internal_channels();
     ssram.set(bank_b(), 0x05, compile_internal_channel_routing(m_internal_P));
     ssram.set(bank_b(), 0x04, compile_internal_channel_routing(m_internal_Q));
-
+    
     uint8_t b = compile_local_output_routing(m_opamps[0], m_opamps[1]);
     ssram.set(bank_b(), 0x02, b);
+    */
+
+    for (std::size_t i = 0; i < 2; i++) {
+        Channel &channel = m_local_input_channels[i];
+        uint8_t select = channel.local_input_source_selector();
+        ssram.set(bank_b(), 0x05 - i, select);
+    }
+
+    uint8_t select = 0x0;
+    for (std::size_t i = 0; i < 2; i++) {
+        Channel &channel = m_local_output_channels[i];
+        select |= channel.local_output_dest_selector();
+    }
+    ssram.set(bank_b(), 0x02, select);
 
     ssram.set(bank_b(), 0x0, from_nibbles(m_used_clocks[1]->id_nibble(), 
                                           m_used_clocks[0]->id_nibble()));
