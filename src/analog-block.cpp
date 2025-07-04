@@ -21,6 +21,7 @@ AnalogBlock::AnalogBlock()
 
     for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
         local_opamp_channel(side) = Channel::IntraCab(side);
+        local_input_channel(side);
     }
 }
 
@@ -272,6 +273,14 @@ void AnalogBlock::set_used_clock(int i, Clock &clock) {
 
 Channel &AnalogBlock::local_opamp_channel(Channel::Side side) {
     return m_local_opamp_channels.at(static_cast<int>(side));
+}
+
+Channel &AnalogBlock::local_input_channel(Channel::Side side) {
+    return m_local_input_channels.at(static_cast<int>(side));
+}
+
+Channel &AnalogBlock::local_output_channel(Channel::Side side) {
+    return m_local_output_channels.at(static_cast<int>(side));
 }
 
 void AnalogBlock::log_resources() const {

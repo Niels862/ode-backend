@@ -6,22 +6,26 @@
 #include <cassert>
 
 Channel::Channel()
-        : driver{nullptr} {}
+        : type{}, side{}, driver{nullptr} {}
+
+Channel::Channel(Channel::Type type, Channel::Side side)
+        : type{type}, side{side}, driver{nullptr} {}
 
 Channel Channel::IntraCab(Side side) {
-    Channel channel;
+    return Channel(Channel::Type::IntraCab, side);
+}
 
-    channel.type = Channel::Type::IntraCab;
-    channel.side = side;
+Channel Channel::LocalInput(Side side) {
+    return Channel(Channel::Type::LocalInput, side);
+}
 
-    return channel;
+Channel Channel::LocalOutput(Side side) {
+    return Channel(Channel::Type::LocalOutput, side);
 }
 
 Channel Channel::InterCab(Side side, AnalogBlock &from, AnalogBlock &to) {
-    Channel channel;
+    Channel channel(Channel::Type::InterCab, side);
 
-    channel.type = Channel::Type::InterCab;
-    channel.side = side;
     auto &data = channel.data.intracab;
     data.cab_from_id = from.id();
     data.cab_to_id = to.id();
@@ -91,10 +95,10 @@ uint8_t Channel::switch_connection_selector() const {
     uint8_t select = 0x0;
 
     switch (type) {
-        case Channel::Type::GlobalDirect:
-            break;
-        
-        case Channel::Type::GlobalIndirect:
+        case Channel::Type::GlobalInputDirect:
+        case Channel::Type::GlobalOutputDirect:
+        case Channel::Type::GlobalBiIndirect:
+        case Channel::Type::LocalOutput:
             break;
 
         case Channel::Type::IntraCab:
@@ -107,7 +111,8 @@ uint8_t Channel::switch_connection_selector() const {
             break;
         }
 
-        case Channel::Type::Local:
+        case Channel::Type::LocalInput:
+            select = 0x6;
             break;
     }
 

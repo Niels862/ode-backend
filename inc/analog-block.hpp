@@ -75,6 +75,8 @@ public:
     AnalogChip &chip() { return *m_chip; }
 
     Channel &local_opamp_channel(Channel::Side side);
+    Channel &local_input_channel(Channel::Side side);
+    Channel &local_output_channel(Channel::Side side);
 
     void log_resources() const;
 
@@ -106,6 +108,8 @@ private:
     IOCell *m_internal_Q;
 
     std::array<Channel, 2> m_local_opamp_channels;
+    std::array<Channel, 2> m_local_input_channels;
+    std::array<Channel, 2> m_local_output_channels;
 
     std::vector<std::unique_ptr<AnalogModule>> m_modules;
 };

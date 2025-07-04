@@ -17,15 +17,20 @@ struct Channel {
     };
 
     enum class Type {
-        GlobalDirect,
-        GlobalIndirect,
+        GlobalInputDirect,
+        GlobalOutputDirect,
+        GlobalBiIndirect,
+        LocalInput,
+        LocalOutput,
         InterCab,
         IntraCab,
-        Local,
     };
     
     Channel();
+    Channel(Channel::Type type, Channel::Side side);
 
+    static Channel LocalInput(Side side);
+    static Channel LocalOutput(Side side);
     static Channel InterCab(Side side, AnalogBlock &from, AnalogBlock &to);
     static Channel IntraCab(Side side);
 
@@ -35,9 +40,10 @@ struct Channel {
 
     friend std::ostream &operator <<(std::ostream &os, Channel const &channel);
 
-    OutputPort *driver;
-    Side side;
     Type type;
+    Side side;
+
+    OutputPort *driver;
 
     union {
         struct {
