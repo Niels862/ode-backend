@@ -135,10 +135,25 @@ void allocate_external_loopback_channels(AnalogBlock &cab, PortLink &link) {
            || in.source() == InPortSource::Comparator);
 
     Channel::Side side = source_to_side(out.source());
+    CabGroup group = Channel::to_cab_group(cab);
 
     /* OpAmpX -> OutputX -> GlobalY -> InputZ */
-    cab.local_output_channel(side).allocate(link);
-    // todo global
+    Channel *output = &cab.local_output_channel(side).allocate(link);
+
+    Channel *global{nullptr};
+    for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+        Channel &channel = cab.chip().global_bi_indirect(group, side);
+        if (channel.available(link)) {
+            global = &channel;
+            break;
+        }
+    }
+
+    if (global) {
+        global->allocate(link);
+    } else {
+        throw DesignError("cannot route");
+    }
 
     Channel *input{nullptr};
     for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
@@ -154,6 +169,9 @@ void allocate_external_loopback_channels(AnalogBlock &cab, PortLink &link) {
     } else {
         throw DesignError("cannot route");
     }
+
+    input->set_local_input_source(*global);
+    output->set_local_output_dest(*global);
 }
 
 void AnalogBlock::finalize() {

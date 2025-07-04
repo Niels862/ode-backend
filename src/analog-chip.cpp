@@ -36,6 +36,12 @@ AnalogChip::AnalogChip()
             }
         }
     }
+
+    for (CabGroup group : { CabGroup::OddCabs, CabGroup::EvenCabs }) {
+        for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+            global_bi_indirect(group, side) = Channel::GlobalBiIndirect(side, group);
+        }
+    }
 }
 
 ShadowSRam AnalogChip::compile() {
@@ -82,6 +88,12 @@ void AnalogChip::to_header_bytestream(std::vector<uint8_t> &data) const {
     for (uint8_t entry : header) {
         data.push_back(entry);
     }
+}
+
+Channel &AnalogChip::global_bi_indirect(CabGroup group, Channel::Side side) {
+    return m_global_bi_indirect_channels
+        .at(static_cast<int>(group))
+        .at(static_cast<int>(side));
 }
 
 Channel &AnalogChip::intercam_channel(AnalogBlock &from, AnalogBlock &to, 

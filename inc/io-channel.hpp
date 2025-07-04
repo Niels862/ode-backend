@@ -10,10 +10,15 @@ class AnalogBlock;
 class OutputPort;
 class PortLink;
 
+enum class CabGroup {
+    OddCabs,
+    EvenCabs,
+};
+
 struct Channel {
     enum Side {
         Primary, 
-        Secondary
+        Secondary,
     };
 
     enum class Type {
@@ -29,13 +34,19 @@ struct Channel {
     Channel();
     Channel(Channel::Type type, Channel::Side side);
 
+    static Channel GlobalBiIndirect(Side side, CabGroup group);
     static Channel InterCab(Side side, AnalogBlock &from, AnalogBlock &to);
     static Channel IntraCab(Side side);
     static Channel LocalInput(Side side);
     static Channel LocalOutput(Side side);
 
+    static CabGroup to_cab_group(AnalogBlock &cab);
+
     bool available(PortLink &link);
     Channel &allocate(PortLink &link);
+
+    void set_local_input_source(Channel &source);
+    void set_local_output_dest(Channel &dest);
 
     uint8_t switch_connection_selector() const;
 
@@ -50,7 +61,19 @@ struct Channel {
         struct {
             int cab_from_id;
             int cab_to_id;
-        } intracab;
+        } intra_cab;
+
+        struct {
+            CabGroup group;
+        } global_bi_indirect;
+
+        struct {
+            Channel *source;
+        } local_input;
+
+        struct {
+            Channel *dest;
+        } local_output;
     } data;
 };
 
