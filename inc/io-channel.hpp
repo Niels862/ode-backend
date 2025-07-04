@@ -5,6 +5,7 @@
 #include <iostream>
 
 class OutputPort;
+class PortLink;
 
 struct Channel {
     enum Side {
@@ -13,10 +14,14 @@ struct Channel {
     };
     
     Channel();
+    Channel(Side side);
+
+    void allocate(PortLink &link);
 
     friend std::ostream &operator <<(std::ostream &os, Channel const &channel);
 
     OutputPort *driver;
+    Side side;
 };
 
 #endif

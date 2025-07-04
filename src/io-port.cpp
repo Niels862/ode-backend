@@ -27,10 +27,10 @@ char const *to_string(OutPortSource source) {
 }
 
 PortLink::PortLink() 
-        : in{nullptr}, out{nullptr}, driving{nullptr} {}
+        : in{nullptr}, out{nullptr}, channel{nullptr} {}
 
 PortLink::PortLink(InputPort *in, OutputPort *out)
-        : in{in}, out{out}, driving{nullptr} {}
+        : in{in}, out{out}, channel{nullptr} {}
 
 std::ostream &operator <<(std::ostream &os, PortLink const &link) {
     if (!link.out || !link.in) {
@@ -38,8 +38,8 @@ std::ostream &operator <<(std::ostream &os, PortLink const &link) {
         return os;
     };
     os << *link.out << " -> " << *link.in;
-    if (link.driving) {
-        os << " in " << *link.driving;
+    if (link.channel) {
+        os << " in " << *link.channel;
     } else {
         os << " (virtual)";
     }

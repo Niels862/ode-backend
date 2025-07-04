@@ -28,7 +28,7 @@ public:
     AnalogBlock(AnalogBlock &&) = delete;
     AnalogBlock &operator=(AnalogBlock &&) = delete;
 
-    void initialize(int id, Clock &pri_clock, Clock &sec_clock);
+    void initialize(int id, AnalogChip &chip);
 
     void setup(Clock &clk_a, Clock &clk_b);
 
@@ -72,13 +72,20 @@ public:
         }
     }
 
+    AnalogChip &chip() { return *m_chip; }
+
+    Channel &local_opamp_channel(Channel::Side side);
+
     void log_resources() const;
 
+    bool operator ==(AnalogBlock &other) { return m_id == other.m_id; }
     operator bool() const { return m_id > 0; }
 
 private:
     void map_internal_channels();
     uint8_t compile_internal_channel_routing(IOCell *channel);
+
+    AnalogChip *m_chip;
 
     int m_id;
     bool m_set_up;
@@ -97,6 +104,8 @@ private:
     std::array<Clock *, 2> m_used_clocks;
     IOCell *m_internal_P;
     IOCell *m_internal_Q;
+
+    std::array<Channel, 2> m_local_opamp_channels;
 
     std::vector<std::unique_ptr<AnalogModule>> m_modules;
 };

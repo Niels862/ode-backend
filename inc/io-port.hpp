@@ -40,7 +40,7 @@ struct PortLink {
 
     InputPort *in;
     OutputPort *out;
-    Channel *driving;
+    Channel *channel;
 };
 
 class InputPort {
@@ -59,6 +59,7 @@ public:
 
     IOCell *io_connection();
 
+    bool connected() const { return m_link != nullptr; }
     PortLink *link() { return m_link; }
 
     friend std::ostream &operator <<(std::ostream &os, InputPort const &in);
@@ -88,6 +89,7 @@ public:
     IOCell &io_cell() { return *m_io_cell; }
     OutPortSource source() const { return m_source; }
 
+    bool connected() const { return !m_links.empty(); }
     std::vector<PortLink *> &links() { return m_links; }
 
     friend std::ostream &operator <<(std::ostream &os, OutputPort const &out);

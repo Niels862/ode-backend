@@ -1,28 +1,36 @@
 #include "analog-block.hpp"
+#include "analog-chip.hpp"
 #include "settings.hpp"
 #include "io-cell.hpp"
 #include "error.hpp"
 #include <vector>
 #include <sstream>
+#include <cassert>
 
 AnalogBlock::AnalogBlock()
-        : m_id{}, m_set_up{false}, 
+        : m_chip{}, m_id{}, m_set_up{false}, 
           m_local_ins{}, m_next_local_in{},
           m_caps{}, m_next_cap{}, 
           m_opamps{}, m_next_opamp{}, m_comp{*this},
           m_used_clocks{nullptr, nullptr}, 
           m_internal_P{}, m_internal_Q{},
-          m_modules{} {
+          m_local_opamp_channels{}, m_modules{} {
     for (InputPort &in : m_local_ins) {
         in = InputPort(*this, InPortSource::Local);
     }
+
+    for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+        local_opamp_channel(side) = Channel(side);
+    }
 }
 
-void AnalogBlock::initialize(int id, Clock &pri_clock, Clock &sec_clock) {
+void AnalogBlock::initialize(int id, AnalogChip &chip) {
+    m_chip = &chip;
+
     m_id = id;
     
-    m_used_clocks[0] = &pri_clock;
-    m_used_clocks[1] = &sec_clock;
+    m_used_clocks[0] = &m_chip->null_clock();
+    m_used_clocks[1] = &m_chip->null_clock();
     
     for (std::size_t i = 0; i < NCapacitorsPerBlock; i++) {
         m_caps[i] = Capacitor(i + 1);
@@ -85,7 +93,63 @@ Comparator &AnalogBlock::claim_comp(AnalogModule &module) {
     return m_comp.claim(module);
 }
 
+static Channel::Side source_to_side(OutPortSource source) {
+    assert(source == OutPortSource::OpAmp1 || source == OutPortSource::OpAmp2);
+    if (source == OutPortSource::OpAmp1) {
+        return Channel::Primary;
+    }
+    return Channel::Secondary;
+}
+
+static void allocate_intercab_channel(AnalogBlock &cab, PortLink &link) {
+    InputPort &in = *link.in;
+    OutputPort &out = *link.out;
+
+    assert(in.source() == InPortSource::Local 
+           || in.source() == InPortSource::Comparator);
+
+    Channel::Side side = source_to_side(out.source());
+    cab.chip().intercam_channel(out.cab(), in.cab(), side).allocate(link);
+}
+
+void allocate_local_opamp_channel(AnalogBlock &cab, PortLink &link) {
+    InputPort &in = *link.in;
+    OutputPort &out = *link.out;
+
+    assert(in.source() == InPortSource::Local 
+           || in.source() == InPortSource::Comparator);
+
+    Channel::Side side = source_to_side(out.source());
+    cab.local_opamp_channel(side).allocate(link);
+}
+
 void AnalogBlock::finalize() {
+    for (InputPort &in : m_local_ins) {
+        if (!in.connected()) {
+            continue;
+        }
+
+        PortLink &link = *in.link();
+        OutputPort &out = *link.out;
+
+        switch (out.source()) {
+            case OutPortSource::None:
+            case OutPortSource::IOCell:
+                break;
+
+            case OutPortSource::OpAmp1:
+            case OutPortSource::OpAmp2:
+                if (out.cab() == in.cab()) {
+                    allocate_local_opamp_channel(*this, link);
+                } else {
+                    allocate_intercab_channel(*this, link);
+                }
+                break;
+        }
+
+        std::cerr << link << std::endl;
+    }
+
     if (args.verbose) {
         log_resources();
     }
@@ -202,6 +266,10 @@ void AnalogBlock::compile(ShadowSRam &ssram) {
 
 void AnalogBlock::set_used_clock(int i, Clock &clock) {
     m_used_clocks[i] = &clock;
+}
+
+Channel &AnalogBlock::local_opamp_channel(Channel::Side side) {
+    return m_local_opamp_channels.at(static_cast<int>(side));
 }
 
 void AnalogBlock::log_resources() const {

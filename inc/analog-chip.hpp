@@ -13,6 +13,13 @@ class AnalogChip {
 public:
     AnalogChip();
 
+    /* Delete copy/move semantics as this breaks links with Ports. */
+    AnalogChip(AnalogChip const &) = delete;
+    AnalogChip &operator=(AnalogChip const &) = delete;
+    
+    AnalogChip(AnalogChip &&) = delete;
+    AnalogChip &operator=(AnalogChip &&) = delete;
+
     ShadowSRam compile();
 
     void to_header_bytestream(std::vector<uint8_t> &data) const;
