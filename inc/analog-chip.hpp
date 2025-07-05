@@ -32,7 +32,11 @@ public:
     Clock &clock(int id)            { return m_clocks.at(id - 1); }
     Clock &null_clock()             { return m_null_clock; }
 
-    Channel &global_bi_indirect(CabGroup group, Channel::Side side);
+    Channel &global_input_direct(IOGroup from, AnalogBlock &to, 
+                                 Channel::Side side);
+    Channel &global_output_direct(IOGroup to, AnalogBlock &from,
+                                  Channel::Side side);
+    Channel &global_bi_indirect(CabColumn group, Channel::Side side);
     Channel &intercam_channel(AnalogBlock &from, AnalogBlock &to, 
                               Channel::Side side);
 
@@ -50,6 +54,12 @@ private:
 
     std::array<Clock, 6> m_clocks;
     Clock m_null_clock;
+
+    // [iogroup_from][cab_to][side]
+    std::array<std::array<std::array<Channel, 2>, 4>, 2> m_global_input_direct_channels;
+
+    // [iogroup_to][cab_from][side]
+    std::array<std::array<std::array<Channel, 2>, 4>, 2> m_global_output_direct_channels;
 
     // [cab_group][side]
     std::array<std::array<Channel, 2>, 4> m_global_bi_indirect_channels;

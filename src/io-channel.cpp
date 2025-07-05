@@ -1,6 +1,7 @@
 #include "io-channel.hpp"
 #include "io-port.hpp"
 #include "analog-block.hpp"
+#include "io-cell.hpp"
 #include <sstream>
 #include <stdexcept>
 #include <cassert>
@@ -15,7 +16,27 @@ Channel Channel::IntraCab(Side side) {
     return Channel(Channel::Type::IntraCab, side);
 }
 
-Channel Channel::GlobalBiIndirect(Side side, CabGroup group) {
+Channel Channel::GlobalInputDirect(Side side, IOGroup from, AnalogBlock &to) {
+    Channel channel(Channel::Type::GlobalInputDirect, side);
+
+    auto &data = channel.data.global_input_direct;
+    data.from = from;
+    data.cab_to = to.id();
+
+    return channel;
+}
+
+Channel Channel::GlobalOutputDirect(Side side, IOGroup to, AnalogBlock &from) {
+    Channel channel(Channel::Type::GlobalOutputDirect, side);
+
+    auto &data = channel.data.global_output_direct;
+    data.to = to;
+    data.cab_from = from.id();
+
+    return channel;
+}
+
+Channel Channel::GlobalBiIndirect(Side side, CabColumn group) {
     Channel channel(Channel::Type::GlobalBiIndirect, side);
 
     auto &data = channel.data.global_bi_indirect;
@@ -52,15 +73,43 @@ Channel Channel::LocalOutput(Side side) {
     return channel;
 }
 
-CabGroup Channel::to_cab_group(AnalogBlock &cab) {
+CabRow Channel::to_cab_row(AnalogBlock &cab) {
+    switch (cab.id()) {
+        case 1:
+        case 2:
+            return CabRow::LowCabs;
+
+        case 3:
+        case 4:
+            return CabRow::HighCabs;
+    }
+
+    abort();
+}
+
+CabColumn Channel::to_cab_column(AnalogBlock &cab) {
     switch (cab.id()) {
         case 1: 
         case 3:
-            return CabGroup::OddCabs;
+            return CabColumn::OddCabs;
 
         case 2:
         case 4:
-            return CabGroup::EvenCabs;
+            return CabColumn::EvenCabs;
+    }
+
+    abort();
+}
+
+IOGroup Channel::to_io_group(IOCell &io_cell) {
+    switch (io_cell.id()) {
+        case 1:
+        case 2:
+            return IOGroup::LowIO;
+
+        case 3:
+        case 4:
+            return IOGroup::HighIO;
     }
 
     abort();

@@ -135,7 +135,7 @@ void allocate_external_loopback_channels(AnalogBlock &cab, PortLink &link) {
            || in.source() == InPortSource::Comparator);
 
     Channel::Side side = source_to_side(out.source());
-    CabGroup group = Channel::to_cab_group(cab);
+    CabColumn group = Channel::to_cab_column(cab);
 
     /* OpAmpX -> OutputX -> GlobalY -> InputZ */
     Channel *output = &cab.local_output_channel(side).allocate(link);

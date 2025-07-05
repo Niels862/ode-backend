@@ -43,7 +43,9 @@ uint8_t Connection::io_nibble() const {
     return 0x0;
 }
 
-uint8_t Connection::cab_nibble(IOCell &cell_from) const {    
+uint8_t Connection::cab_nibble(IOCell &cell_from) const { 
+    return 0x0;
+    
     int from_id = cell_from.id();
     int to_id = cab->id();
 
@@ -101,13 +103,14 @@ bool Connection::equivalent(Connection const &other) const {
 }
 
 IOCell::IOCell() /* IOCell manages its own in() and out() port */
-        : AnalogModule{"IOCell"}, m_id{}, 
+        : AnalogModule{"IOCell"}, m_chip{}, m_id{}, 
           m_mode{IOMode::Disabled},
           m_in{*this}, m_out{*this}, 
           m_conns{} {}
 
 void IOCell::initialize(int id, AnalogBlock &cab) {
     set_cab(cab);
+    m_chip = &cab.chip();
     m_id = id;
     m_mode = IOMode::Disabled;
 
@@ -117,6 +120,10 @@ void IOCell::initialize(int id, AnalogBlock &cab) {
 }
 
 void IOCell::finalize() {
+
+}
+
+#if 0
     for (Connection &conn : m_conns) {
         conn.reset();
     }
@@ -155,7 +162,7 @@ void IOCell::finalize() {
             }
         }
     }
-}
+#endif
 
 void IOCell::set_mode(IOMode mode) {
     if (m_mode != IOMode::Disabled) { 

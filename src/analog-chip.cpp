@@ -37,9 +37,18 @@ AnalogChip::AnalogChip()
         }
     }
 
-    for (CabGroup group : { CabGroup::OddCabs, CabGroup::EvenCabs }) {
+    for (CabColumn group : { CabColumn::OddCabs, CabColumn::EvenCabs }) {
         for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
             global_bi_indirect(group, side) = Channel::GlobalBiIndirect(side, group);
+        }
+    }
+
+    for (IOGroup group : { IOGroup::LowIO, IOGroup::HighIO }) {
+        for (AnalogBlock &cab : m_cabs) {
+            for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+                global_input_direct(group, cab, side) = Channel::GlobalInputDirect(side, group, cab);
+                global_output_direct(group, cab, side) = Channel::GlobalOutputDirect(side, group, cab);
+            }
         }
     }
 }
@@ -90,7 +99,23 @@ void AnalogChip::to_header_bytestream(std::vector<uint8_t> &data) const {
     }
 }
 
-Channel &AnalogChip::global_bi_indirect(CabGroup group, Channel::Side side) {
+Channel &AnalogChip::global_input_direct(IOGroup from, AnalogBlock &to, 
+                                         Channel::Side side) {
+    return m_global_input_direct_channels
+        .at(static_cast<int>(from))
+        .at(to.id() - 1)
+        .at(static_cast<int>(side));
+} 
+
+Channel &AnalogChip::global_output_direct(IOGroup to, AnalogBlock &from,
+                                          Channel::Side side) {
+    return m_global_input_direct_channels
+        .at(static_cast<int>(to))
+        .at(from.id() - 1)
+        .at(static_cast<int>(side));
+}
+
+Channel &AnalogChip::global_bi_indirect(CabColumn group, Channel::Side side) {
     return m_global_bi_indirect_channels
         .at(static_cast<int>(group))
         .at(static_cast<int>(side));

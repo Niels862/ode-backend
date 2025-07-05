@@ -80,6 +80,8 @@ public:
     }
 
 private:
+    AnalogChip *m_chip;
+
     int m_id;
 
     IOMode m_mode;
