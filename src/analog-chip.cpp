@@ -109,7 +109,7 @@ Channel &AnalogChip::global_input_direct(IOGroup from, AnalogBlock &to,
 
 Channel &AnalogChip::global_output_direct(IOGroup to, AnalogBlock &from,
                                           Channel::Side side) {
-    return m_global_input_direct_channels
+    return m_global_output_direct_channels
         .at(static_cast<int>(to))
         .at(from.id() - 1)
         .at(static_cast<int>(side));

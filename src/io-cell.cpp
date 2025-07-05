@@ -121,6 +121,60 @@ void IOCell::initialize(int id, AnalogBlock &cab) {
 
 static void finalize_input(IOCell &cell) {
     assert(cell.mode() == IOMode::InputBypass);
+
+    IOGroup group = Channel::to_io_group(cell);
+
+    for (PortLink *link : cell.out().links()) {
+        AnalogBlock &cab = link->in->cab();
+        CabColumn cab_group = Channel::to_cab_column(cab);
+        bool direct = Channel::uses_direct_channel(cell, cab);
+
+        Channel *input = nullptr;
+        if (direct) {
+            for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+                Channel &channel = cell.chip().global_input_direct(group, cab, side);
+                if (channel.available(*link)) {
+                    input = &channel;
+                    break;
+                }
+            }
+        } else {
+            for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+                Channel &channel = cell.chip().global_bi_indirect(cab_group, side);
+                if (channel.available(*link)) {
+                    input = &channel;
+                    break;
+                }
+            }
+        }
+
+        if (!input) {
+            throw DesignError("could not route");
+        }
+
+        Channel *local = nullptr;
+        if (input->type == Channel::Type::GlobalBiIndirect) {
+            for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+                Channel &channel = cab.local_input_channel(side);
+                if (channel.available(*link)) {
+                    local = &channel;
+                    break;
+                }
+            }
+
+            if (!local) {
+                throw DesignError("could not route");
+            }
+        }
+
+        input->allocate(*link);
+        if (local) {
+            local->allocate(*link);
+            local->set_local_input_source(*input);
+        }
+
+        cell.set_used_channel(cab_group, *input);
+    }
 }
 
 static void finalize_output(IOCell &cell) {

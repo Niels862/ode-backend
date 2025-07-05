@@ -188,6 +188,43 @@ void Channel::set_local_output_dest(Channel &dest) {
     data.local_output.dest = &dest;
 }
 
+uint8_t Channel::io_routing_selector() const {
+    if (type == Channel::Type::None) {
+        return 0x0;
+    }
+
+    switch (type) {
+        case Channel::Type::None:
+            break;
+
+        case Channel::Type::GlobalInputDirect:
+            if (side == Channel::Primary) {
+                return 0x1;
+            } else {
+                return 0x2;
+            }
+            
+        case Channel::Type::GlobalOutputDirect:
+            if (side == Channel::Primary) {
+                return 0xC;
+            } else {
+                return 0x8;
+            }
+
+        case Channel::Type::GlobalBiIndirect:
+            if (side == Channel::Primary) {
+                return 0x5;
+            } else {
+                return 0x6;
+            }
+
+        default:
+            break;
+    }
+
+    abort();
+}
+
 static uint8_t intercab_selector(int from, int to) {
     assert(from > 0 && from <= NBlocksPerChip);
     assert(to > 0 && to <= NBlocksPerChip);
@@ -231,37 +268,24 @@ static uint8_t intercab_selector(int from, int to) {
     return 0x0;
 }
 
-uint8_t Channel::io_routing_selector() const {
-    if (type == Channel::Type::None) {
-        return 0x0;
-    }
-
-    switch (type) {
-        case Channel::Type::None:
+static uint8_t io_selector(IOGroup from, int to) {
+    switch (from) {
+        case IOGroup::LowIO:
+            switch (to) {
+                case 1:
+                case 2: return 0x8;
+                case 3:
+                case 4: return 0x6;
+            }
             break;
 
-        case Channel::Type::GlobalInputDirect:
-            if (side == Channel::Primary) {
-                return 0x1;
-            } else {
-                return 0x2;
+        case IOGroup::HighIO:
+            switch (to) {
+                case 1: 
+                case 2: return 0x6;
+                case 3: return 0xC;
+                case 4: return 0xE;
             }
-            
-        case Channel::Type::GlobalOutputDirect:
-            if (side == Channel::Primary) {
-                return 0xC;
-            } else {
-                return 0x8;
-            }
-
-        case Channel::Type::GlobalBiIndirect:
-            if (side == Channel::Primary) {
-                return 0x5;
-            } else {
-                return 0x6;
-            }
-
-        default:
             break;
     }
 
@@ -273,10 +297,14 @@ uint8_t Channel::switch_connection_selector() const {
 
     switch (type) {
         case Channel::Type::None:
-        case Channel::Type::GlobalInputDirect:
         case Channel::Type::GlobalOutputDirect:
         case Channel::Type::GlobalBiIndirect:
         case Channel::Type::LocalOutput:
+            break;
+
+        case Channel::Type::GlobalInputDirect:
+            select = io_selector(data.global_input_direct.from,
+                                 data.global_input_direct.cab_to);
             break;
 
         case Channel::Type::IntraCab:
