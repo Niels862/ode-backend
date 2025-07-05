@@ -120,6 +120,32 @@ IOGroup Channel::to_io_group(IOCell &io_cell) {
     abort();
 }
 
+bool Channel::uses_direct_channel(IOCell &cell, AnalogBlock &cab) {
+    assert(cab.id() >= 1 && cab.id() <= 4);
+
+    IOGroup group = Channel::to_io_group(cell);
+
+    switch (group) {
+        case IOGroup::LowIO:
+            return cab.id() == 1 || cab.id() == 2;
+
+        case IOGroup::HighIO:
+            return cab.id() == 3 || cab.id() == 4;
+    }
+
+    abort();
+}
+
+Channel::Side Channel::source_to_side(OutPortSource source) {
+    assert(source == OutPortSource::OpAmp1 || source == OutPortSource::OpAmp2);
+
+    if (source == OutPortSource::OpAmp1) {
+        return Channel::Primary;
+    } else {
+        return Channel::Secondary;
+    }
+}
+
 bool Channel::available(PortLink &link) {
     if (driver == link.out) {
         return true;
@@ -223,9 +249,9 @@ uint8_t Channel::io_routing_selector() const {
             
         case Channel::Type::GlobalOutputDirect:
             if (side == Channel::Primary) {
-                return 0x8;
-            } else {
                 return 0xC;
+            } else {
+                return 0x8;
             }
 
         case Channel::Type::GlobalBiIndirect:

@@ -106,7 +106,7 @@ IOCell::IOCell() /* IOCell manages its own in() and out() port */
         : AnalogModule{"IOCell"}, m_chip{}, m_id{}, 
           m_mode{IOMode::Disabled},
           m_in{*this}, m_out{*this}, 
-          m_conns{} {}
+          m_conns{}, m_used_channels{{nullptr, nullptr}} {}
 
 void IOCell::initialize(int id, AnalogBlock &cab) {
     set_cab(cab);
@@ -119,8 +119,55 @@ void IOCell::initialize(int id, AnalogBlock &cab) {
     }
 }
 
-void IOCell::finalize() {
+static void finalize_input(IOCell &cell) {
+    assert(cell.mode() == IOMode::InputBypass);
+}
 
+static void finalize_output(IOCell &cell) {
+    assert(cell.mode() == IOMode::OutputBypass);
+
+    PortLink *link = cell.in().link();
+    if (!link) {
+        return;
+    }
+
+    IOGroup group = Channel::to_io_group(cell);
+    AnalogBlock &cab = link->out->cab();
+    CabColumn cab_group = Channel::to_cab_column(cab);
+    bool direct = Channel::uses_direct_channel(cell, cab);
+    Channel::Side side = Channel::source_to_side(link->out->source());
+
+    Channel *channel = nullptr;
+    if (direct) {
+        channel = &cell.chip().global_output_direct(group, cab, side);
+    } else {
+        // todo: lookup channel
+    }
+
+    if (!channel) {
+        return;
+        //throw DesignError("could not route");
+    }
+
+    channel->allocate(*link);
+    cell.set_used_channel(cab_group, *channel);
+
+    std::cerr << "IO" << cell.id() << ": " << *link << std::endl;
+}
+
+void IOCell::finalize() {
+    switch (m_mode) {
+        case IOMode::Disabled:
+            break;
+
+        case IOMode::InputBypass:
+            finalize_input(*this);
+            break;
+
+        case IOMode::OutputBypass:
+            finalize_output(*this);
+            break;
+    }
 }
 
 #if 0
@@ -201,6 +248,13 @@ OutputPort &IOCell::out(std::size_t i) {
     }
 
     return m_out;
+}
+
+void IOCell::set_used_channel(CabColumn &group, Channel &channel) {
+    Channel *&entry = m_used_channels.at(static_cast<int>(group));
+    assert(entry == nullptr);
+
+    entry = &channel;
 }
 
 Channel &IOCell::used_channel(CabColumn &group) {

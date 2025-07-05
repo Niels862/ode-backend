@@ -8,8 +8,8 @@
 
 enum class IOMode {
     Disabled        = 0x00, 
-    InputBypass     = 0x10, 
-    OutputBypass    = 0x40,
+    InputBypass     = 0x40, 
+    OutputBypass    = 0x10,
 };
 
 class AnalogChip;
@@ -70,6 +70,8 @@ public:
     IOMode mode() const { return m_mode; }
     void set_mode(IOMode mode);
 
+    AnalogChip &chip() { return *m_chip; }
+
     int id() const { return m_id; }
 
     InputPort &in(std::size_t i = 0) override;
@@ -82,6 +84,7 @@ public:
         return m_conns[cab.id() - 1];
     }
 
+    void set_used_channel(CabColumn &group, Channel &channel);
     Channel &used_channel(CabColumn &group);
 
 private:

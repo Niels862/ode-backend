@@ -8,6 +8,8 @@
 
 class AnalogBlock;
 class IOCell;
+
+enum class OutPortSource;
 class OutputPort;
 class PortLink;
 
@@ -58,6 +60,8 @@ struct Channel {
     static CabRow to_cab_row(AnalogBlock &cab);
     static CabColumn to_cab_column(AnalogBlock &cab);
     static IOGroup to_io_group(IOCell &io_cell);
+    static bool uses_direct_channel(IOCell &cell, AnalogBlock &cab);
+    static Channel::Side source_to_side(OutPortSource source);
 
     bool available(PortLink &link);
     Channel &allocate(PortLink &link);

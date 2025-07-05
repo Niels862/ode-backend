@@ -97,14 +97,6 @@ Comparator &AnalogBlock::claim_comp(AnalogModule &module) {
     return m_comp.claim(module);
 }
 
-static Channel::Side source_to_side(OutPortSource source) {
-    assert(source == OutPortSource::OpAmp1 || source == OutPortSource::OpAmp2);
-    if (source == OutPortSource::OpAmp1) {
-        return Channel::Primary;
-    }
-    return Channel::Secondary;
-}
-
 static void allocate_intercab_channel(AnalogBlock &cab, PortLink &link) {
     InputPort &in = *link.in;
     OutputPort &out = *link.out;
@@ -112,7 +104,7 @@ static void allocate_intercab_channel(AnalogBlock &cab, PortLink &link) {
     assert(in.source() == InPortSource::Local 
            || in.source() == InPortSource::Comparator);
 
-    Channel::Side side = source_to_side(out.source());
+    Channel::Side side = Channel::source_to_side(out.source());
     cab.chip().intercam_channel(out.cab(), in.cab(), side).allocate(link);
 }
 
@@ -123,7 +115,7 @@ void allocate_local_opamp_channel(AnalogBlock &cab, PortLink &link) {
     assert(in.source() == InPortSource::Local 
            || in.source() == InPortSource::Comparator);
 
-    Channel::Side side = source_to_side(out.source());
+    Channel::Side side = Channel::source_to_side(out.source());
     cab.local_opamp_channel(side).allocate(link);
 }
 
@@ -134,7 +126,7 @@ void allocate_external_loopback_channels(AnalogBlock &cab, PortLink &link) {
     assert(in.source() == InPortSource::Local 
            || in.source() == InPortSource::Comparator);
 
-    Channel::Side side = source_to_side(out.source());
+    Channel::Side side = Channel::source_to_side(out.source());
     CabColumn group = Channel::to_cab_column(cab);
 
     /* OpAmpX -> OutputX -> GlobalY -> InputZ */
