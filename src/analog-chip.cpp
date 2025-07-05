@@ -172,9 +172,6 @@ void AnalogChip::compile_io_routing(ShadowSRam &ssram) {
         for (CabColumn cab_group : { CabColumn::OddCabs, CabColumn::EvenCabs }) {
             std::size_t idx = 2 * static_cast<int>(io_group) 
                             + static_cast<int>(cab_group);
-
-            std::cout << ">>>IO" << cell.id() << " - [" << idx << "] ";
-
             uint8_t select = cell.used_channel(cab_group).io_routing_selector();
 
             if (group_entry == 0) {

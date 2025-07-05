@@ -137,22 +137,35 @@ static void finalize_output(IOCell &cell) {
     bool direct = Channel::uses_direct_channel(cell, cab);
     Channel::Side side = Channel::source_to_side(link->out->source());
 
-    Channel *channel = nullptr;
+    Channel *output = nullptr;
     if (direct) {
-        channel = &cell.chip().global_output_direct(group, cab, side);
+        output = &cell.chip().global_output_direct(group, cab, side);
     } else {
+        for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+            Channel &channel = cell.chip().global_bi_indirect(cab_group, side);
+            if (channel.available(*link)) {
+                output = &channel;
+                break;
+            }
+        }
         // todo: lookup channel
     }
 
-    if (!channel) {
-        return;
-        //throw DesignError("could not route");
+    if (!output) {
+        throw DesignError("could not route");
     }
 
-    channel->allocate(*link);
-    cell.set_used_channel(cab_group, *channel);
+    Channel *local = nullptr;
+    if (output->type == Channel::Type::GlobalBiIndirect) {
+        local = &cab.local_output_channel(side).allocate(*link);
+    }
 
-    std::cerr << "IO" << cell.id() << ": " << *link << std::endl;
+    output->allocate(*link);
+    if (local) {
+        local->set_local_output_dest(*output);
+    }
+
+    cell.set_used_channel(cab_group, *output);
 }
 
 void IOCell::finalize() {
