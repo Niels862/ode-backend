@@ -202,3 +202,12 @@ OutputPort &IOCell::out(std::size_t i) {
 
     return m_out;
 }
+
+Channel &IOCell::used_channel(CabColumn &group) {
+    Channel *channel = m_used_channels.at(static_cast<int>(group));
+    if (channel) {
+        return *channel;
+    } else {
+        return Channel::None();
+    }
+}

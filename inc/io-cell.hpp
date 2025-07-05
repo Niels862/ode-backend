@@ -3,10 +3,13 @@
 
 #include "analog-module.hpp"
 #include "analog-block.hpp"
+#include "io-channel.hpp"
 #include "io-port.hpp"
 
 enum class IOMode {
-    Disabled, InputBypass, OutputBypass
+    Disabled        = 0x00, 
+    InputBypass     = 0x10, 
+    OutputBypass    = 0x40,
 };
 
 class AnalogChip;
@@ -79,6 +82,8 @@ public:
         return m_conns[cab.id() - 1];
     }
 
+    Channel &used_channel(CabColumn &group);
+
 private:
     AnalogChip *m_chip;
 
@@ -90,6 +95,8 @@ private:
     OutputPort m_out;
 
     std::array<Connection, NBlocksPerChip> m_conns;
+
+    std::array<Channel *, 2> m_used_channels;
 };
 
 #endif

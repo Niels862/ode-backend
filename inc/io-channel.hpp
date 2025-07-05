@@ -33,6 +33,7 @@ struct Channel {
     };
 
     enum class Type {
+        None,
         GlobalInputDirect,
         GlobalOutputDirect,
         GlobalBiIndirect,
@@ -45,6 +46,7 @@ struct Channel {
     Channel();
     Channel(Channel::Type type, Channel::Side side);
 
+    static Channel &None();
     static Channel GlobalInputDirect(Side side, IOGroup from, AnalogBlock &to);
     static Channel GlobalOutputDirect(Side side, IOGroup to, AnalogBlock &from);
     static Channel GlobalBiIndirect(Side side, CabColumn group);
@@ -63,6 +65,7 @@ struct Channel {
     void set_local_input_source(Channel &source);
     void set_local_output_dest(Channel &dest);
 
+    uint8_t io_routing_selector() const;
     uint8_t switch_connection_selector() const;
     uint8_t local_input_source_selector() const;
     uint8_t local_output_dest_selector() const;

@@ -158,18 +158,36 @@ void AnalogChip::compile_lut_io_control(ShadowSRam &ssram) {
 }
 
 void AnalogChip::compile_io_routing(ShadowSRam &ssram) {
-    for (std::size_t i = 0; i < m_io_cells.size(); i++) {
-        uint8_t mode_data;
-        switch (m_io_cells[i].mode()) {
-            case IOMode::Disabled:      mode_data = 0x00; break;
-            case IOMode::InputBypass:   mode_data = 0x40; break;
-            case IOMode::OutputBypass:  mode_data = 0x10; break;
-            default:
-                throw DesignError("Unexpected Mode");
-        }
+    //   dd cc bb aa
+    // ~ CD CD AB AB
 
-        ssram.set(0x02, 0x13 - 3 * i, mode_data);
+    uint8_t io_routing[4] = { 0 };
+
+    for (IOCell &cell : m_io_cells) {
+        ssram.set(0x02, 0x16 - 3 * cell.id(), static_cast<int>(cell.mode()));
+
+        IOGroup io_group = Channel::to_io_group(cell);
+        int group_entry = cell.id() % 2;
+
+        for (CabColumn cab_group : { CabColumn::OddCabs, CabColumn::EvenCabs }) {
+            std::size_t idx = 2 * static_cast<int>(io_group) + group_entry;
+            uint8_t select = cell.used_channel(cab_group).io_routing_selector();
+
+            if (group_entry == 0) {
+                io_routing[idx] |= select;
+            } else {
+                io_routing[idx] |= select << 4;
+            }
+        }
     }
+
+    for (std::size_t i = 0; i < 4; i++) {
+        std::size_t addr = 0x07 - i * 2;
+        ssram.set(0x02, addr, io_routing[i]);
+    }
+}
+
+#if 0
 
     uint8_t routing_lo[4] = { 0 };
     configure_shared_routing(io_cell(1), io_cell(2), routing_lo);
@@ -182,6 +200,7 @@ void AnalogChip::compile_io_routing(ShadowSRam &ssram) {
     ssram.set(0x02, 0x03, from_nibbles(routing_hi[1], routing_hi[0]));
     ssram.set(0x02, 0x01, from_nibbles(routing_hi[3], routing_hi[2]));
 }
+#endif
 
 static void setup_connection_matrix(IOCell &cell, Connection *conns[2][2]) {
     for (auto &conn : cell.connections()) {

@@ -16,6 +16,11 @@ Channel Channel::IntraCab(Side side) {
     return Channel(Channel::Type::IntraCab, side);
 }
 
+Channel &Channel::None() {
+    static Channel channel;
+    return channel;
+}
+
 Channel Channel::GlobalInputDirect(Side side, IOGroup from, AnalogBlock &to) {
     Channel channel(Channel::Type::GlobalInputDirect, side);
 
@@ -200,10 +205,48 @@ static uint8_t intercab_selector(int from, int to) {
     return 0x0;
 }
 
+uint8_t Channel::io_routing_selector() const {
+    if (type == Channel::Type::None) {
+        return 0x0;
+    }
+
+    switch (type) {
+        case Channel::Type::None:
+            break;
+
+        case Channel::Type::GlobalInputDirect:
+            if (side == Channel::Primary) {
+                return 0x1;
+            } else {
+                return 0x2;
+            }
+            
+        case Channel::Type::GlobalOutputDirect:
+            if (side == Channel::Primary) {
+                return 0x8;
+            } else {
+                return 0xC;
+            }
+
+        case Channel::Type::GlobalBiIndirect:
+            if (side == Channel::Primary) {
+                return 0x5;
+            } else {
+                return 0x6;
+            }
+
+        default:
+            break;
+    }
+
+    abort();
+}
+
 uint8_t Channel::switch_connection_selector() const {
     uint8_t select = 0x0;
 
     switch (type) {
+        case Channel::Type::None:
         case Channel::Type::GlobalInputDirect:
         case Channel::Type::GlobalOutputDirect:
         case Channel::Type::GlobalBiIndirect:
@@ -277,13 +320,37 @@ std::ostream &operator <<(std::ostream &os, Channel const &channel) {
     os << "Channel [";
 
     switch (channel.type) {
-        case Channel::Type::GlobalInputDirect:  os << "global-input"; break;
-        case Channel::Type::GlobalOutputDirect: os << "global-output"; break;
-        case Channel::Type::GlobalBiIndirect:   os << "global-bi"; break;
-        case Channel::Type::InterCab:           os << "inter-cab"; break;
-        case Channel::Type::IntraCab:           os << "intra-cab"; break;
-        case Channel::Type::LocalInput:         os << "local-input"; break;
-        case Channel::Type::LocalOutput:        os << "local-output"; break;
+        case Channel::Type::None:
+            os << "none";
+            break;
+
+        case Channel::Type::GlobalInputDirect:  
+            os << "global-input"; 
+            break;
+
+        case Channel::Type::GlobalOutputDirect: 
+            os << "global-output"; 
+            break;
+
+        case Channel::Type::GlobalBiIndirect:   
+            os << "global-bi"; 
+            break;
+            
+        case Channel::Type::InterCab:           
+            os << "inter-cab"; 
+            break;
+
+        case Channel::Type::IntraCab:           
+            os << "intra-cab"; 
+            break;
+
+        case Channel::Type::LocalInput:         
+            os << "local-input"; 
+            break;
+
+        case Channel::Type::LocalOutput:
+            os << "local-output"; 
+            break;
     }
 
     if (channel.side == Channel::Primary) {
