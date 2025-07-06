@@ -188,6 +188,18 @@ void Channel::set_local_output_dest(Channel &dest) {
     data.local_output.dest = &dest;
 }
 
+Channel *Channel::local_input_source() {
+    assert(type == Channel::Type::LocalInput);
+
+    return data.local_input.source;
+}
+
+Channel *Channel::local_output_dest() {
+    assert(type == Channel::Type::LocalOutput);
+
+    return data.local_output.dest;
+}
+
 uint8_t Channel::io_routing_selector() const {
     if (type == Channel::Type::None) {
         return 0x0;
@@ -362,8 +374,8 @@ uint8_t Channel::local_output_dest_selector() const {
         }
     } else {
         switch (dest->side) {
-            case Channel::Primary:      return 0x20;
-            case Channel::Secondary:    return 0x10;
+            case Channel::Primary:      return 0x02;
+            case Channel::Secondary:    return 0x01;
         }
     }
 

@@ -317,10 +317,24 @@ void AnalogBlock::compile(ShadowSRam &ssram) {
         ssram.set(bank_b(), 0x05 - i, select);
     }
 
+    // [side] => local output that reroutes to global bi at side
+    Channel *output_reroutes[2] = { 0 };
+    for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+        Channel &channel = local_output_channel(side);
+        
+        Channel *reroute = channel.local_output_dest();
+        if (reroute) {
+            output_reroutes[static_cast<int>(reroute->side)] = &channel;
+        }
+    }
+
     uint8_t select = 0x0;
     for (std::size_t i = 0; i < 2; i++) {
-        Channel &channel = m_local_output_channels[i];
-        select |= channel.local_output_dest_selector();
+        Channel *channel = output_reroutes[i];
+        if (channel) {
+            uint8_t reroute_select = channel->local_output_dest_selector();
+            select |= reroute_select << (i * 4);
+        }
     }
     ssram.set(bank_b(), 0x02, select);
 

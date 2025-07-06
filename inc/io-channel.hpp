@@ -68,6 +68,8 @@ struct Channel {
 
     void set_local_input_source(Channel &source);
     void set_local_output_dest(Channel &dest);
+    Channel *local_input_source();
+    Channel *local_output_dest();
 
     uint8_t io_routing_selector() const;
     uint8_t switch_connection_selector() const;
