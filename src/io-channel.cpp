@@ -53,7 +53,7 @@ Channel Channel::GlobalBiIndirect(Side side, CabColumn group) {
 Channel Channel::InterCab(Side side, AnalogBlock &from, AnalogBlock &to) {
     Channel channel(Channel::Type::InterCab, side);
 
-    auto &data = channel.data.intra_cab;
+    auto &data = channel.data.inter_cab;
     data.cab_from_id = from.id();
     data.cab_to_id = to.id();
 
@@ -323,8 +323,8 @@ uint8_t Channel::switch_connection_selector() const {
             break;
 
         case Channel::Type::InterCab: {
-            select = switch_intercab_selector(data.intra_cab.cab_from_id, 
-                                              data.intra_cab.cab_to_id);
+            select = switch_intercab_selector(data.inter_cab.cab_from_id, 
+                                              data.inter_cab.cab_to_id);
             break;
         }
 
@@ -340,6 +340,47 @@ uint8_t Channel::switch_connection_selector() const {
     } else {
         return select;
     }
+}
+
+static uint8_t comparator_intercab_selector(int from, int to) {
+    assert(from > 0 && from <= NBlocksPerChip);
+    assert(to > 0 && to <= NBlocksPerChip);
+    assert(from != to);
+
+    switch (from) {
+        case 1:
+            switch (to) {
+                case 2: return 0x10;
+                case 3: return 0x10;
+                case 4: return 0x10;
+            }
+            break;
+
+        case 2:
+            switch (to) {
+                case 1: return 0x01;
+                case 3: return 0x40;
+                case 4: return 0x40;
+            }
+            break;
+
+        case 3:
+            switch (to) {
+                case 1: return 0x10;
+                case 2: return 0x04;
+                case 4: return 0x04;
+            }
+            break;
+
+        case 4:
+            switch (to) {
+                case 1: return 0x04;
+                case 2: return 0x01;
+                case 3: return 0x01;
+            }
+    }
+
+    abort();
 }
 
 static uint8_t comparator_io_selector(IOGroup from, int to) {
@@ -367,7 +408,7 @@ static uint8_t comparator_io_selector(IOGroup from, int to) {
 }
 
 uint8_t Channel::comparator_connection_selector() const {
-    uint8_t select = 0x00;
+    uint8_t select = 0xFF;
 
     switch (type) {
         case Channel::Type::None:
@@ -385,13 +426,16 @@ uint8_t Channel::comparator_connection_selector() const {
             break;
 
         case Channel::Type::InterCab:
+            select = comparator_intercab_selector(data.inter_cab.cab_from_id,
+                                                  data.inter_cab.cab_to_id);
             break;
 
         case Channel::Type::LocalInput:
+            select = 0x00;
             break;
     }
 
-    assert(select != 0x0);
+    assert(select != 0xFF);
 
     if (side == Channel::Primary) {
         return select;

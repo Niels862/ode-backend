@@ -98,7 +98,7 @@ struct Channel {
         struct {
             int cab_from_id;
             int cab_to_id;
-        } intra_cab;
+        } inter_cab;
 
         struct {
             CabColumn group;

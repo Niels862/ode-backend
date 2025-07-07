@@ -124,10 +124,20 @@ static void finalize_input(IOCell &cell) {
 
     IOGroup group = Channel::to_io_group(cell);
 
+    bool use_indirect[2] = { false, false };
     for (PortLink *link : cell.out().links()) {
         AnalogBlock &cab = link->in->cab();
         CabColumn cab_group = Channel::to_cab_column(cab);
         bool direct = Channel::uses_direct_channel(cell, cab);
+
+        std::size_t i = static_cast<int>(cab_group);
+        use_indirect[i] = use_indirect[i] || !direct;
+    }
+
+    for (PortLink *link : cell.out().links()) {
+        AnalogBlock &cab = link->in->cab();
+        CabColumn cab_group = Channel::to_cab_column(cab);
+        bool direct = !use_indirect[static_cast<int>(cab_group)];
 
         Channel *input = nullptr;
         if (direct) {
@@ -319,7 +329,7 @@ OutputPort &IOCell::out(std::size_t i) {
 
 void IOCell::set_used_channel(CabColumn &group, Channel &channel) {
     Channel *&entry = m_used_channels.at(static_cast<int>(group));
-    assert(entry == nullptr);
+    assert(entry == nullptr || entry == &channel);
 
     entry = &channel;
 }
