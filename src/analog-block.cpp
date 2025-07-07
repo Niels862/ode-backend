@@ -97,6 +97,10 @@ Comparator &AnalogBlock::claim_comp(AnalogModule &module) {
     return m_comp.claim(module);
 }
 
+void AnalogBlock::finalize_comparator() {
+    m_comp.finalize();
+}
+
 static void allocate_intercab_channel(AnalogBlock &cab, PortLink &link) {
     InputPort &in = *link.in;
     OutputPort &out = *link.out;
@@ -108,7 +112,7 @@ static void allocate_intercab_channel(AnalogBlock &cab, PortLink &link) {
     cab.chip().intercam_channel(out.cab(), in.cab(), side).allocate(link);
 }
 
-void allocate_local_opamp_channel(AnalogBlock &cab, PortLink &link) {
+static void allocate_local_opamp_channel(AnalogBlock &cab, PortLink &link) {
     InputPort &in = *link.in;
     OutputPort &out = *link.out;
 
@@ -119,7 +123,7 @@ void allocate_local_opamp_channel(AnalogBlock &cab, PortLink &link) {
     cab.local_opamp_channel(side).allocate(link);
 }
 
-void allocate_external_loopback_channels(AnalogBlock &cab, PortLink &link) {
+static void allocate_external_loopback_channels(AnalogBlock &cab, PortLink &link) {
     InputPort &in = *link.in;
     OutputPort &out = *link.out;
 

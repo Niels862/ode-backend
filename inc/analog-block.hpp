@@ -50,6 +50,7 @@ public:
     OpAmp &claim_opamp(AnalogModule &module);
     Comparator &claim_comp(AnalogModule &module);
 
+    void finalize_comparator();
     void finalize();
 
     void compile(ShadowSRam &ssram);

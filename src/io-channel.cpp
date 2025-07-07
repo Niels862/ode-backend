@@ -175,6 +175,18 @@ Channel &Channel::allocate(PortLink &link) {
     return *this;
 }
 
+Channel &Channel::reserve(OutputPort &out) {
+    if (driver == nullptr || driver == &out) {
+        driver = &out;
+    } else {
+        std::stringstream ss;
+        ss << "Cannot reserve Channel " << *this << " for Port " << out;
+        throw std::runtime_error(ss.str());
+    }
+
+    return *this;
+}
+
 void Channel::set_local_input_source(Channel &source) {
     assert(type == Channel::Type::LocalInput);
     assert(source.type == Channel::Type::GlobalBiIndirect);

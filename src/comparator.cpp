@@ -46,7 +46,29 @@ static uint8_t compile_route(Comparator &comp) {
     return 0x08;
 }
 
-#define TEMP_I2SEC_TO_COMPC1 0x80
+void Comparator::finalize() {
+    if (!m_module) {
+        return;
+    }
+
+    AnalogBlock &cab = m_module->cab();
+
+    PortLink *link = m_in.link();
+    if (!link) {
+        return;
+    }
+
+    OutputPort &out = *link->out;
+    if (out.source() != OutPortSource::IOCell) {
+        return;
+    }
+
+    if (Channel::uses_direct_channel(out.io_cell(), cab)) {
+        return;
+    }
+
+    cab.local_input_channel(Channel::Primary).reserve(out);
+}
 
 void Comparator::compile(AnalogBlock const &cab, ShadowSRam &ssram) {
     ssram.set(cab.bank_b(), 0x09, { m_cfg[0], m_cfg[1] });

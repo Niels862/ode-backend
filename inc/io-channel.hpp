@@ -83,9 +83,18 @@ struct Channel {
         throw std::runtime_error("Could not route design");
     }
 
+    /* Returns true if Channel is driven by output port of link */
     bool allocated_for(PortLink &link);
+
+    /* Returns true if channel is allocated for link or empty */
     bool available(PortLink &link);
+
+    /* Allocates Channel and links it with link */
     Channel &allocate(PortLink &link);
+
+    /* Reserves Channel so that only links with output port `driver` 
+       can allocate it */
+    Channel &reserve(OutputPort &driver);
 
     void set_local_input_source(Channel &source);
     void set_local_output_dest(Channel &dest);
