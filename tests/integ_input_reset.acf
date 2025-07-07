@@ -2,8 +2,6 @@ chip {
     io: [
         input,
         input,
-        input,
-        input,
     ],
     cabs: [
         cab 1 with clocks 1, 3 {
@@ -40,9 +38,16 @@ chip {
         },
     ],
     routing: [
-        io1 -> integ1:cmp,
+        io1 -> integ1,
+        io2 -> integ1:cmp,
+        
+        io1 -> integ2,
         io2 -> integ2:cmp,
-        io3 -> integ3:cmp,
-        io4 -> integ4:cmp,
+        
+        io1 -> integ3,
+        io2 -> integ3:cmp,
+        
+        io1 -> integ4,
+        io2 -> integ4:cmp,
     ],
 }

@@ -37,7 +37,7 @@ uint8_t PortLink::switch_connection_selector() {
         Channel const &final = *channels.back();
         return final.switch_connection_selector();
     }
-    return out->switch_connection_selector(*in);
+    return 0x0;
 }
 
 std::ostream &operator <<(std::ostream &os, PortLink const &link) {
@@ -149,29 +149,4 @@ std::ostream &operator <<(std::ostream &os, OutputPort const &out) {
         os << "CAB" << out.m_cab->id() << ":" << to_string(out.m_source);
     }
     return os;
-}
-
-static uint8_t iocell_connection_selector(IOCell &cell_from,
-                                          AnalogBlock &cab_to) {    
-    Connection &conn = cell_from.connection(cab_to);
-    return conn.cab_nibble(cell_from);
-}
-
-uint8_t OutputPort::switch_connection_selector(InputPort &input) {
-    // Assert that the method is not called on an IOCell's input port (cab == 0) 
-    assert(input.source() != InPortSource::IOCell);
-
-    switch (m_source) {
-        case OutPortSource::None:    
-            return 0x0;
-
-        case OutPortSource::IOCell:    
-            return iocell_connection_selector(*m_io_cell, input.cab());
-
-        case OutPortSource::OpAmp1:
-        case OutPortSource::OpAmp2:    
-            return 0x0;
-    }
-
-    return 0x0;
 }

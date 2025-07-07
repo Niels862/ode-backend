@@ -25,16 +25,13 @@ Comparator &Comparator::set_configuration(std::array<uint8_t, 2> cfg) {
 }
 
 static bool is_internally_routed(InputPort &port) {
-    IOCell *cell = port.io_connection();
-    if (!cell) {
-        throw DesignError("No connected to Comparator");
+    PortLink *link = port.link();
+    if (!link) {
+        return false;
     }
 
-    Connection *conn = &cell->connection(port.cab());
-    if (conn->mode == Connection::Mode::Far) {
-        return true;
-    }
-    return false;
+    Channel *channel = link->channels.back();
+    return channel->type == Channel::Type::LocalInput;
 }
 
 static uint8_t compile_route(Comparator &comp) {

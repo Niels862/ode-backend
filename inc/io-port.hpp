@@ -87,8 +87,6 @@ public:
 
     void connect(InputPort &in);
 
-    uint8_t switch_connection_selector(InputPort &to);
-
     AnalogBlock &cab();
     IOCell &io_cell() { return *m_io_cell; }
     OutPortSource source() const { return m_source; }
