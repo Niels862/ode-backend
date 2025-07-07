@@ -214,33 +214,59 @@ void AnalogBlock::finalize() {
     }
 }
 
-/*
-The CAB has two internal routing channels, P and Q.
-In the local routing configuration, external channels can be mapped 
-to the channels:
+uint8_t local_output_reroute_selector(AnalogBlock &cab) {
+    std::cout << "CAB" << cab.id() << std::endl;
+    Channel *local_to_bi_pri = nullptr, *local_to_bi_sec = nullptr;
 
-Byte 05 controls the signal to Q, byte 04 controls the signal to P,
-possibly multiplexer values. In the CAB module routing, these channels
-can be referenced using the defined values. 
+    for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+        Channel &channel = cab.local_output_channel(side);
+        
+        Channel *reroute = channel.local_output_dest();
+        if (!reroute) {
+            continue;
+        }
 
-Constraints: 
-- Capacitor switches can select either P or Q.
-- The single comparator is *only able* to use the Q channel, as the 
-  configuration to P is unknown / may not exist.
+        switch (reroute->side) {
+            case Channel::Primary:
+                local_to_bi_pri = &channel;
+                break;
 
-These channels are used for `far` connections to IO-Cells. Whether a 
-connection is `near` or `far` is determind elsewhere and can be tested with 
-conn.channel.
+            case Channel::Secondary:
+                local_to_bi_sec = &channel;
+                break;
+        }
+    }
 
-Approach:
-- Check if comparator is in use and if its connnection is to a far IO-Cell. 
-  If so, reserve Q for the signal from this IO-Cell. It may still be used by 
-  switches as well. 
-- Iterate over each switch connection to the CAB. If a connection is to a far 
-  IO-Cell, first check if it is to an existing mapping to P or Q. If not, 
-  add a mapping. If both P and Q are mapped and both do not match, throw a 
-  RoutingError.  
-*/
+    if (local_to_bi_pri) {
+        std::cout << "pri: " << *local_to_bi_pri << std::endl;
+    }
+    if (local_to_bi_sec) {
+        std::cout << "sec: " << *local_to_bi_sec << std::endl;
+    }
+
+    if (local_to_bi_pri) {
+        if (!local_to_bi_sec) {
+            switch (local_to_bi_pri->side) {
+                case Channel::Primary:      return 0x01;
+                case Channel::Secondary:    return 0x02;
+            }
+        } else {
+            return 0x11;
+        }
+    } else {
+        if (!local_to_bi_sec) {
+            return 0x00;
+        } else {
+            switch (local_to_bi_sec->side) {
+                case Channel::Primary:      return 0x08;
+                case Channel::Secondary:    return 0x10;
+            }
+        }
+    }
+
+    return 0x00;
+}
+
 void AnalogBlock::compile(ShadowSRam &ssram) {
     /* Enable Clocks */
     for (Clock *clock : m_used_clocks) {
@@ -264,27 +290,8 @@ void AnalogBlock::compile(ShadowSRam &ssram) {
         uint8_t select = channel.local_input_source_selector();
         ssram.set(bank_b(), 0x05 - i, select);
     }
-
-    // [side] => local output that reroutes to global bi at side
-    Channel *output_reroutes[2] = { 0 };
-    for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
-        Channel &channel = local_output_channel(side);
-        
-        Channel *reroute = channel.local_output_dest();
-        if (reroute) {
-            output_reroutes[static_cast<int>(reroute->side)] = &channel;
-        }
-    }
-
-    uint8_t select = 0x0;
-    for (std::size_t i = 0; i < 2; i++) {
-        Channel *channel = output_reroutes[i];
-        if (channel) {
-            uint8_t reroute_select = channel->local_output_dest_selector();
-            select |= reroute_select << (i * 4);
-        }
-    }
-    ssram.set(bank_b(), 0x02, select);
+    
+    ssram.set(bank_b(), 0x02, local_output_reroute_selector(*this));
 
     ssram.set(bank_b(), 0x0, from_nibbles(m_used_clocks[1]->id_nibble(), 
                                           m_used_clocks[0]->id_nibble()));

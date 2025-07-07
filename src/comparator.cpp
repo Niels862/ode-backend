@@ -24,28 +24,6 @@ Comparator &Comparator::set_configuration(std::array<uint8_t, 2> cfg) {
     return *this;
 }
 
-static bool is_internally_routed(InputPort &port) {
-    PortLink *link = port.link();
-    if (!link) {
-        return false;
-    }
-
-    Channel *channel = link->channels.back();
-    return channel->type == Channel::Type::LocalInput;
-}
-
-static uint8_t compile_route(Comparator &comp) {
-    if (!comp.is_used()) {
-        return 0x00;
-    }
-
-    if (is_internally_routed(comp.in())) {
-        return 0x48;
-    }
-
-    return 0x08;
-}
-
 void Comparator::finalize() {
     if (!m_module) {
         return;
@@ -67,7 +45,29 @@ void Comparator::finalize() {
         return;
     }
 
-    cab.local_input_channel(Channel::Primary).reserve(out);
+    cab.local_input_channel(Channel::Secondary).reserve(out);
+}
+
+static bool is_internally_routed(InputPort &port) {
+    PortLink *link = port.link();
+    if (!link) {
+        return false;
+    }
+
+    Channel *channel = link->channels.back();
+    return channel->type == Channel::Type::LocalInput;
+}
+
+static uint8_t compile_route(Comparator &comp) {
+    if (!comp.is_used()) {
+        return 0x00;
+    }
+
+    if (is_internally_routed(comp.in())) {
+        return 0x48;
+    }
+
+    return 0x08;
 }
 
 void Comparator::compile(AnalogBlock const &cab, ShadowSRam &ssram) {

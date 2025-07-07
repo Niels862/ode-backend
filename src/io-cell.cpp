@@ -79,6 +79,8 @@ static void finalize_input(IOCell &cell) {
         }
 
         cell.set_used_channel(cab_group, *input);
+
+        std::cout << *link << std::endl;
     }
 }
 

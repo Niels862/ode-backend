@@ -60,6 +60,10 @@ ShadowSRam AnalogChip::compile() {
         clock.set_is_used(false);
     }
 
+    for (AnalogBlock &cab : m_cabs) {
+        cab.finalize_comparator();
+    }
+
     for (IOCell &cell : m_io_cells) {
         cell.finalize();
     }
