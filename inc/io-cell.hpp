@@ -15,46 +15,6 @@ enum class IOMode {
 class AnalogChip;
 class IOCell;
 
-struct Connection {
-    enum Block {
-        None,
-        ToInput,
-        FromOutput,
-    };
-
-    enum Mode {
-        Near,
-        Far
-    };
-
-    enum Channel {
-        Primary,
-        Secondary
-    };
-
-    enum class Internal {
-        Unset,
-        P,
-        Q,
-    };
-
-    Block block;
-    Mode mode;
-    Channel channel;
-    AnalogBlock *cab;
-    Internal internal;
-
-    Connection() { reset(); }
-    void reset();
-
-    void initialize(AnalogBlock &cab, Block block);
-
-    uint8_t io_nibble() const;
-    uint8_t cab_nibble(IOCell &cell) const;
-
-    bool equivalent(Connection const &other) const;
-};
-
 class IOCell : public AnalogModule {
 public:
     IOCell();
@@ -77,13 +37,6 @@ public:
     InputPort &in(std::size_t i = 0) override;
     OutputPort &out(std::size_t i = 0) override;
 
-    std::array<Connection, NBlocksPerChip> &connections() { 
-        return m_conns; 
-    }
-    Connection &connection(AnalogBlock const &cab) {
-        return m_conns[cab.id() - 1];
-    }
-
     void set_used_channel(CabColumn &group, Channel &channel);
     Channel &used_channel(CabColumn &group);
 
@@ -96,8 +49,6 @@ private:
 
     InputPort m_in;
     OutputPort m_out;
-
-    std::array<Connection, NBlocksPerChip> m_conns;
 
     std::array<Channel *, 2> m_used_channels;
 };

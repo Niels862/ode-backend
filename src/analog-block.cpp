@@ -210,53 +210,6 @@ void AnalogBlock::finalize() {
     }
 }
 
-int find_connection_channel(OpAmp &opamp1, OpAmp &opamp2, 
-                                   Connection::Channel channel) {
-    bool is1 = false, is2 = false;
-    
-    if (opamp1.is_used()) {
-        for (PortLink *link : opamp1.out().links()) {
-            if (link->in->source() == InPortSource::IOCell) {
-                Connection &conn = link->in->io_cell().connection(opamp1.out().cab());
-                if (conn.channel == channel && conn.mode == Connection::Far) {
-                    is1 = true;
-                }
-            }
-        }
-    }
-
-    if (opamp2.is_used()) {
-        for (PortLink *link : opamp2.out().links()) {
-            if (link->in->source() == InPortSource::IOCell) {
-                Connection &conn = link->in->io_cell().connection(opamp2.out().cab());
-                if (conn.channel == channel && conn.mode == Connection::Far) {
-                    is2 = true;
-                }
-            }
-        }
-    }
-    
-    if (is1 && is2) {
-        abort();
-    }
-
-    if (is1) return 1;
-    if (is2) return 2;
-    return 0;
-}
-
-/* FIXME: unreliable, needs more research */
-uint8_t compile_local_output_routing(OpAmp &opamp1, OpAmp &opamp2) {
-    int pri = find_connection_channel(opamp1, opamp2, Connection::Primary);
-    int sec = find_connection_channel(opamp1, opamp2, Connection::Secondary);
-
-    if (sec) {
-        sec = (sec == 2 ? 1 : 2);
-    }
-
-    return pri | (sec << 4);
-}
-
 /*
 The CAB has two internal routing channels, P and Q.
 In the local routing configuration, external channels can be mapped 
@@ -301,15 +254,6 @@ void AnalogBlock::compile(ShadowSRam &ssram) {
     }
 
     m_comp.compile(*this, ssram);
-
-    /*
-    map_internal_channels();
-    ssram.set(bank_b(), 0x05, compile_internal_channel_routing(m_internal_P));
-    ssram.set(bank_b(), 0x04, compile_internal_channel_routing(m_internal_Q));
-    
-    uint8_t b = compile_local_output_routing(m_opamps[0], m_opamps[1]);
-    ssram.set(bank_b(), 0x02, b);
-    */
 
     for (std::size_t i = 0; i < 2; i++) {
         Channel &channel = m_local_input_channels[i];
@@ -363,54 +307,4 @@ void AnalogBlock::log_resources() const {
               << NCapacitorsPerBlock << " Capacitors, " 
               << m_next_opamp << " / " << NOpAmpsPerBlock << " OpAmps, " 
               << m_comp.is_used() << " / 1 Comparators" << std::endl;
-}
-
-void AnalogBlock::map_internal_channels() {
-    IOCell *comp_io = m_comp.in().io_connection();
-    if (comp_io) {
-        Connection &conn = comp_io->connection(*this);
-        if (conn.mode == Connection::Far) {
-            conn.internal = Connection::Internal::Q;
-            m_internal_Q = comp_io;
-        }
-    }
-
-    for (InputPort &in : m_local_ins) {
-        IOCell *in_io = in.io_connection();
-        if (!in_io) {
-            continue;
-        }
-        
-        Connection &conn = in_io->connection(*this);
-        if (conn.mode != Connection::Far) {
-            continue;
-        }
-
-        if (m_internal_P == in_io) {
-            conn.internal = Connection::Internal::P;
-        } else if (m_internal_Q == in_io) {
-            conn.internal = Connection::Internal::Q;
-        } else if (m_internal_P == nullptr) {
-            conn.internal = Connection::Internal::P;
-            m_internal_P = in_io;
-        } else if (m_internal_Q == nullptr) {
-            conn.internal = Connection::Internal::Q;
-            m_internal_Q = in_io;
-        } else {
-            throw DesignError(
-                    "Cannot realize routing: out of internal channels");
-        }
-    }
-}
-
-uint8_t AnalogBlock::compile_internal_channel_routing(IOCell *channel) {
-    if (channel == nullptr) {
-        return 0x00;
-    }
-
-    Connection &conn = channel->connection(*this);
-    if (conn.channel == Connection::Primary) {
-        return 0x01;
-    }
-    return 0x02;
 }

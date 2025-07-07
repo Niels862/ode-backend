@@ -84,9 +84,6 @@ public:
     operator bool() const { return m_id > 0; }
 
 private:
-    void map_internal_channels();
-    uint8_t compile_internal_channel_routing(IOCell *channel);
-
     AnalogChip *m_chip;
 
     int m_id;
