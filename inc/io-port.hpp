@@ -37,6 +37,7 @@ struct PortLink {
     PortLink(InputPort *in, OutputPort *out);
 
     uint8_t switch_connection_selector();
+    uint8_t comparator_connection_selector();
 
     friend std::ostream &operator <<(std::ostream &os, PortLink const &link);
 
@@ -54,6 +55,7 @@ public:
     /* Returns the 4-bit nibble representing the connection to this 
        input port as it appears in the configuration data. */
     uint8_t switch_connection_selector();
+    uint8_t comparator_connection_selector();
 
     AnalogBlock &cab();
     IOCell &io_cell() { return *m_io_cell; }

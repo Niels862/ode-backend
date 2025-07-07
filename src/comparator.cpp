@@ -51,10 +51,5 @@ static uint8_t compile_route(Comparator &comp) {
 void Comparator::compile(AnalogBlock const &cab, ShadowSRam &ssram) {
     ssram.set(cab.bank_b(), 0x09, { m_cfg[0], m_cfg[1] });
     ssram.set(cab.bank_a(), 0x0E, compile_route(*this));
-
-    if (m_module) {
-        ssram.set(cab.bank_b(), 0x06, TEMP_I2SEC_TO_COMPC1);
-    } else {
-        ssram.set(cab.bank_b(), 0x06, 0x00);
-    }
+    ssram.set(cab.bank_b(), 0x06, m_in.comparator_connection_selector());
 }

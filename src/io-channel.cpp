@@ -237,7 +237,7 @@ uint8_t Channel::io_routing_selector() const {
     abort();
 }
 
-static uint8_t intercab_selector(int from, int to) {
+static uint8_t switch_intercab_selector(int from, int to) {
     assert(from > 0 && from <= NBlocksPerChip);
     assert(to > 0 && to <= NBlocksPerChip);
     assert(from != to);
@@ -276,25 +276,24 @@ static uint8_t intercab_selector(int from, int to) {
             break;
     }
 
-    assert(1);
-    return 0x0;
+    abort();
 }
 
-static uint8_t io_selector(IOGroup from, int to) {
+static uint8_t switch_io_selector(IOGroup from, int to) {
     switch (from) {
         case IOGroup::LowIO:
             switch (to) {
                 case 1:
                 case 2: return 0x8;
-                case 3:
-                case 4: return 0x6;
+                /*case 3:
+                case 4: return 0x6;*/
             }
             break;
 
         case IOGroup::HighIO:
             switch (to) {
-                case 1: 
-                case 2: return 0x6;
+                /*case 1: 
+                case 2: return 0x6;*/
                 case 3: return 0xC;
                 case 4: return 0xE;
             }
@@ -315,8 +314,8 @@ uint8_t Channel::switch_connection_selector() const {
             break;
 
         case Channel::Type::GlobalInputDirect:
-            select = io_selector(data.global_input_direct.from,
-                                 data.global_input_direct.cab_to);
+            select = switch_io_selector(data.global_input_direct.from,
+                                        data.global_input_direct.cab_to);
             break;
 
         case Channel::Type::IntraCab:
@@ -324,8 +323,8 @@ uint8_t Channel::switch_connection_selector() const {
             break;
 
         case Channel::Type::InterCab: {
-            select = intercab_selector(data.intra_cab.cab_from_id, 
-                                       data.intra_cab.cab_to_id);
+            select = switch_intercab_selector(data.intra_cab.cab_from_id, 
+                                              data.intra_cab.cab_to_id);
             break;
         }
 
@@ -340,6 +339,64 @@ uint8_t Channel::switch_connection_selector() const {
         return select | 0x1;
     } else {
         return select;
+    }
+}
+
+static uint8_t comparator_io_selector(IOGroup from, int to) {
+    switch (from) {
+        case IOGroup::LowIO:
+            switch (to) {
+                case 1:
+                case 2: return 0x40;
+                /*case 3: 
+                case 4:*/
+            }
+            break;
+
+        case IOGroup::HighIO:
+            switch (to) {
+                /*case 1:
+                case 2:*/
+                case 3: return 0x04;
+                case 4: return 0x01;
+            }
+            break;
+    }
+
+    abort();
+}
+
+uint8_t Channel::comparator_connection_selector() const {
+    uint8_t select = 0x00;
+
+    switch (type) {
+        case Channel::Type::None:
+        case Channel::Type::GlobalBiIndirect:
+        case Channel::Type::GlobalOutputDirect:
+        case Channel::Type::LocalOutput:
+            break;
+
+        case Channel::Type::GlobalInputDirect:
+            select = comparator_io_selector(data.global_input_direct.from,
+                                            data.global_input_direct.cab_to);
+            break;
+
+        case Channel::Type::IntraCab:
+            break;
+
+        case Channel::Type::InterCab:
+            break;
+
+        case Channel::Type::LocalInput:
+            break;
+    }
+
+    assert(select != 0x0);
+
+    if (side == Channel::Primary) {
+        return select;
+    } else {
+        return select << 1;
     }
 }
 

@@ -73,6 +73,7 @@ struct Channel {
 
     uint8_t io_routing_selector() const;
     uint8_t switch_connection_selector() const;
+    uint8_t comparator_connection_selector() const;
     uint8_t local_input_source_selector() const;
     uint8_t local_output_dest_selector() const;
 

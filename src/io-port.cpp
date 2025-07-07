@@ -33,11 +33,13 @@ PortLink::PortLink(InputPort *in, OutputPort *out)
         : in{in}, out{out}, channels{} {}
 
 uint8_t PortLink::switch_connection_selector() {
-    if (!channels.empty()) {
-        Channel const &final = *channels.back();
-        return final.switch_connection_selector();
-    }
-    return 0x0;
+    Channel const &final = *channels.back();
+    return final.switch_connection_selector();
+}
+
+uint8_t PortLink::comparator_connection_selector() {
+    Channel const &final = *channels.back();
+    return final.comparator_connection_selector();
 }
 
 std::ostream &operator <<(std::ostream &os, PortLink const &link) {
@@ -81,6 +83,13 @@ uint8_t InputPort::switch_connection_selector() {
         return 0x0;
     }
     return m_link->switch_connection_selector();
+}
+
+uint8_t InputPort::comparator_connection_selector() {
+    if (!m_link) {
+        return 0x0;
+    }
+    return m_link->comparator_connection_selector();
 }
 
 AnalogBlock &InputPort::cab() {
