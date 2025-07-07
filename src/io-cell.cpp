@@ -141,21 +141,19 @@ static void finalize_input(IOCell &cell) {
 
         Channel *input = nullptr;
         if (direct) {
-            for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
-                Channel &channel = cell.chip().global_input_direct(group, cab, side);
-                if (channel.available(*link)) {
-                    input = &channel;
-                    break;
-                }
-            }
+            input = &Channel::find_available(
+                [&](Channel::Side side) -> Channel &{
+                    return cell.chip().global_input_direct(group, cab, side);
+                },
+                link
+            );
         } else {
-            for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
-                Channel &channel = cell.chip().global_bi_indirect(cab_group, side);
-                if (channel.available(*link)) {
-                    input = &channel;
-                    break;
-                }
-            }
+            input = &Channel::find_available(
+                [&](Channel::Side side) -> Channel &{
+                    return cell.chip().global_bi_indirect(cab_group, side);
+                },
+                link
+            );
         }
 
         if (!input) {
@@ -164,13 +162,12 @@ static void finalize_input(IOCell &cell) {
 
         Channel *local = nullptr;
         if (input->type == Channel::Type::GlobalBiIndirect) {
-            for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
-                Channel &channel = cab.local_input_channel(side);
-                if (channel.available(*link)) {
-                    local = &channel;
-                    break;
-                }
-            }
+            local = &Channel::find_available(
+                [&](Channel::Side side) -> Channel &{
+                    return cab.local_input_channel(side);
+                },
+                link
+            );
 
             if (!local) {
                 throw DesignError("could not route");
@@ -205,14 +202,12 @@ static void finalize_output(IOCell &cell) {
     if (direct) {
         output = &cell.chip().global_output_direct(group, cab, side);
     } else {
-        for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
-            Channel &channel = cell.chip().global_bi_indirect(cab_group, side);
-            if (channel.available(*link)) {
-                output = &channel;
-                break;
-            }
-        }
-        // todo: lookup channel
+        output = &Channel::find_available(
+            [&](Channel::Side side) -> Channel &{
+                return cell.chip().global_bi_indirect(cab_group, side);
+            },
+            link
+        );
     }
 
     if (!output) {

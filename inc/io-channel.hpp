@@ -5,6 +5,7 @@
 #include <variant>
 #include <array>
 #include <iostream>
+#include <stdexcept>
 
 class AnalogBlock;
 class IOCell;
@@ -63,6 +64,26 @@ struct Channel {
     static bool uses_direct_channel(IOCell &cell, AnalogBlock &cab);
     static Channel::Side source_to_side(OutPortSource source);
 
+    template<typename F>
+    static Channel &find_available(F select, PortLink *link) {
+        for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+            Channel &channel = select(side);
+            if (channel.allocated_for(*link)) {
+                return channel;
+            }
+        }
+
+        for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
+            Channel& channel = select(side);
+            if (channel.available(*link)) {
+                return channel;
+            }
+        }
+
+        throw std::runtime_error("Could not route design");
+    }
+
+    bool allocated_for(PortLink &link);
     bool available(PortLink &link);
     Channel &allocate(PortLink &link);
 

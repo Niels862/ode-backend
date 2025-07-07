@@ -147,7 +147,7 @@ Channel::Side Channel::source_to_side(OutPortSource source) {
 }
 
 bool Channel::available(PortLink &link) {
-    if (driver == link.out) {
+    if (allocated_for(link)) {
         return true;
     }
 
@@ -156,6 +156,10 @@ bool Channel::available(PortLink &link) {
     }
 
     return false;
+}
+
+bool Channel::allocated_for(PortLink &link) {
+    return driver == link.out;
 }
 
 Channel &Channel::allocate(PortLink &link) {
