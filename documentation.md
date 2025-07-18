@@ -12,10 +12,64 @@ Bank and byte addresses will be indicated with hexadecimal notation:
 
 For CAB banks, the notation a:XX and b:XX refers to bytes in Bank A and B, respectively.
 
+Channels
+========
+
+The following channels are present. Each channel has both a primary and secondary "side", which can be used independently. 
+
+- from IO1/2 direct to CAB1 (input)
+- from IO1/2 direct to CAB2 (input)
+- from IO3/4 direct to CAB3 (input)
+- from IO3/4 direct to CAB4 (input)
+
+- from CAB1 direct to IO1/2 (output)
+- from CAB2 direct to IO1/2 (output)
+- from CAB3 direct to IO3/4 (output)
+- from CAB4 direct to IO3/4 (output)
+
+- from IO indirect to CAB1/3 (bidirectional) 
+- from IO indirect to CAB2/4 (bidirectional) 
+
+from each CAB to each other CAB, so 4 x 3 = 12 lines
+
+Local (per CAB):
+- local input channels
+- local output channels
+- opamp output channels
+
+Clocks
+======
+
+Each CAB can select two system clocks for synchronizing its compponents. These are set in byte b:00. The byte equals (ID_B << 4) | (ID_A) where ID_x is a 4-bit word indicating a clock. The following mapping is used:
+
+	case 0: return 0x0; // disabled clock
+	case 1: return 0xC;
+	case 2: return 0xD;
+	case 3: return 0xE;
+	case 4: return 0xF;
+	case 5: return 0xA;
+	case 6: return 0xB;
+
+The byte 0:06 controls which clocks are used. It has the following bit structure:
+
+MSB
+(6)(5)(4)(3)(2)(1)'0''1'
+Where (x) is '1' if the clock is used and '0' otherwise. 
+
+The clock frequencies and delays can be configured. This is implemented in the compiler, but the data is held static. Please refer to `AnalogChip::compile_clocks` and `Clock::compile` for more information.
+
 Switches & Capacitors
 =====================
 
-The capacitance of each capacitor is set through one byte. 
+The capacitance of each capacitor is set through one byte. The capacitance is usually set according to an equation (found in the CAM documentation of AD2).
+
+For example, C1 / C2 = 0.5 would yield C1 = 127 and C2 = 254. In the case that multiple values result in the same error, the highest capacitance is chosen.
+
+Switches are configured through four bytes, where the first two bytes control the input switch and the other two bytes control the output switch. The input switch selects the input to its capacitor, and the output switch selects its output. Each capacitor therefore has two programmable switches.
+
+Multiple states can be selected. For both switches, the switch can be opned (disconnected) using "00 00". 
+
+The input switch can be connected to an input using "00 X0", where X can be found in the following table. 
 
 ```
 0 	0000	-> 	None		
@@ -54,6 +108,8 @@ F	1111	->	CAB2:Op-amp1 for CAB 1
 				CAB4:Op-amp1 for CAB 2, 3
 				IO3/IO4:1 for CAB 4
 ```
+
+The switch can also be synchronized on a clock. One of two clocks selected for a CAB can be chosen. "01 YX" uses Clock A, while "02 YX" uses Clock B. Here, the switch is connected to X in phase 1 and to Y in phase 2. 
 
 As an example, the switch `01 13` is connected to Op-amp 1 in phase 1 and to ground on phase 2. 
 
