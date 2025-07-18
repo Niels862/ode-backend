@@ -165,3 +165,24 @@ Its main configuration is in 2 bytes at b:09. Two configurations are known:
 
 - 07 C9: Used by Integrator
 - 07 01: Used by GainSwitch
+
+These bytes may require further research. Some raw findings are presented below. 
+
+	Comparator setup bytes C01:09-C01:0A
+	1:76543210 2:76543210
+
+	2:b0  -> 0 = Phase 2; 1 = Phase 1
+	1:b43 -> 00 = Non-Inverting, 11 = Inverting
+	1:b1  -> 0 = Compare to GND; 1 = Dual-Input
+	1:b2  -> 0 = Hyserisis as 0mV; 1 = Hyserisis as 10mV 
+	2:    -> xxxx x0xx -> No Output Synch;
+			xxxx F10x -> Phase 1 Output Synch
+			xxxx F11x -> Phase 2 Output Synch
+			where F = 0 => on rising edge & F = 1 on falling edge
+
+CAB Routing
+===========
+
+The CAB can route global channels to and from its local channels. 
+The byte b:02 controls the output redirection and bytes b:05 and b:04 control input redirection to the first and second local input channel, respectively. 
+The redirection is complex and handled in `local_output_reroute_selector` (`analog-block.cpp`). 

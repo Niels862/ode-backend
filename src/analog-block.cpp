@@ -215,7 +215,6 @@ void AnalogBlock::finalize() {
 }
 
 uint8_t local_output_reroute_selector(AnalogBlock &cab) {
-    std::cout << "CAB" << cab.id() << std::endl;
     Channel *local_to_bi_pri = nullptr, *local_to_bi_sec = nullptr;
 
     for (Channel::Side side : { Channel::Primary, Channel::Secondary }) {
@@ -236,14 +235,7 @@ uint8_t local_output_reroute_selector(AnalogBlock &cab) {
                 break;
         }
     }
-
-    if (local_to_bi_pri) {
-        std::cout << "pri: " << *local_to_bi_pri << std::endl;
-    }
-    if (local_to_bi_sec) {
-        std::cout << "sec: " << *local_to_bi_sec << std::endl;
-    }
-
+    
     if (local_to_bi_pri) {
         if (!local_to_bi_sec) {
             switch (local_to_bi_pri->side) {
