@@ -145,4 +145,23 @@ Capacitor Memory Addresses
 
 Op-Amp
 ======
+The op-amps are configured with two bytes, starting at the following addresses:
 
+- Op-amp 1: b:1A
+- Op-amp 2: b:14
+
+The following configurations are known:
+
+- 00 00: Op-amp is unused
+- 00 05: Op-amp is used, no feedback (feedback is usually handled through capacitor switches, see circuit diagram for SumInv).
+- 6C 05: Use feedback switch, open if comparator Control < 0, else closed. See Integrator.
+- 81 05: Clock-synchronized switch in feedback loop. See GainSwitch. 
+
+Comparator
+==========
+
+The comparator is set up in different bytes.
+Its main configuration is in 2 bytes at b:09. Two configurations are known:
+
+- 07 C9: Used by Integrator
+- 07 01: Used by GainSwitch
