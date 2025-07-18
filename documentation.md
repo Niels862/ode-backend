@@ -1,3 +1,22 @@
+Introduction
+============
+
+This documentation was written on the basis of the reverse engineering process of the bachelor thesis of Niels van Schagen. 
+
+As a prerequisite, the reader is assumed to be familiar with the structure of the configuration array, which is detailed in the User Manual.
+
+Addressing
+==========
+Bank and byte addresses will be indicated with hexadecimal notation:
+6:12 refers to the byte in bank 6 at address 0x12.
+
+For CAB banks, the notation a:XX and b:XX refers to bytes in Bank A and B, respectively.
+
+Switches & Capacitors
+=====================
+
+The capacitance of each capacitor is set through one byte. 
+
 ```
 0 	0000	-> 	None		
 1	0001	-> 	Ground
